@@ -1,0 +1,67 @@
+import os
+import json
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+from openai_models import get_embed
+from utils import deserialize_props_str, load_from_file, save_to_file
+
+
+def lifted_translate(query, raw_data):
+    prompt_examples = retriever(query, raw_data)
+
+
+
+def retriever(query, raw_data):
+    nprops_query = len(deserialize_props_str(query[1]))
+    query = query[:1]
+
+    # Select lifted commands and formulas with same nprops as query command
+    data = []
+    for ltl_type, props, utt, ltl in raw_data:
+        nprops = len(deserialize_props_str(props))
+        if nprops == nprops_query:
+            data.append([ltl_type, props, utt, ltl])
+    print(f"{len(data)} templates matched query nprops")
+
+    breakpoint()
+
+    # Embed lifted commands then save or load from cache
+    embeds = []
+    embeds_fpath = os.path.join(data_dpath, f"data_embeds.pkl")
+    utt2embed = load_from_file(embeds_fpath) if os.path.isfile(embeds_fpath) else {}
+    embeds_updated = False
+    for idx, (_, _, utt, _) in enumerate(data):
+        if utt in utt2embed:
+            embed = utt2embed[utt]
+        else:
+            embed = get_embed(utt)  # embedding
+            utt2embed[utt] = embed
+            embeds_updated = True
+        embeds.append(embed)
+        print(f"{idx}/{len(data)}. finished embedding:\n{utt}\n")
+    if embeds_updated:
+        save_to_file(utt2embed, embeds_fpath)
+    embeds = np.array(embeds)
+
+    # Retrieve prompt examples
+    query_embed = get_embed(query)
+    query_scores = cosine_similarity(np.array(query_embed).reshape(1, -1), embeds)[0]
+    data_sorted = sorted(zip(query_scores, data), reverse=True)
+
+    prompt_examples = []
+    for score, (ltl_type, props, utt, ltl) in data_sorted[:50]:
+        prompt_examples.append(f"Command: \"{utt}\"\nLTL formula: \"{ltl}\"")
+        print(f"Command: \"{utt}\"\nLTL formula: \"{ltl}\"\n")
+
+    return prompt_examples
+
+
+if __name__ == "__main__":
+    data_dpath = os.path.join(os.path.expanduser("~"), "lang2ltl", "data")
+    data_fpath = os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
+    raw_data = load_from_file(data_fpath)
+
+    query = ["go to b but only after a and always avoid c", "['a', 'b', 'c']"]
+
+    lifted_translate(query, raw_data)
