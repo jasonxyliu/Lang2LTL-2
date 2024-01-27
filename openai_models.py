@@ -115,40 +115,42 @@ def get_embed(txt):
     return embedding
 
 
-def prompt2msg(query_prompt):
-    """
-    Make prompts for GPT-3 compatible with GPT-3.5 and GPT-4.
-    Support prompts for
-        RER: e.g., data/osm/rer_prompt_16.txt
-        symbolic translation: e.g., data/prompt_symbolic_batch12_perm/prompt_nexamples1_symbolic_batch12_perm_ltl_formula_9_42_fold0.txt
-        end-to-end translation: e.g., data/osm/osm_full_e2e_prompt_boston_0.txt
-    :param query_prompt: prompt used by text completion API (text-davinci-003).
-    :return: message used by chat completion API (gpt-3, gpt-3.5-turbo).
-    """
-    # prompt_splits = query_prompt.split("\n\n")
-    # system_prompt = "\n\n".join(prompt_splits[0: -1])  # task description and common examples
-    # query = prompt_splits[-1]  # specific context info and query question
-    #
-    # msg = [{"role": "system", "content": system_prompt}]
-    # msg.append({"role": "user", "content": query})
+def translate(query, examples):
+    client = OpenAI()
 
-    prompt_splits = query_prompt.split("\n\n")
-    task_description = prompt_splits[0]
-    examples = prompt_splits[1: -1]
-    query = prompt_splits[-1]
+    complete = False
+    ntries = 0
+    task = "You are an expert at translating natural language commands to linear temporal logic (LTL) formulas."
+    while not complete:
+        try:
+            raw_response = client.chat.completions.create(
+                model = "gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"{task}\n\nHere are some examples:\n\n{examples}"
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Translate the following command to an LTL formula\n\nCommand: \"{query}\""
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=1000,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0
+            )
+            complete = True
+        except:
+            sleep(30)
+            print(f"{ntries}: waiting for the server. sleep for 30 sec...")
+            # logging.info(f"{ntries}: waiting for the server. sleep for 30 sec...\n{query_prompt}")
+            print("OK continue")
+            ntries += 1
 
-    msg = [{"role": "system", "content": task_description}]
-    for example in examples:
-        if "\n" in example:
-            example_splits = example.split("\n")
-            q = '\n'.join(example_splits[0:-1])  # every line except the last in 1 example block
-            a_splits = example_splits[-1].split(" ")  # last line is the response
-            q += f"\n{a_splits.pop(0)}"
-            a = " ".join(a_splits)
-            msg.append({"role": "user", "content": q})
-            msg.append({"role": "assistant", "content": a})
-        else:  # info should be in system prompt, e.g., landmark list
-            msg[0]["content"] += f"\n{example}"
-    msg.append({"role": "user", "content": query})
+    breakpoint()
 
-    return msg
+    response = raw_response.choices[0].message.content
+    response.replace("\"", "").split(': ')[1]
+    return response
