@@ -18,6 +18,10 @@ if __name__ == "__main__":
     osm_fpath = os.path.join(data_dpath, "osm", "blackstone.json")
     srer_out_fname = "srer_outs_blackstone.json"
 
+    # Spatial Referring Expression Recognition
+
+
+    # Lifted Translation
     srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
     lt_outs = []
 
@@ -32,6 +36,12 @@ if __name__ == "__main__":
         # breakpoint()
 
     save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
+
+
+    # Referring Expression Grounding
+
+
+    # Spatial Predicate Grounding
 
     # lifted_utt = "go to a at most five times"
     # lifted_ltl = ground(lifted_utt, model_fpath)
