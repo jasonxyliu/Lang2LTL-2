@@ -1,0 +1,446 @@
+[
+    {
+        "sres": [
+            "the chair between bakery and restaurant",
+            "the bicycle rack in front of bakery"
+        ],
+        "spatial_preds": [
+            {
+                "between": [
+                    "the chair",
+                    "bakery",
+                    "restaurant"
+                ]
+            },
+            {
+                "in front of": [
+                    "the bicycle rack",
+                    "bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "Only visit a once and do not visit b until you visit a",
+        "sre_map": {
+            "a": "the chair between bakery and restaurant",
+            "b": "the bicycle rack in front of bakery"
+        },
+        "re_to_preds": {
+            "the chair between bakery and restaurant": {
+                "between": [
+                    "the chair",
+                    "bakery",
+                    "restaurant"
+                ]
+            },
+            "the bicycle rack in front of bakery": {
+                "in front of": [
+                    "the bicycle rack",
+                    "bakery"
+                ]
+            }
+        },
+        "utt": "Only visit the chair between bakery and restaurant once and do not visit the bicycle rack in front of bakery until you visit the chair between bakery and restaurant."
+    },
+    {
+        "sres": [
+            "the car right of restaurant",
+            "the bicycle rack southeast of restaurant",
+            "the car between restaurant and bakery"
+        ],
+        "spatial_preds": [
+            {
+                "right of": [
+                    "the car",
+                    "restaurant"
+                ]
+            },
+            {
+                "southeast of": [
+                    "the bicycle rack",
+                    "restaurant"
+                ]
+            },
+            {
+                "between": [
+                    "the car",
+                    "restaurant",
+                    "bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "Reach a, then reach b, then reach c",
+        "sre_map": {
+            "a": "the car right of restaurant",
+            "b": "the bicycle rack southeast of restaurant",
+            "c": "the car between restaurant and bakery"
+        },
+        "re_to_preds": {
+            "the car right of restaurant": {
+                "right of": [
+                    "the car",
+                    "restaurant"
+                ]
+            },
+            "the bicycle rack southeast of restaurant": {
+                "southeast of": [
+                    "the bicycle rack",
+                    "restaurant"
+                ]
+            },
+            "the car between restaurant and bakery": {
+                "between": [
+                    "the car",
+                    "restaurant",
+                    "bakery"
+                ]
+            }
+        },
+        "utt": "Reach the car right of restaurant, then reach the bicycle rack southeast of restaurant, then reach the car between restaurant and bakery."
+    },
+    {
+        "sres": [
+            "the chair in front of bakery"
+        ],
+        "spatial_preds": [
+            {
+                "in front of": [
+                    "the chair",
+                    "bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "You have to reach a at least twice.",
+        "sre_map": {
+            "a": "the chair in front of bakery"
+        },
+        "re_to_preds": {
+            "the chair in front of bakery": {
+                "in front of": [
+                    "the chair",
+                    "bakery"
+                ]
+            }
+        },
+        "utt": "You have to reach the chair in front of bakery at least twice."
+    },
+    {
+        "sres": [
+            "the chair next to the bakery"
+        ],
+        "spatial_preds": [
+            {
+                "next to": [
+                    "the chair",
+                    "the bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "Do not visit a less than five times.",
+        "sre_map": {
+            "a": "the chair next to the bakery"
+        },
+        "re_to_preds": {
+            "the chair next to the bakery": {
+                "next to": [
+                    "the chair",
+                    "the bakery"
+                ]
+            }
+        },
+        "utt": "Do not visit the chair next to the bakery less than five times."
+    },
+    {
+        "sres": [
+            "the bicycle rack right of restaurant",
+            "the car in front of bakery",
+            "the chair left of bakery"
+        ],
+        "spatial_preds": [
+            {
+                "right of": [
+                    "the bicycle rack",
+                    "restaurant"
+                ]
+            },
+            {
+                "in front of": [
+                    "the car",
+                    "bakery"
+                ]
+            },
+            {
+                "left of": [
+                    "the chair",
+                    "bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "Always stay away from a, b, and c",
+        "sre_map": {
+            "a": "the bicycle rack right of restaurant",
+            "b": "the car in front of bakery",
+            "c": "the chair left of bakery"
+        },
+        "re_to_preds": {
+            "the bicycle rack right of restaurant": {
+                "right of": [
+                    "the bicycle rack",
+                    "restaurant"
+                ]
+            },
+            "the car in front of bakery": {
+                "in front of": [
+                    "the car",
+                    "bakery"
+                ]
+            },
+            "the chair left of bakery": {
+                "left of": [
+                    "the chair",
+                    "bakery"
+                ]
+            }
+        },
+        "utt": "Always stay away from the bicycle rack right of restaurant, the car in front of bakery, and the chair left of bakery."
+    },
+    {
+        "sres": [
+            "the car opposite the bakery"
+        ],
+        "spatial_preds": [
+            {
+                "opposite": [
+                    "the car",
+                    "the bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "You can visit a at most three times.",
+        "sre_map": {
+            "a": "the car opposite the bakery"
+        },
+        "re_to_preds": {
+            "the car opposite the bakery": {
+                "opposite": [
+                    "the car",
+                    "the bakery"
+                ]
+            }
+        },
+        "utt": "You can visit the car opposite the bakery at most three times."
+    },
+    {
+        "sres": [
+            "the chair next to bakery",
+            "the bicycle rack near restaurant"
+        ],
+        "spatial_preds": [
+            {
+                "next to": [
+                    "the chair",
+                    "bakery"
+                ]
+            },
+            {
+                "near": [
+                    "the bicycle rack",
+                    "restaurant"
+                ]
+            }
+        ],
+        "lifted_utt": "Never go through any of a or b.",
+        "sre_map": {
+            "a": "the chair next to bakery",
+            "b": "the bicycle rack near restaurant"
+        },
+        "re_to_preds": {
+            "the chair next to bakery": {
+                "next to": [
+                    "the chair",
+                    "bakery"
+                ]
+            },
+            "the bicycle rack near restaurant": {
+                "near": [
+                    "the bicycle rack",
+                    "restaurant"
+                ]
+            }
+        },
+        "utt": "Never go through any of the chair next to bakery or the bicycle rack near restaurant."
+    },
+    {
+        "sres": [
+            "the bicycle rack adjacent to restaurant"
+        ],
+        "spatial_preds": [
+            {
+                "adjacent to": [
+                    "the bicycle rack",
+                    "restaurant"
+                ]
+            }
+        ],
+        "lifted_utt": "You cannot go to a more than three times.",
+        "sre_map": {
+            "a": "the bicycle rack adjacent to restaurant"
+        },
+        "re_to_preds": {
+            "the bicycle rack adjacent to restaurant": {
+                "adjacent to": [
+                    "the bicycle rack",
+                    "restaurant"
+                ]
+            }
+        },
+        "utt": "You cannot go to the bicycle rack adjacent to restaurant more than three times."
+    },
+    {
+        "sres": [
+            "the car in front of bakery",
+            "the bicycle rack next to bakery"
+        ],
+        "spatial_preds": [
+            {
+                "in front of": [
+                    "the car",
+                    "bakery"
+                ]
+            },
+            {
+                "next to": [
+                    "the bicycle rack",
+                    "bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "Reach a, reach b",
+        "sre_map": {
+            "a": "the car in front of bakery",
+            "b": "the bicycle rack next to bakery"
+        },
+        "re_to_preds": {
+            "the car in front of bakery": {
+                "in front of": [
+                    "the car",
+                    "bakery"
+                ]
+            },
+            "the bicycle rack next to bakery": {
+                "next to": [
+                    "the bicycle rack",
+                    "bakery"
+                ]
+            }
+        },
+        "utt": "Reach the car in front of bakery, reach the bicycle rack next to bakery."
+    },
+    {
+        "sres": [
+            "the bicycle rack at bakery",
+            "the chair between restaurant and bakery"
+        ],
+        "spatial_preds": [
+            {
+                "at": [
+                    "the bicycle rack",
+                    "bakery"
+                ]
+            },
+            {
+                "between": [
+                    "the chair",
+                    "restaurant",
+                    "bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "Stay on a until you reach b",
+        "sre_map": {
+            "a": "the bicycle rack at bakery",
+            "b": "the chair between restaurant and bakery"
+        },
+        "re_to_preds": {
+            "the bicycle rack at bakery": {
+                "at": [
+                    "the bicycle rack",
+                    "bakery"
+                ]
+            },
+            "the chair between restaurant and bakery": {
+                "between": [
+                    "the chair",
+                    "restaurant",
+                    "bakery"
+                ]
+            }
+        },
+        "utt": "Stay on the bicycle rack at bakery until you reach the chair between restaurant and bakery."
+    },
+    {
+        "sres": [
+            "the south of restaurant"
+        ],
+        "spatial_preds": [
+            {
+                "south of": [
+                    "restaurant"
+                ]
+            }
+        ],
+        "lifted_utt": "Make sure you visit a two or more times.",
+        "sre_map": {
+            "a": "the south of restaurant"
+        },
+        "re_to_preds": {
+            "the south of restaurant": {
+                "south of": [
+                    "restaurant"
+                ]
+            }
+        },
+        "utt": "Make sure you visit the south of restaurant two or more times."
+    },
+    {
+        "sres": [
+            "the chair between restaurant and bakery",
+            "the bicycle rack next to bakery"
+        ],
+        "spatial_preds": [
+            {
+                "between": [
+                    "the chair",
+                    "restaurant",
+                    "bakery"
+                ]
+            },
+            {
+                "next to": [
+                    "the bicycle rack",
+                    "bakery"
+                ]
+            }
+        ],
+        "lifted_utt": "Visit a, but do not visit a before you reach b",
+        "sre_map": {
+            "a": "the chair between restaurant and bakery",
+            "b": "the bicycle rack next to bakery"
+        },
+        "re_to_preds": {
+            "the chair between restaurant and bakery": {
+                "between": [
+                    "the chair",
+                    "restaurant",
+                    "bakery"
+                ]
+            },
+            "the bicycle rack next to bakery": {
+                "next to": [
+                    "the bicycle rack",
+                    "bakery"
+                ]
+            }
+        },
+        "utt": "Visit the chair between restaurant and bakery, but do not visit the chair between restaurant and bakery before you reach the bicycle rack next to bakery."
+    }
+]

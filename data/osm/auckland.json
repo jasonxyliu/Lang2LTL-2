@@ -1,0 +1,258 @@
+{
+	"Jason Books": {
+		"shop": "books",
+		"lat": -36.8475630,
+		"long": 174.7672145,
+		"url": "https://www.openstreetmap.org/node/8232349963"
+	},
+	"Sophia": {
+		"lat": -36.8475203,
+		"long": 174.7670278,
+		"amenity": "restaurant",
+		"cuisine": "korean"
+	},
+	"Kryspy Kreme": {
+		"lat": -36.8478217,
+		"long": 174.7672834,
+		"amenity": "fast_food",
+		"cuisine": "coffee_shop",
+		"takeaway": "yes",
+		"wheelchair": "yes"
+	},
+	"Sushi Train": {
+		"lat": -36.8480498,
+		"long": 174.7672225,
+		"amenity": "restaurant",
+		"cuisine": "sushi"
+	},
+	"The Coffee Club": {
+		"lat": -36.8480554,
+		"long": 174.7665831,
+		"addr:city": "Auckland",
+		"addr:housenumber": "42A",
+		"addr:street": "High Street",
+		"addr:suburb": "Auckland Central",
+		"amenity": "cafe",
+		"brand": "The Coffee Club",
+		"brand:wikidata": "Q7726599",
+		"brand:wikipedia": "en:The Coffee Club",
+		"cuisine": "coffee_shop",
+		"opening_hours": "Mo-Su 07:00-17:00",
+		"ref:linz:address_id": "1998939",
+		"takeaway": "yes",
+		"wheelchair": "yes"
+	},
+	"Tatty's": {
+		"lat": -36.8478925,
+		"long": 174.7664125,
+		"addr:housenumber": "41",
+		"addr:street": "High Street",
+		"addr:suburb": "Auckland Central",
+		"check_date:opening_hours": "2023-09-20",
+		"opening_hours:signed": "no",
+		"ref:linz:address_id": "1132238",
+		"second_hand": "only",
+		"shop": "clothes",
+		"website": "https://tattys.co.nz/"
+	},
+	"Ellen Melville Centre": {
+		"alt_name": "Pioneer Women's Memorial Hall",
+		"amenity": "community_centre",
+		"architect": "Tibor Donner (Auckland City Council)",
+		"building": "yes",
+		"operator": "Auckland Council",
+		"operator:type": "government",
+		"operator:wikidata": "Q758635",
+		"start_date": "1962",
+		"website": "https://bookings.aucklandcouncil.govt.nz/facilities/facility/ellen-melville-centre"
+	},
+	"Dengdeng": {
+		"lat": -36.8480490,
+		"long": 174.7668010,
+		"amenity": "restaurant",
+		"cuisine": "japanese",
+		"opening_hours": "Mo-Su 18:00-03:30",
+		"wheelchair": "yes"
+	},
+	"Twelve Restaurant": {
+		"lat": -36.8480111,
+		"long": 174.7666869,
+		"addr:city": "Auckland",
+		"addr:housenumber": "1",
+		"addr:postcode": "1010",
+		"addr:street": "Courthouse Lane",
+		"amenity": "restaurant",
+		"cuisine": "korean"
+	},
+	"Ascolour": {
+		"lat": -36.8483737,
+		"long": 174.7664707,
+		"check_date:opening_hours": "2023-09-29",
+		"opening_hours:signed": "no",
+		"shop": "clothes"
+	},
+	"Dong De Moon": {
+		"lat": -36.8483174,
+		"long": 174.7665098,
+		"amenity": "restaurant",
+		"cuisine": "korean",
+		"opening_hours": "Mo 17:00-24:00, Tu-Th 12:00-24:00, Fr,Sa 12:00-01:00, Su 12:00-23:00",
+		"wheelchair": "yes"
+	},
+	"Cafe BBQ Duck": {
+		"lat": -36.8482429,
+		"long": 174.7665300,
+		"amenity": "cafe",
+		"opening_hours": "Su-Th 11:00-23:00; Fr,Sa 11:00-24:00",
+		"wheelchair": "yes"
+	},
+	"Machi Machi": {
+		"lat": -36.8481858,
+		"long": 174.7665471,
+		"amenity": "cafe",
+		"cuisine": "bubble_tea",
+		"opening_hours": "Mo-Su 11:00-22:30"
+	},
+	"Prosper": {
+		"lat": -36.8481094,
+		"long": 174.7665610,
+		"opening_hours": "Mo-Su 12:00-17:30",
+		"shop": "clothes",
+		"wheelchair": "yes"
+	},
+	"Sushi Pac": {
+		"lat": -36.8480513,
+		"long": 174.7663332,
+		"amenity": "fast_food",
+		"wheelchair": "yes"
+	},
+	"Pieces": {
+		"lat": -36.8475371,
+		"long": 174.7665399,
+		"opening_hours": "Mo-Su 11:00-19:00",
+		"shop": "clothes"
+	},
+	"Shut the Front Door": {
+		"lat": -36.8474803,
+		"long": 174.7665601,
+		"opening_hours": "Mo-Sa 09:00-18:00; Su 10:00-17:00",
+		"shop": "gift"
+	},
+	"VAPO": {
+		"lat": -36.8474814,
+		"long": 174.7667331,
+		"brand": "VAPO",
+		"brand:wikidata": "Q117236856",
+		"opening_hours": "Mo-Fr 09:00-18:00; Sa 10:00-18:00; Su 10:00-17:00",
+		"shop": "e-cigarette"
+	},
+	"Looksmart Alterations": {
+		"lat": -36.8472884,
+		"long": 174.7667873,
+		"shop": "tailor"
+	},
+	"EB Games": {
+		"lat": -36.8479559,
+		"long": 174.7663986,
+		"brand": "EB Games",
+		"brand:wikidata": "Q4993686",
+		"brand:wikipedia": "en:EB Games",
+		"shop": "video_games"
+	},
+	"Sneaky Snacky Donuts": {
+		"lat": -36.8477542,
+		"long": 174.7664753,
+		"amenity": "fast_food",
+		"cuisine": "donut"
+	},
+	"Daikoku Cosmetics": {
+		"lat": -36.8484310,
+		"long": 174.7662650,
+		"opening_hours": "Su-We 10:00-20:00; Th-Sa 10:00-21:00",
+		"shop": "cosmetics"
+	},
+	"The Shelf": {
+		"lat": -36.8484713,
+		"long": 174.7664283,
+		"amenity": "cafe",
+		"wheelchair": "limited"
+	},
+	"Le Chef": {
+		"lat": -36.8472101,
+		"long": 174.7670000,
+		"amenity": "cafe",
+		"wheelchair": "limited"
+	},
+	"Groman": {
+		"lat": -36.8471737,
+		"long": 174.7668132,
+		"opening_hours": "Mo-Fr 09:30-17:30; Sa,Su 10:00-17:00",
+		"shop": "clothes"
+	},
+	"Little Unity": {
+		"lat": -36.8473056,
+		"long": 174.7666014,
+		"shop": "books"
+	},
+	"Better Burger": {
+		"lat": -36.8472140,
+		"long": 174.7664288,
+		"addr:housenumber": "19",
+		"addr:postcode": "1010",
+		"addr:street": "Vulcan Lane",
+		"amenity": "fast_food",
+		"opening_hours": "Mo-Su 11:00-22:00",
+		"website": "https://www.betterburger.co.nz/"
+	},
+	"Lobby": {
+		"lat": -36.8470596,
+		"long": 174.7665237,
+		"amenity": "pub"
+	},
+	"Cahn's wine and spirits": {
+		"lat": -36.8471551,
+		"long": 174.7673099,
+		"shop": "alcohol"
+	},
+	"Sumthin Dumplin": {
+		"lat": -36.8472750,
+		"long": 174.7672588,
+		"addr:city": "Auckland",
+		"addr:housenumber": "12",
+		"addr:postcode": "1010",
+		"addr:street": "O'Connell Street",
+		"addr:suburb": "Auckland Central",
+		"amenity": "restaurant",
+		"building:flats": "12",
+		"cuisine": "asian",
+		"diet:vegetarian": "yes",
+		"opening_hours": "Mo-Fr 11:00-20:00",
+		"phone": "+6493007546",
+		"ref:linz:address_id": "1132023",
+		"website": "https://sumthindumplin.co.nz"
+	},
+	"Al's Deli": {
+		"lat": -36.8473696,
+		"long": 174.7672502,
+		"addr:city": "Auckland Central",
+		"addr:housenumber": "12",
+		"addr:postcode": "1010",
+		"addr:street": "O'Connell Street",
+		"amenity": "restaurant",
+		"capacity": "16",
+		"cuisine": "american",
+		"smoking": "no",
+		"takeaway": "yes"
+	},
+	"Amici": {
+		"lat": -36.8472949,
+		"long": 174.7669477,
+		"amenity": "cafe"
+	},
+	"Emporio \"U\"": {
+		"lat": -36.8470562,
+		"long": 174.7666797,
+		"level": -1,
+		"shop": "clothes"
+	}
+}

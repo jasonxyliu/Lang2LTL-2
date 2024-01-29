@@ -1,0 +1,26 @@
+Only visit the chair between bakery and restaurant once and do not visit the bicycle rack in front of bakery until you visit the chair between bakery and restaurant.
+
+Reach the car right of restaurant, then reach the bicycle rack southeast of restaurant, then reach the car between restaurant and bakery.
+
+You have to reach the chair in front of bakery at least twice.
+
+Do not visit the chair next to the bakery less than five times.
+
+Always stay away from the bicycle rack right of restaurant, the car in front of bakery, and the chair left of bakery.
+
+You can visit the car opposite the bakery at most three times.
+
+Never go through any of the chair next to bakery or the bicycle rack near restaurant.
+
+You cannot go to the bicycle rack adjacent to restaurant more than three times.
+
+Reach the car in front of bakery, reach the bicycle rack next to bakery.
+
+Stay on the bicycle rack at bakery until you reach the chair between restaurant and bakery.
+
+Make sure you visit the south of restaurant two or more times.
+
+Visit the chair between restaurant and bakery, but do not visit the chair between restaurant and bakery before you reach the bicycle rack next to bakery.
+
+
+
