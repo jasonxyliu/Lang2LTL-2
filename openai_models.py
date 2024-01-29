@@ -149,8 +149,11 @@ def translate(query, examples):
             print("OK continue")
             ntries += 1
 
-    breakpoint()
 
     response = raw_response.choices[0].message.content
-    response.replace("\"", "").split(': ')[1]
+    print(f"GPT query: {query}\n{response}")
+    response = response.replace("\"", "").split(': ')[1]
+    print(response)
+
+    breakpoint()
     return response

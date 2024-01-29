@@ -14,9 +14,9 @@ class REG():
     """
     def __init__(self, img_embeds, txt_embeds):
         self.img_embeds = np.array(list(img_embeds.values()))
-        self.img_ids = list(self.img_embeds.keys())
+        self.img_ids = list(img_embeds.keys())
         self.txt_embeds = np.array(list(txt_embeds.values()))
-        self.txt_ids = list(self.txt_embeds.keys())
+        self.txt_ids = list(txt_embeds.keys())
         self.txt_embed_model = TextEmbedding()
 
     def query(self, query, topk):
@@ -25,8 +25,8 @@ class REG():
 
         lmks_sorted = sorted(zip(query_scores, self.img_ids+self.txt_ids), reverse=True)
 
-        for score, sem_id in lmks_sorted:
-            print(f"{sem_id}: {score}")
+        # for score, sem_id in lmks_sorted:
+        #     print(f"{sem_id}: {score}")
 
         return lmks_sorted[:topk]
 
@@ -69,40 +69,63 @@ def embed_texts(txts, embed_dpath):
     return txt_embeds
 
 
-if __name__ == "__main__":
-    data_dpath = os.path.join(os.path.expanduser("~"), "lang2ltl", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", "downloaded_graph_2024-01-16_13-40-18")
-
-    img_embed_dpath = os.path.join(graph_dpath, "image_embeds")
-    img_cap_dpath = os.path.join(img_embed_dpath, "captions")
+def reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk):
+    img_cap_dpath = os.path.join(graph_dpath, "image_captions")
     os.makedirs(img_cap_dpath, exist_ok=True)
-    img_embed_dpath = os.path.join(img_embed_dpath, "embeddings")
+    img_embed_dpath = os.path.join(graph_dpath, "image_embeds")
     os.makedirs(img_embed_dpath, exist_ok=True)
-
-    txt_embed_dpath = os.path.join(data_dpath, "text_embeds")
+    txt_embed_dpath = os.path.join(graph_dpath, "text_embeds")
     os.makedirs(txt_embed_dpath, exist_ok=True)
 
     img_dpath = os.path.join(graph_dpath, "images")  # SLAM
     img_fpaths = sorted([os.path.join(img_dpath, fname) for fname in os.listdir(img_dpath) if "jpg" in fname])
     img_embeds = embed_images(img_fpaths, img_cap_dpath, img_embed_dpath)
 
-    txts = load_from_file(os.path.join(data_dpath, "osm", "osm_temp.json"))  # OSM
+    txts = load_from_file(osm_fpath)  # OSM
     txt_embeds = embed_texts(txts, txt_embed_dpath)
 
-    queries = ["bookshelf", "desk and chair", "kitchen cabinet", "blue couch", "red couch", "refrigerator", "door", "white board", "TV"]
+    reg = REG(img_embeds, txt_embeds)
 
-    for idx, query in enumerate(queries):
-        print(f"{idx}: {query}")
-        reg = REG(img_embeds, txt_embeds)
-        # reg = REG(np.array(list(img_embeds.values())), np.array(list(txt_embeds.values())))
-        lmk_candidates = reg.query(query, topk=5)
+    reg_outs = []
+    srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
 
-        print("\n\n")
+    for srer_out in srer_outs:
+        print(f"command: {srer_out['utt']}")
+        grounded_spatial_pred = []
 
-    # logging.basicConfig(level=logging.DEBUG,
-    #                         format='%(message)s',
-    #                         handlers=[
-    #                             logging.FileHandler(f'exp.log', mode='w'),
-    #                             logging.StreamHandler()
-    #                         ]
-    # )
+        for spatial_pred in srer_out["spatial_preds"]:
+            spatil_relation = list(spatial_pred.keys())[0]
+            res =  list(spatial_pred.values())[0]
+
+            grounded_res = []
+            for idx, query in enumerate(res):
+                lmk_candidates = reg.query(query, topk=topk)
+                grounded_res.append(lmk_candidates)
+                print(f"{idx}: {query}\n{lmk_candidates}\n")
+
+            grounded_spatial_pred.append({spatil_relation: grounded_res})
+
+        srer_out["grounded_spatial_preds"] = grounded_spatial_pred
+
+        reg_outs.append(srer_out)
+
+    breakpoint()
+    save_to_file(reg_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "reg")))
+
+    # queries = ["bookshelf", "desk and chair", "kitchen cabinet", "blue couch", "red couch", "refrigerator", "door", "white board", "TV"]
+    # for idx, query in enumerate(queries):
+    #     print(f"{idx}: {query}")
+    #     reg = REG(img_embeds, txt_embeds)
+    #     # reg = REG(np.array(list(img_embeds.values())), np.array(list(txt_embeds.values())))
+    #     lmk_candidates = reg.query(query, topk=5)
+
+    #     print("\n\n")
+
+
+if __name__ == "__main__":
+    data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
+    graph_dpath = os.path.join(data_dpath, "maps", "downloaded_graph_2024-01-27_07-48-53")
+    osm_fpath = os.path.join(data_dpath, "osm", "blackstone.json")
+    srer_out_fname = "srer_outs_blackstone.json"
+
+    reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk=3)
