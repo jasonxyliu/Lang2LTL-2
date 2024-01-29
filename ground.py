@@ -1,8 +1,10 @@
 import os
+from tqdm import tqdm
 
 from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
 
+from rer import referring_exp_recognition
 
 def ground(lifted_utt, model_fpath):
     query = lifted_utt.translate(str.maketrans('', '', ',.'))
@@ -17,9 +19,21 @@ if __name__ == "__main__":
     graph_dpath = os.path.join(data_dpath, "maps", "downloaded_graph_2024-01-27_07-48-53")
     osm_fpath = os.path.join(data_dpath, "osm", "blackstone.json")
     srer_out_fname = "srer_outs_blackstone.json"
+    utt_fpath = os.path.join(data_dpath, "utts_blackstone.txt")
 
     # Spatial Referring Expression Recognition
 
+    # -- load commands and filter out all empty strings:
+    utterances = list(filter(None, [X.strip() for X in open(utt_fpath, 'r').readlines()]))
+
+    rer_outputs = []
+
+    for utt in tqdm(utterances, desc='Performing referring expression recognition (RER)...'):
+        # -- extract RER info from LLM interaction:
+        _, output = referring_exp_recognition(utt)
+        rer_outputs.append(output)
+    
+    save_to_file(rer_outputs, os.path.join(data_dpath, srer_out_fname))
 
     # Lifted Translation
     srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
