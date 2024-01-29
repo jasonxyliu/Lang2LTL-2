@@ -51,7 +51,7 @@ def save_to_file(data, fpth, mode=None):
             wfile.write(data)
     elif ftype == 'json':
         with open(fpth, mode if mode else 'w') as wfile:
-            json.dump(data, wfile)
+            json.dump(data, wfile, indent=4)
     elif ftype == 'csv':
         with open(fpth, mode if mode else 'w', newline='') as wfile:
             writer = csv.writer(wfile)
