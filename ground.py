@@ -2,6 +2,7 @@ import os
 from tqdm import tqdm
 
 from rer import referring_exp_recognition
+from spg import init, spg
 from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
 
@@ -20,6 +21,7 @@ if __name__ == "__main__":
     osm_fpath = os.path.join(data_dpath, "osm", "blackstone.json")
     utt_fpath = os.path.join(data_dpath, "utts_blackstone.txt")
     srer_out_fname = "srer_outs_blackstone.json"
+    reg_out_fname = "reg_outs_blackstone.json"
 
     # Spatial Referring Expression Recognition
     rer_outs = []
@@ -53,6 +55,10 @@ if __name__ == "__main__":
 
 
     # Spatial Predicate Grounding
+    reg_outs = load_from_file(os.path.join(data_dpath, reg_out_fname))
+    init(osm_landmark_file=osm_fpath)
+    for reg_out in reg_outs:
+        spg_out = spg(reg_out)
 
     # lifted_utt = "go to a at most five times"
     # lifted_ltl = ground(lifted_utt, model_fpath)
