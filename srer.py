@@ -1,7 +1,11 @@
+import os
 import random
-import openai
 
-model_name = 'gpt-4'
+import openai
+from openai import OpenAI
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 
 def generate_synthetic_command(params, num_utterances=10, min_props=2, force_sre=False):
@@ -96,8 +100,9 @@ def generate_synthetic_command(params, num_utterances=10, min_props=2, force_sre
 
 def prompt_referring_exp(command):
     # -- use OpenAI's API for interacting with GPT (using the Chat variation):
-    prompt = openai.ChatCompletion.create(
-        model=model_name,
+    client = OpenAI()
+    prompt = client.chat.completions.create(
+        model="gpt-4",
         temperature=0.1,
         max_tokens=1500,
         frequency_penalty=0,
@@ -183,5 +188,18 @@ def referring_exp_recognition(command):
     raw_output = prompt_referring_exp(command)
     parsed_output = parse_LLM_output(raw_output)
     parsed_output['utt'] = command
+    return raw_output, parsed_output
 
-    return (raw_output, parsed_output)
+
+if __name__ == "__main__":
+    commands = [
+        "go to the couch in front of the TV, the couch on the left of the kitchen counter, the table next to the door, the table in front of the whiteboard, and the table on the left of the bookshelf",
+
+    ]
+
+    for command in commands:
+        raw_out, parsed_out = referring_exp_recognition(command)
+
+        print(f"{parsed_out['lifted_utt']}\n{parsed_out['spatial_preds']}")
+
+        breakpoint()
