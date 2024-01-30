@@ -315,8 +315,7 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, do_360_search
         try:
             anchor = anchor_landmarks[A]
         except KeyError:
-            # TODO: what if a landmark doesn't exist as an anchor? Then we should use the target landmark?
-            # input('LA')
+            input('LA')
             continue
 
         anchor['name'] = A
@@ -408,10 +407,10 @@ def get_target_position(spatial_rel, anchor_candidate):
 
     # -- plot all anchors and targets provided to the function:
     for A in anchor_landmarks:
-        plt.scatter(x=anchor_landmarks[A]['x'], y=anchor_landmarks[A]['y'],
+        plt.scatter(x=A['x'], y=A['y'],
                     marker='o', c='darkorange',
                     label=f"anchor: {A}")
-        plt.text(anchor_landmarks[A]['x'], anchor_landmarks[A]['y'], A)
+        plt.text(A['x'], A['y'], A)
 
     # -- plot the range as well for visualization:
     plt.plot([anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']], [anchor['y'],
@@ -421,7 +420,7 @@ def get_target_position(spatial_rel, anchor_candidate):
 
     plt.axis('square')
     plt.legend()
-    plt.show(block=False)
+    plt.show()
 
     return new_robot_pos
 #enddef
@@ -551,12 +550,12 @@ def spg(spatial_preds):
                     is_valid = evaluate_spg(relation, target_id, [anchor_1_id, anchor_2_id] if anchor_2 else [anchor_1_id])
 
                     if is_valid:
-                        return {
-                            'target': target_id,
-                            'anchor': [anchor_1_id, anchor_2_id] if anchor_2 else [anchor_1_id]
-                        }
+                        break
 
-    return None
+                if is_valid:
+                    break
+
+        input()
 
 if __name__ == '__main__':
     # -- just run this part with the output from regular expression grounding (REG):

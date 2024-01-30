@@ -22,34 +22,34 @@ if __name__ == "__main__":
     utt_fpath = os.path.join(data_dpath, "utts_blackstone.txt")
     srer_out_fname = "srer_outs_blackstone.json"
     reg_out_fname = "reg_outs_blackstone.json"
-    spg_out_fname = "spg_outs_blackstone.json"
 
     # Spatial Referring Expression Recognition
     rer_outs = []
     utts = list(filter(None, [X.strip() for X in open(utt_fpath, 'r').readlines()]))  # load commands, filter empty strings
 
-    for utt in tqdm(utts, desc='Performing referring expression recognition (RER)...'):
-        # -- extract RER info from LLM interaction:
-        _, rer_out = referring_exp_recognition(utt)
-        rer_outs.append(rer_out)
+    if False:
+        for utt in tqdm(utts, desc='Performing referring expression recognition (RER)...'):
+            # -- extract RER info from LLM interaction:
+            _, rer_out = referring_exp_recognition(utt)
+            rer_outs.append(rer_out)
 
-    save_to_file(rer_outs, os.path.join(data_dpath, srer_out_fname))
+        save_to_file(rer_outs, os.path.join(data_dpath, srer_out_fname))
 
-    # Lifted Translation
-    srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
-    lt_outs = []
+        # Lifted Translation
+        srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
+        lt_outs = []
 
-    for srer_out in srer_outs:
-        lifted_utt = srer_out["lifted_utt"]
-        lifted_ltl = ground(lifted_utt, model_fpath)
+        for srer_out in srer_outs:
+            lifted_utt = srer_out["lifted_utt"]
+            lifted_ltl = ground(lifted_utt, model_fpath)
 
-        srer_out["lifted_ltl"] = lifted_ltl
-        lt_outs.append(srer_out)
+            srer_out["lifted_ltl"] = lifted_ltl
+            lt_outs.append(srer_out)
 
-        print(f"{lifted_utt}\n{lifted_ltl}\n")
-        # breakpoint()
+            print(f"{lifted_utt}\n{lifted_ltl}\n")
+            # breakpoint()
 
-    save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
+        save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
 
 
     # Referring Expression Grounding
@@ -58,18 +58,8 @@ if __name__ == "__main__":
     # Spatial Predicate Grounding
     reg_outs = load_from_file(os.path.join(data_dpath, reg_out_fname))
     init(osm_landmark_file=osm_fpath)
-
-    spg_outs = []
     for reg_out in reg_outs:
-        # -- make a copy of the dictionary for a corresponding utterance:
-        spg_out = reg_out
-
-        # -- add a new field to the dictionary with the final output of SPG (if any):
-        spg_out['final_grounding'] = spg(reg_out)
-        spg_outs.append(spg_out)            
-
-    save_to_file(spg_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "spg")))
-
+        spg_out = spg(reg_out)
 
     # lifted_utt = "go to a at most five times"
     # lifted_ltl = ground(lifted_utt, model_fpath)
