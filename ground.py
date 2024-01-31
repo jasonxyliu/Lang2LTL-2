@@ -21,6 +21,7 @@ if __name__ == "__main__":
     graph_dpath = os.path.join(data_dpath, "maps", "downloaded_graph_2024-01-27_07-48-53")
     osm_fpath = os.path.join(data_dpath, "osm", "blackstone.json")
     utt_fpath = os.path.join(data_dpath, "utts_blackstone.txt")
+    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     srer_out_fname = "srer_outs_blackstone.json"
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
@@ -33,34 +34,31 @@ if __name__ == "__main__":
     for utt in tqdm(utts, desc='Performing spatial referring expression recognition (SRER)...'):
         _, rer_out = srer(utt)
         rer_outs.append(rer_out)
-    save_to_file(rer_outs, os.path.join(data_dpath, srer_out_fname))
+    save_to_file(rer_outs, os.path.join(results_dpath, srer_out_fname))
 
 
     # Referring Expression Grounding
-    reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk)
+    reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk)
 
 
     # Spatial Predicate Grounding
-    reg_outs = load_from_file(os.path.join(data_dpath, reg_out_fname))
+    reg_outs = load_from_file(os.path.join(results_dpath, reg_out_fname))
     init(osm_fpath)
 
     spg_outs = []
     for reg_out in reg_outs:
         # -- make a copy of the dictionary for a corresponding utterance:
         spg_out = reg_out
-
-        breakpoint()
-
         # -- add a new field to the dictionary with the final output of SPG (if any):
         spg_out['spg_results'] = spg(reg_out, topk)
         # spg_out.pop('grounded_spatial_preds')
         spg_outs.append(spg_out)
 
-    save_to_file(spg_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "spg")))
+    save_to_file(spg_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "spg")))
 
 
     # Lifted Translation
-    srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
+    srer_outs = load_from_file(os.path.join(results_dpath, srer_out_fname))
     lt_outs = []
 
     for srer_out in srer_outs:
@@ -73,7 +71,7 @@ if __name__ == "__main__":
         print(f"{lifted_utt}\n{lifted_ltl}\n")
         # breakpoint()
 
-    save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
+    save_to_file(lt_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "lt")))
 
     # lifted_utt = "go to a at most five times"
     # lifted_ltl = ground(lifted_utt, model_fpath)

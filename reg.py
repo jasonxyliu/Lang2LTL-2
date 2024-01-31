@@ -68,7 +68,7 @@ def embed_texts(txts, embed_dpath):
     return txt_embeds
 
 
-def reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk):
+def reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk):
     img_cap_dpath = os.path.join(graph_dpath, "image_captions")
     os.makedirs(img_cap_dpath, exist_ok=True)
     img_embed_dpath = os.path.join(graph_dpath, "image_embeds")
@@ -86,7 +86,7 @@ def reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk):
     reg = REG(img_embeds, txt_embeds)
 
     reg_outs = []
-    srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
+    srer_outs = load_from_file(os.path.join(results_dpath, srer_out_fname))
 
     for srer_out in srer_outs:
         print(f"command: {srer_out['utt']}")
@@ -111,7 +111,7 @@ def reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk):
         srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
 
         reg_outs.append(srer_out)
-    save_to_file(reg_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "reg")))
+    save_to_file(reg_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "reg")))
 
     # queries = ["bookshelf", "desk and chair", "kitchen cabinet", "blue couch", "red couch", "refrigerator", "door", "white board", "TV"]
     # for idx, query in enumerate(queries):
@@ -127,6 +127,7 @@ if __name__ == "__main__":
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", "downloaded_graph_2024-01-27_07-48-53")
     osm_fpath = os.path.join(data_dpath, "osm", "blackstone.json")
+    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     srer_out_fname = "srer_outs_blackstone.json"
 
-    reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk=3)
+    reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk=3)
