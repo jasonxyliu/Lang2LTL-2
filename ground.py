@@ -2,6 +2,7 @@ import os
 from tqdm import tqdm
 
 from srer import referring_exp_recognition
+from reg import reg
 from spg import init, spg
 from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
@@ -21,8 +22,9 @@ if __name__ == "__main__":
     osm_fpath = os.path.join(data_dpath, "osm", "blackstone.json")
     utt_fpath = os.path.join(data_dpath, "utts_blackstone.txt")
     srer_out_fname = "srer_outs_blackstone.json"
-    reg_out_fname = "reg_outs_blackstone.json"
-    spg_out_fname = "spg_outs_blackstone.json"
+    reg_out_fname = srer_out_fname.replace("srer", "reg")
+    spg_out_fname = srer_out_fname.replace("srer", "spg")
+
 
     # Spatial Referring Expression Recognition
     rer_outs = []
@@ -34,6 +36,27 @@ if __name__ == "__main__":
         rer_outs.append(rer_out)
 
     save_to_file(rer_outs, os.path.join(data_dpath, srer_out_fname))
+
+
+    # Referring Expression Grounding
+    reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk=3)
+
+
+    # Spatial Predicate Grounding
+    reg_outs = load_from_file(os.path.join(data_dpath, reg_out_fname))
+    init(osm_landmark_file=osm_fpath)
+
+    spg_outs = []
+    for reg_out in reg_outs:
+        # -- make a copy of the dictionary for a corresponding utterance:
+        spg_out = reg_out
+
+        # -- add a new field to the dictionary with the final output of SPG (if any):
+        spg_out['final_grounding'] = spg(reg_out)
+        spg_outs.append(spg_out)
+
+    save_to_file(spg_outs, os.path.join(data_dpath, spg_out_fname))
+
 
     # Lifted Translation
     srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
@@ -50,26 +73,6 @@ if __name__ == "__main__":
         # breakpoint()
 
     save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
-
-
-    # Referring Expression Grounding
-
-
-    # Spatial Predicate Grounding
-    reg_outs = load_from_file(os.path.join(data_dpath, reg_out_fname))
-    init(osm_landmark_file=osm_fpath)
-
-    spg_outs = []
-    for reg_out in reg_outs:
-        # -- make a copy of the dictionary for a corresponding utterance:
-        spg_out = reg_out
-
-        # -- add a new field to the dictionary with the final output of SPG (if any):
-        spg_out['final_grounding'] = spg(reg_out)
-        spg_outs.append(spg_out)            
-
-    save_to_file(spg_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "spg")))
-
 
     # lifted_utt = "go to a at most five times"
     # lifted_ltl = ground(lifted_utt, model_fpath)
