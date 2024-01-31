@@ -52,7 +52,7 @@ if __name__ == "__main__":
         spg_out = reg_out
 
         # -- add a new field to the dictionary with the final output of SPG (if any):
-        spg_out['spg_results'] = spg(reg_out, topk=5)
+        spg_out['spg_results'] = spg(reg_out)
         spg_out.pop('grounded_spatial_preds')
         spg_outs.append(spg_out)            
 
