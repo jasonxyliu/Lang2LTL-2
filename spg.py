@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import itertools as it
 from sklearn.metrics.pairwise import cosine_similarity
 
-from load_map import load_map
+from ground.spot.load_map import load_map
 from openai_models import get_embed
 from utils import load_from_file
 
