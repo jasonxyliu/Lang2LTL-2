@@ -66,32 +66,6 @@ class GPT4V:
         return raw_responses.choices[0].message.content
 
 
-class TextEmbedding():
-    def __init__(self):
-        self.client = OpenAI()
-
-    def embed(self, txt):
-        txt = json.dumps(txt).replace("\n", " ")
-        complete = False
-        ntries = 0
-        while not complete:
-            try:
-                raw_responses = self.client.embeddings.create(
-                    model = "text-embedding-3-large",
-                    input=txt
-                )
-                complete = True
-            except:
-                sleep(30)
-                logging.info(f"{ntries}: waiting for the server. sleep for 30 sec...")
-                # logging.info(f"{ntries}: waiting for the server. sleep for 30 sec...\n{query_prompt}")
-                logging.info("OK continue")
-                ntries += 1
-
-        embedding = raw_responses.data[0].embedding
-        return embedding
-
-
 def get_embed(txt):
     client = OpenAI()
     txt = json.dumps(txt).replace("\n", " ")
@@ -100,7 +74,7 @@ def get_embed(txt):
     while not complete:
         try:
             raw_responses = client.embeddings.create(
-                model = "text-embedding-ada-002",
+                model = "text-embedding-3-large",
                 input=txt
             )
             complete = True

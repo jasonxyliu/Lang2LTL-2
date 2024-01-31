@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-from openai_models import GPT4V, TextEmbedding
+from openai_models import GPT4V, get_embed
 from utils import load_from_file, save_to_file
 
 
@@ -17,10 +17,9 @@ class REG():
         self.img_ids = list(img_embeds.keys())
         self.txt_embeds = np.array(list(txt_embeds.values()))
         self.txt_ids = list(txt_embeds.keys())
-        self.txt_embed_model = TextEmbedding()
 
     def query(self, query, topk):
-        query_embeds = self.txt_embed_model.embed(query)
+        query_embeds = get_embed(query)
         query_scores = cosine_similarity(np.array(query_embeds).reshape(1, -1), np.concatenate((self.img_embeds, self.txt_embeds), axis=0))[0]
 
         lmks_sorted = sorted(zip(query_scores, self.img_ids+self.txt_ids), reverse=True)
@@ -46,7 +45,7 @@ def embed_images(img_fpaths, cap_dpath, embed_dpath):
             save_to_file(img_cap, cap_fpath)
             save_to_file(img_cap, os.path.join(cap_dpath, f"{img_id}.txt"))
 
-            img_embed = TextEmbedding().embed(img_cap)
+            img_embed = get_embed(img_cap)
             save_to_file(img_embed, embed_fpath)
 
         img_embeds[img_id] = img_embed
@@ -62,7 +61,7 @@ def embed_texts(txts, embed_dpath):
         if os.path.isfile(embed_fpath):
             txt_emebed = load_from_file(embed_fpath)
         else:
-            txt_emebed = TextEmbedding().embed(txt)
+            txt_emebed = get_embed(txt)
             save_to_file(txt_emebed, embed_fpath)
 
         txt_embeds[txt_id] = txt_emebed
@@ -112,8 +111,6 @@ def reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk):
         srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
 
         reg_outs.append(srer_out)
-
-    breakpoint()
     save_to_file(reg_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "reg")))
 
     # queries = ["bookshelf", "desk and chair", "kitchen cabinet", "blue couch", "red couch", "refrigerator", "door", "white board", "TV"]
