@@ -18,7 +18,7 @@ osm_path = os.path.join(os.path.expanduser("~"), "ground", "data", "osm", "black
 reg_output_path = os.path.join(os.path.expanduser("~"), "ground", "data", "reg_outs_blackstone.json")
 
 known_spatial_relations = [
-    'left', 'left of', 'right', 'right of',
+    'left', 'left of', 'to the left of', 'right', 'right of', 'to the right of',
     'in front of', 'opposite', 'opposite to', 'behind', 'behind of', 'at the rear of',
     'near', 'near to', 'next', 'next to', 'adjacent to', 'close', 'close to', 'at', 'by', 'between',
     'north of', 'south of', 'east of', 'west of', 'northeast of', 'northwest of', 'southeast of', 'southwest of'
@@ -119,10 +119,10 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
 
     # NOTE: mean angle of 0 if we get the spatial relation "in front of" or "opposite"
     mean_angle = 0
-    if spatial_rel in ['left', 'left of']:
+    if spatial_rel in ['left', 'left of', 'to the left of']:
         # -- if we want something to the left, we need to go in positive 90 degrees:
         mean_angle = -90
-    elif spatial_rel in ['right', 'right of']:
+    elif spatial_rel in ['right', 'right of', 'to the right of']:
         # -- if we want something to the right, we need to go in negative 90 degrees:
         mean_angle = 90
     elif spatial_rel in ['behind', 'at the rear of', 'behind of']:
