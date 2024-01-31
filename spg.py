@@ -639,12 +639,12 @@ def spg(spatial_preds, topk=5):
 
     spg_output = []
 
-    for R in range(len(spatial_preds['grounded_spatial_preds'])):
-        reg_dict = spatial_preds['grounded_spatial_preds'][R]
+    for R in range(len(spatial_preds['grounded_sre_to_preds'])):
+        reg_dict = spatial_preds['grounded_sre_to_preds'][R]
         
         # NOTE: the spatial relation is always the first key:
         unmatched_rel = list(reg_dict.keys()).pop()
-        grounding_set = sort_by_scores(spatial_preds['grounded_spatial_preds'][R][unmatched_rel])
+        grounding_set = sort_by_scores(spatial_preds['grounded_sre_to_preds'][R][unmatched_rel])
 
         # -- relation is the string that *should* be in the listed of evaluated predicates:
         relation = unmatched_rel
@@ -721,7 +721,7 @@ def spg(spatial_preds, topk=5):
 
             spg_output.append(output)
 
-        breakpoint()
+        breakpoint( )
 
         plt.close('all')
 
