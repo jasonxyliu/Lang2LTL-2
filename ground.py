@@ -24,27 +24,25 @@ if __name__ == "__main__":
     srer_out_fname = "srer_outs_blackstone.json"
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
+    topk = 3  # top 3 most likely landmarks grounded by REG
 
 
     # Spatial Referring Expression Recognition
     rer_outs = []
-    utts = list(filter(None, [X.strip() for X in open(utt_fpath, 'r').readlines()]))  # load commands, filter empty strings
-
-    for utt in tqdm(utts, desc='Performing referring expression recognition (RER)...'):
-        # -- extract RER info from LLM interaction:
+    utts = load_from_file(utt_fpath)
+    for utt in tqdm(utts, desc='Performing spatial referring expression recognition (SRER)...'):
         _, rer_out = srer(utt)
         rer_outs.append(rer_out)
-
     save_to_file(rer_outs, os.path.join(data_dpath, srer_out_fname))
 
 
     # Referring Expression Grounding
-    reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk=3)
+    reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk)
 
 
     # Spatial Predicate Grounding
     reg_outs = load_from_file(os.path.join(data_dpath, reg_out_fname))
-    init(osm_landmark_file=osm_fpath)
+    init(osm_fpath)
 
     spg_outs = []
     for reg_out in reg_outs:
@@ -52,9 +50,9 @@ if __name__ == "__main__":
         spg_out = reg_out
 
         # -- add a new field to the dictionary with the final output of SPG (if any):
-        spg_out['spg_results'] = spg(reg_out, topk=3)
+        spg_out['spg_results'] = spg(reg_out, topk)
         spg_out.pop('grounded_spatial_preds')
-        spg_outs.append(spg_out)            
+        spg_outs.append(spg_out)
 
     save_to_file(spg_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "spg")))
 
@@ -75,6 +73,6 @@ if __name__ == "__main__":
 
     save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
 
-    # lifted_utt = "go to a at most five times"
-    # lifted_ltl = ground(lifted_utt, model_fpath)
-    # print(lifted_ltl)
+    lifted_utt = "go to a at most five times"
+    lifted_ltl = ground(lifted_utt, model_fpath)
+    print(lifted_ltl)
