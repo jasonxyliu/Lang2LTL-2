@@ -61,33 +61,39 @@ def parse_LLM_output(output):
         elif line.startswith('Symbol Map:'):
             # -- adding the generated symbol map to the dictionary:
             output = eval(line.split('Symbol Map: ')[1])
-            llm_output['sre_map'] = output
+            llm_output['lifted_symbol_map'] = output
         elif line.startswith('Spatial Predicates: '):
             output = eval(line.split('Spatial Predicates: ')[1])
             llm_output['spatial_preds'] = output
 
     # -- mapping each referring expression to its corresponding spatial predicates map:
-    llm_output['re_to_preds'] = {}
+    llm_output['sre_to_preds'] = {}
     spatial_preds = list(llm_output['spatial_preds'])
-    for re in llm_output['sres']:
-        try:
-            spatial_pred = spatial_preds.pop(0)
-        except Exception:
-            print(f"ERROR: {llm_output['spatial_preds']}")
-            continue
 
-        # -- test if the spatial predicate belongs to this referring expression:
-        spatial_relation = list(spatial_pred.keys())[-1]
-        spatial_args = spatial_pred[spatial_relation]
+    for sre in llm_output['sres']:
+        # -- we need to make sure we find the corresponding spatial predicate to an SRE;
+        #       however, note that there may be some referring expressions that have no spatial relations.
+        found = False
 
-        not_match = False
-        if spatial_relation not in re:
-            not_match = True
-        for arg in spatial_args:
-            if arg not in re:
-                not_match = True
-        if not_match == False:
-            llm_output['re_to_preds'][re] = spatial_pred
+        for pred in spatial_preds:
+            # -- get the spatial relation phrase and check if 
+            #       it exists in the SRE we are checking for match:
+            relation = list(pred.keys()).pop()
+
+            if relation in sre:
+                # -- check if each landmark exists in the            
+                num_matches = 0
+                for lmrk in pred[relation]:
+                    if lmrk in sre:
+                        num_matches += 1
+
+                if len(pred[relation]) == num_matches:
+                    llm_output['sre_to_preds'][sre] = pred
+                    found = True
+            
+        if not found:
+            # -- this means we have a referring expression without spatial relations:
+            llm_output['sre_to_preds'][sre] = {}
 
     return llm_output
 

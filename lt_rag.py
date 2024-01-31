@@ -12,7 +12,7 @@ def lt(data_dpath, srer_out_fname, raw_data, topk):
     srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
 
     for srer_out in srer_outs:
-        query = [srer_out['lifted_utt'], json.dumps(list(srer_out["sre_map"].keys()))]
+        query = [srer_out['lifted_utt'], json.dumps(list(srer_out["lifted_symbol_map"].keys()))]
         lifted_ltl = lifted_translate(query, raw_data, topk)
 
         print(f"query: {query}\n{lifted_ltl}\n")
