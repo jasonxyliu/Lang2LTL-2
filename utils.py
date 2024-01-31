@@ -26,7 +26,7 @@ def load_from_file(fpath, noheader=True):
             if 'prompt' in fpath:
                 out = "".join(rfile.readlines())
             else:
-                out = [line[:-1] for line in rfile.readlines()]
+                out = [line.strip() for line in rfile.read().splitlines() if line]
     elif ftype == 'json':
         with open(fpath, 'r') as rfile:
             out = json.load(rfile)
