@@ -77,7 +77,7 @@ def gps_to_cartesian(landmark):
 
 def align_coordinates(osm_landmarks, spot_waypoints, grounding_landmark):
 
-    global use_pyproj
+    global use_pyproj, robot
 
     use_pyproj = False
 
@@ -132,17 +132,19 @@ def align_coordinates(osm_landmarks, spot_waypoints, grounding_landmark):
             elif W == grounding_landmark[1]['waypoint']:
                 known_waypoint_2 = spot_coordinate
 
-            landmarks[W] = {
-                'x': spot_coordinate[0],
-                'y': spot_coordinate[1],
-            }
-
             if spot_waypoints[W].annotations.name == 'waypoint_0':
-                global robot
+                id_name = 'waypoint_0'
                 robot = {
                     'x': spot_coordinate[0],
                     'y': spot_coordinate[1],
                 }
+            else: 
+                id_name = W
+
+            landmarks[id_name] = {
+                'x': spot_coordinate[0],
+                'y': spot_coordinate[1],
+            }
 
     # -- compute an offset that can be used to align the known landmark from world to Spot space:
     offset = ((known_waypoint_1 - known_landmark_1) + (known_waypoint_2 - known_landmark_2)) / 2.0 
@@ -528,12 +530,12 @@ def plot_landmarks(landmarks=None):
     if landmarks:
         plt.scatter(x=[landmarks[L]['x'] for L in landmarks], y=[landmarks[L]['y'] for L in landmarks], c='green', label='landmarks')
         for L in landmarks:
-            if 'osm_name' not in landmarks[L] and L != robot['name']:
+            if 'osm_name' not in landmarks[L] and L != 'waypoint_0':
                 plt.text(landmarks[L]['x'], landmarks[L]['y'], L)
     
     if robot:
         plt.scatter(x=robot['x'], y=robot['y'], c='orange', label='robot')
-        plt.text(robot['x'], robot['y'], robot['name'])
+        plt.text(robot['x'], robot['y'], 'robot')
     
     plt.title('Landmarks: Target and Anchor')
     plt.legend()
@@ -678,8 +680,6 @@ def spg(spatial_preds, topk=5):
                     break
 
             spg_output.append(output)
-
-        input()
 
     return spg_output
 #enddef
