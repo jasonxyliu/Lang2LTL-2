@@ -91,21 +91,25 @@ def reg(data_dpath, graph_dpath, osm_fpath, srer_out_fname, topk):
 
     for srer_out in srer_outs:
         print(f"command: {srer_out['utt']}")
-        grounded_spatial_pred = []
+        grounded_sre_to_preds = {}
 
-        for spatial_pred in srer_out["spatial_preds"]:
-            spatil_relation = list(spatial_pred.keys())[0]
-            res =  list(spatial_pred.values())[0]
+        for sre, spatial_pred in srer_out["sre_to_preds"].items():
+            if spatial_pred:
+                spatil_relation = list(spatial_pred.keys())[0]
+                res =  list(spatial_pred.values())[0]
+            else:
+                spatil_relation = "None"  # reference expression w/o spatial relation
+                res = [sre]
 
             grounded_res = []
             for idx, query in enumerate(res):
                 lmk_candidates = reg.query(query, topk=topk)
                 grounded_res.append(lmk_candidates)
-                print(f"{idx}: {query}\n{lmk_candidates}\n")
+                print(f"{idx}: {sre}\n{query}\n{lmk_candidates}\n")
 
-            grounded_spatial_pred.append({spatil_relation: grounded_res})
+            grounded_sre_to_preds[sre] = {spatil_relation: grounded_res}
 
-        srer_out["grounded_spatial_preds"] = grounded_spatial_pred
+        srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
 
         reg_outs.append(srer_out)
 
