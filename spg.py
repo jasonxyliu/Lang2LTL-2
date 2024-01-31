@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools as it
 
-from spot.load_map import load_map
+from load_map import load_map
 from openai_models import get_embed
 from utils import load_from_file
 
@@ -663,7 +663,7 @@ def spg(spatial_preds, topk=5):
                 output['groundings'].append({
                         'target': G['target']
                     })
-            
+
             spg_output.append(output)
             continue
 
