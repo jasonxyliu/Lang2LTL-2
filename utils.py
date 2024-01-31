@@ -5,7 +5,6 @@ import csv
 import string
 
 
-
 def deserialize_props_str(props_str):
     """
     Deserialize json string of propositions.
