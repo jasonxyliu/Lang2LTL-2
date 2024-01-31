@@ -92,7 +92,7 @@ def parse_LLM_output(output):
     return llm_output
 
 
-def referring_exp_recognition(command):
+def srer(command):
     raw_output = prompt_referring_exp(command)
     parsed_output = parse_LLM_output(raw_output)
     parsed_output['utt'] = command
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     ]
 
     for command in commands:
-        raw_out, parsed_out = referring_exp_recognition(command)
+        raw_out, parsed_out = srer(command)
 
         print(f"{parsed_out['lifted_utt']}\n{parsed_out['spatial_preds']}")
 

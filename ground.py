@@ -1,7 +1,7 @@
 import os
 from tqdm import tqdm
 
-from srer import referring_exp_recognition
+from srer import srer
 from reg import reg
 from spg import init, spg
 from lt_s2s_sup_tcd import Seq2Seq
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     for utt in tqdm(utts, desc='Performing referring expression recognition (RER)...'):
         # -- extract RER info from LLM interaction:
-        _, rer_out = referring_exp_recognition(utt)
+        _, rer_out = srer(utt)
         rer_outs.append(rer_out)
 
     save_to_file(rer_outs, os.path.join(data_dpath, srer_out_fname))
