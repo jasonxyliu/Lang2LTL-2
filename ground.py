@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # Spatial Predicate Grounding
     reg_outs = load_from_file(os.path.join(results_dpath, reg_out_fname))
-    init(osm_fpath)
+    init(graph_dpath, osm_fpath)
 
     spg_outs = []
     for reg_out in reg_outs:
