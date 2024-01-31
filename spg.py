@@ -2,9 +2,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools as it
-from sklearn.metrics.pairwise import cosine_similarity
 
-from ground.spot.load_map import load_map
+from spot.load_map import load_map
 from openai_models import get_embed
 from utils import load_from_file
 
@@ -18,10 +17,10 @@ osm_path = os.path.join(os.path.expanduser("~"), "ground", "data", "osm", "black
 # NOTE: reg_output_path :- file path to the output of the RER process (obtained from Jason):
 reg_output_path = os.path.join(os.path.expanduser("~"), "ground", "data", "reg_outs_blackstone.json")
 
-evaluated_spatial_relations = [
+known_spatial_relations = [
     'left', 'left of', 'right', 'right of',
     'in front of', 'opposite', 'opposite to', 'behind', 'behind of', 'at the rear of',
-    'near', 'near to', 'next', 'next to', 'adjacent to', 'close', 'close to', 'at', 'by',
+    'near', 'near to', 'next', 'next to', 'adjacent to', 'close', 'close to', 'at', 'by', 'between',
     'north of', 'south of', 'east of', 'west of', 'northeast of', 'northwest of', 'southeast of', 'southwest of'
 ]
 
@@ -31,7 +30,7 @@ grounding_landmark = [
         'gps': {'lat': 41.858055308939804, 'long':-71.39119853826014}
     },
     {
-    # NOTE: chair: https://maps.app.goo.gl/FAUaqQRXQar9J1P79
+        # NOTE: chair: https://maps.app.goo.gl/FAUaqQRXQar9J1P79
         'waypoint' : 'lossy-beef-zbwSxEF1a4R7bkFu3V9Cyg==',
         'gps': {'lat': 41.85814693862552, 'long':-71.39127870267093}
     },
@@ -78,17 +77,28 @@ def gps_to_cartesian(landmark):
 def find_closest_relation(rel):
     # -- using text embedding model provided by OpenAI:
     closest_rel = None
+    closest_rel_embedding = None
 
-    for R in evaluated_spatial_relations:
+    # -- precompute the embedding for the unseen relation:
+    unseen_rel_embedding = get_embed(rel)
+
+    for R in known_spatial_relations:
+
+        # -- get an embedding for each predefined relation:
+        candidate_embedding = get_embed(R)
+
         if not closest_rel:
             closest_rel = R
+            closest_rel_embedding = candidate_embedding
+
         else:
             # -- compute cosine similarity between words and pick the higher (i.e., most similar) word:
-            current_score = np.dot(get_embed(rel), get_embed(closest_rel))
-            new_rel_score = np.dot(get_embed(rel), get_embed(R))
+            current_score = np.dot(unseen_rel_embedding, closest_rel_embedding)
+            new_rel_score = np.dot(unseen_rel_embedding, candidate_embedding)
 
             if current_score < new_rel_score:
                 closest_rel = R
+                closest_rel_embedding =candidate_embedding
 
     return closest_rel
 #enddef
@@ -96,11 +106,6 @@ def find_closest_relation(rel):
 
 def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
     list_ranges = []
-
-    # TODO: check if spatial relation is predefined:
-    if spatial_rel not in evaluated_spatial_relations:
-        # -- find the closest spatial relation:
-        spatial_rel = find_closest_relation(spatial_rel)
 
     # NOTE: we want to draw a vector from the anchor's perspective to the robot!
     # -- this gives us a normal vector pointing outside of the anchor object
@@ -224,7 +229,7 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
 # enddef
 
 
-def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, do_360_search=False, sre=None, plot=True):
+def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False, do_360_search=False):
 
     global robot, landmarks, max_range
 
@@ -249,54 +254,68 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, do_360_search
         is_valid = False
 
         for R in list_ranges:
-            dir_tgt = np.arctan2(target['y'] - anchor['y'], target['x'] - anchor['x'])
-            dir_min = np.arctan2(R['min'][1], R['min'][0])
-            dir_max = np.arctan2(R['max'][1], R['max'][0])
+            dir_tgt = np.rad2deg(np.arctan2(target['y'] - anchor['y'], target['x'] - anchor['x']))
+            dir_min = np.rad2deg(np.arctan2(R['min'][1], R['min'][0]))
+            dir_max = np.rad2deg(np.arctan2(R['max'][1], R['max'][0]))
 
+            # -- making it easier by making things w.r.t. 0 - 360 degree measurements:
+            if dir_tgt < 0:
+                dir_tgt += 360
+            if dir_max < 0:
+                dir_max += 360
+            if dir_min < 0:
+                dir_min += 360
+
+            # -- this is a case where the max vector is positive while the min vector is negative, resulting in it being larger:
+            if dir_min > dir_max:
+                dir_max += 360
+            
             distance_a2t = np.linalg.norm(np.array([target['x'], target['y']]) - np.array([anchor['x'], anchor['y']]))
 
             if dir_tgt >= dir_min and dir_tgt <= dir_max and distance_a2t < max_range:
-                print('YES!')
+                print(f'    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates[0]}')
                 is_valid = True
                 break
 
         if is_valid:
-            # -- plot the computed range:
-            plt.figure(figsize=(5,5))
-            plt.title(f'Final Grounding: "{sre}"\n(Target:{target_candidate}, Anchor:{anchor_candidates})')
-            plt.scatter(x=[robot['x']], y=[robot['y']], marker='o', color='yellow', label='robot')
-            plt.scatter(x=[anchor['x']], y=[anchor['y']], marker='o', color='orange', label='anchor')
-            plt.scatter(x=[target['x']], y=[target['y']], marker='o', color='green', label='target')
-            plt.plot([robot['x'], anchor['x']], [robot['y'], anchor['y']], linestyle='dotted', c='k', label='normal')
 
-            plt.text(anchor['x'], anchor['y'], s=anchor_candidates[0])
-            plt.text(target['x'], target['y'], s=target_candidate)
+            if plot:
+                # -- plot the computed range:
+                plt.figure()
+                plt.title(f'Final Grounding: "{sre}"\n(Target:{target_candidate}, Anchor:{anchor_candidates})')
+                plt.scatter(x=[robot['x']], y=[robot['y']], marker='o', color='yellow', label='robot')
+                plt.scatter(x=[anchor['x']], y=[anchor['y']], marker='o', color='orange', label='anchor')
+                plt.scatter(x=[target['x']], y=[target['y']], marker='o', color='green', label='target')
+                plt.plot([robot['x'], anchor['x']], [robot['y'], anchor['y']], linestyle='dotted', c='k', label='normal')
 
-            for R in range(len(list_ranges)):
-                mean_pose = np.array([(list_ranges[R]['mean'][0] * max_range) + anchor['x'],
-                                (list_ranges[R]['mean'][1] * max_range) + anchor['y']])
-                # plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c='g', marker='o', label='mean')
+                plt.text(anchor['x'], anchor['y'], s=anchor_candidates[0])
+                plt.text(target['x'], target['y'], s=target_candidate)
 
-                min_pose = np.array([(list_ranges[R]['min'][0] * max_range) + anchor['x'],
-                            (list_ranges[R]['min'][1] * max_range) + anchor['y']])
-                # plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c='r', marker='x', label='min')
+                for R in range(len(list_ranges)):
+                    mean_pose = np.array([(list_ranges[R]['mean'][0] * max_range) + anchor['x'],
+                                    (list_ranges[R]['mean'][1] * max_range) + anchor['y']])
+                    # plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c='g', marker='o', label='mean')
 
-                max_pose = np.array([(list_ranges[R]['max'][0] * max_range) + anchor['x'],
-                            (list_ranges[R]['max'][1] * max_range) + anchor['y']])
-                # plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c='b', marker='x', label='max')
+                    min_pose = np.array([(list_ranges[R]['min'][0] * max_range) + anchor['x'],
+                                (list_ranges[R]['min'][1] * max_range) + anchor['y']])
+                    # plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c='r', marker='x', label='min')
 
-                if R == (len(list_ranges) - 1):
-                    # plt.plot([anchor['x'], mean_pose[0]], [anchor['y'], mean_pose[1]], linestyle='dotted', c='g', label='mean_range' )
-                    plt.plot([anchor['x'], min_pose[0]], [anchor['y'], min_pose[1]], linestyle='dotted', c='r', label='min_range')
-                    plt.plot([anchor['x'], max_pose[0]], [anchor['y'], max_pose[1]], linestyle='dotted', c='b', label='max_range')
-                else:
-                    # plt.plot([anchor['x'], mean_pose[0]], [anchor['y'], mean_pose[1]], linestyle='dotted', c='g', )
-                    plt.plot([anchor['x'], min_pose[0]], [anchor['y'], min_pose[1]], linestyle='dotted', c='r')
-                    plt.plot([anchor['x'], max_pose[0]], [anchor['y'], max_pose[1]], linestyle='dotted', c='b')
+                    max_pose = np.array([(list_ranges[R]['max'][0] * max_range) + anchor['x'],
+                                (list_ranges[R]['max'][1] * max_range) + anchor['y']])
+                    # plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c='b', marker='x', label='max')
 
-            plt.legend()
-            plt.axis('square')
-            plt.show(block=False)
+                    if R == (len(list_ranges) - 1):
+                        # plt.plot([anchor['x'], mean_pose[0]], [anchor['y'], mean_pose[1]], linestyle='dotted', c='g', label='mean_range' )
+                        plt.plot([anchor['x'], min_pose[0]], [anchor['y'], min_pose[1]], linestyle='dotted', c='r', label='min_range')
+                        plt.plot([anchor['x'], max_pose[0]], [anchor['y'], max_pose[1]], linestyle='dotted', c='b', label='max_range')
+                    else:
+                        # plt.plot([anchor['x'], mean_pose[0]], [anchor['y'], mean_pose[1]], linestyle='dotted', c='g', )
+                        plt.plot([anchor['x'], min_pose[0]], [anchor['y'], min_pose[1]], linestyle='dotted', c='r')
+                        plt.plot([anchor['x'], max_pose[0]], [anchor['y'], max_pose[1]], linestyle='dotted', c='b')
+
+                plt.legend()
+                plt.axis('square')
+                plt.show(block=False)
 
             return True
 
@@ -331,7 +350,7 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, do_360_search
 
         if 0 <= dot_ABAM and dot_ABAM <= dot_ABAB and 0 <= dot_BCBM and dot_BCBM <= dot_BCBC:
             if plot:
-                plt.figure(figsize=(5,5))
+                plt.figure()
 
                 plt.scatter(x=[robot['x']], y=[robot['y']], marker='o', color='yellow', label='robot')
                 plt.scatter(x=[target[0]], y=[target[1]], marker='o', color='green', label='target')
@@ -351,7 +370,7 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, do_360_search
                 plt.axis('square')
                 plt.show(block=False)
 
-            print('YES!')
+            print(f'    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates}')
             return True
 
         return False
@@ -395,17 +414,17 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
                         'y': (R['mean'][1] * range_to_anchor) + anchor['y']}
 
     if plot:
-        plt.figure(figsize=(5,5))
+        plt.figure()
         plt.title(f'Computed Target Position: "{sre}"' if sre else f'Computed Target Position: "{spatial_rel}"')
         plt.scatter(x=[robot['x']], y=[robot['y']], marker='o', label='robot')
         plt.scatter(x=[new_robot_pos['x']], y=[new_robot_pos['y']], marker='x', c='g', s=15, label='new robot pose')
 
         # -- plot all anchors and targets provided to the function:
-        for A in anchor_landmarks:
-            plt.scatter(x=anchor_landmarks[A]['x'], y=anchor_landmarks[A]['y'],
+        for A in landmarks:
+            plt.scatter(x=landmarks[A]['x'], y=landmarks[A]['y'],
                         marker='o', c='darkorange',
                         label=f"anchor: {A}")
-            plt.text(anchor_landmarks[A]['x'], anchor_landmarks[A]['y'], A)
+            plt.text(landmarks[A]['x'], landmarks[A]['y'], A)
 
         # -- plot the range as well for visualization:
         plt.plot([anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']], [anchor['y'],
@@ -423,7 +442,7 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
 
 def plot_landmarks(landmarks=None):
     # -- plotting the points in the shared world space local to the Spot's map:
-    plt.figure(figsize=(5,5))
+    plt.figure()
 
     if landmarks:
         plt.scatter(x=[landmarks[L]['x'] for L in landmarks], y=[landmarks[L]['y'] for L in landmarks], c='green', label='landmarks')
@@ -590,7 +609,7 @@ def sort_by_scores(spatial_pred_dict):
 
 def spg(spatial_preds, topk=5):
 
-    global landmarks
+    global landmarks, known_spatial_relations
 
     # -- plot the points for visualization purposes:
     plot_landmarks(landmarks)
@@ -621,15 +640,37 @@ def spg(spatial_preds, topk=5):
     spg_output = []
 
     for R in range(len(spatial_preds['grounded_spatial_preds'])):
-        reg_dict, sre = spatial_preds['grounded_spatial_preds'][R], spatial_preds['sres'][R]
-        print(sre)
-
+        reg_dict = spatial_preds['grounded_spatial_preds'][R]
+        
         # NOTE: the spatial relation is always the first key:
-        relation = list(reg_dict.keys()).pop()
+        unmatched_rel = list(reg_dict.keys()).pop()
+        grounding_set = sort_by_scores(spatial_preds['grounded_spatial_preds'][R][unmatched_rel])
 
-        grounding_set = sort_by_scores(spatial_preds['grounded_spatial_preds'][R][relation])
+        # -- relation is the string that *should* be in the listed of evaluated predicates:
+        relation = unmatched_rel
 
-        if len(reg_dict[relation]) == 1:
+        # -- reconstructing the SRE based on the spatial predicate list:
+        sre = None
+        if len(reg_dict[unmatched_rel]) == 1:
+            sre = f"{relation} {spatial_preds['spatial_preds'][R][relation][0]}"
+        elif len(reg_dict[unmatched_rel]) == 2:
+            sre = f"{spatial_preds['spatial_preds'][R][relation][0]} {relation} {spatial_preds['spatial_preds'][R][relation][1]}"
+        elif len(reg_dict[unmatched_rel]) == 3:
+            sre = f"{spatial_preds['spatial_preds'][R][relation][0]} {relation} {spatial_preds['spatial_preds'][R][relation][1]} and {spatial_preds['spatial_preds'][R][relation][2]}"
+
+        if not sre:
+            # -- this means there is some error elsewhere:
+            raise Exception
+
+        print(f' >> {sre}')
+
+        # TODO: check if spatial relation is predefined:
+        if unmatched_rel not in known_spatial_relations:
+            # -- find the closest spatial relation:
+            relation = find_closest_relation(unmatched_rel)
+            print(f'    - UNSEEN RELATION:\t"{unmatched_rel}" is closest to "{relation}"!')
+
+        if len(reg_dict[unmatched_rel]) == 1:
             # NOTE: this means we only have an anchoring landmark and no target landmark:
 
             # -- we will keep a list of target positions in order of confidence scores from REG:
@@ -679,6 +720,10 @@ def spg(spatial_preds, topk=5):
                     break
 
             spg_output.append(output)
+
+        breakpoint()
+
+        plt.close('all')
 
     return spg_output
 #enddef
