@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools as it
 
-from load_map import load_map
+from spot.load_map import load_map
 from openai_models import get_embed
 from utils import load_from_file
 
@@ -639,30 +639,36 @@ def spg(spatial_preds, topk=5):
 
     spg_output = []
 
-    for R in range(len(spatial_preds['grounded_sre_to_preds'])):
-        reg_dict = spatial_preds['grounded_sre_to_preds'][R]
+    for R in spatial_preds['grounded_sre_to_preds']:
+        # -- extract the name of the SRE, which is a key in spatial_preds['grounded_sre_to_preds']:
+        sre = R
+        print(f' >> {sre}')
 
         # NOTE: the spatial relation is always the first key:
-        unmatched_rel = list(reg_dict.keys()).pop()
-        grounding_set = sort_by_scores(spatial_preds['grounded_sre_to_preds'][R][unmatched_rel])
+        unmatched_rel = list(spatial_preds['grounded_sre_to_preds'][R].keys()).pop()
+
+        # -- extract the name of the relation in the SRE dict:
+        reg_dict = spatial_preds['grounded_sre_to_preds'][R][unmatched_rel]
+
+        # -- rank all sets of targets and anchors for evaluating spatial predicate grounding:
+        grounding_set = sort_by_scores(reg_dict)
+
+        if unmatched_rel == 'None':
+            # TODO: what to do for non-spatial referring expressions?
+            output = {
+                'sre' : sre,
+                'groundings': []
+            }
+            for G in grounding_set:
+                output['groundings'].append({
+                        'target': G['target']
+                    })
+            
+            spg_output.append(output)
+            continue
 
         # -- relation is the string that *should* be in the listed of evaluated predicates:
         relation = unmatched_rel
-
-        # -- reconstructing the SRE based on the spatial predicate list:
-        sre = None
-        if len(reg_dict[unmatched_rel]) == 1:
-            sre = f"{relation} {spatial_preds['spatial_preds'][R][relation][0]}"
-        elif len(reg_dict[unmatched_rel]) == 2:
-            sre = f"{spatial_preds['spatial_preds'][R][relation][0]} {relation} {spatial_preds['spatial_preds'][R][relation][1]}"
-        elif len(reg_dict[unmatched_rel]) == 3:
-            sre = f"{spatial_preds['spatial_preds'][R][relation][0]} {relation} {spatial_preds['spatial_preds'][R][relation][1]} and {spatial_preds['spatial_preds'][R][relation][2]}"
-
-        if not sre:
-            # -- this means there is some error elsewhere:
-            raise Exception
-
-        print(f' >> {sre}')
 
         # TODO: check if spatial relation is predefined:
         if unmatched_rel not in known_spatial_relations:
@@ -670,7 +676,7 @@ def spg(spatial_preds, topk=5):
             relation = find_closest_relation(unmatched_rel)
             print(f'    - UNSEEN RELATION:\t"{unmatched_rel}" is closest to "{relation}"!')
 
-        if len(reg_dict[unmatched_rel]) == 1:
+        if len(reg_dict) == 1:
             # NOTE: this means we only have an anchoring landmark and no target landmark:
 
             # -- we will keep a list of target positions in order of confidence scores from REG:
@@ -720,8 +726,6 @@ def spg(spatial_preds, topk=5):
                     break
 
             spg_output.append(output)
-
-        breakpoint( )
 
         plt.close('all')
 
