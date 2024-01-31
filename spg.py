@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools as it
 
-from spot.load_map import load_map
+# from spot.load_map import load_map
 from openai_models import get_embed
 from utils import load_from_file
 
@@ -269,7 +269,7 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
             # -- this is a case where the max vector is positive while the min vector is negative, resulting in it being larger:
             if dir_min > dir_max:
                 dir_max += 360
-            
+
             distance_a2t = np.linalg.norm(np.array([target['x'], target['y']]) - np.array([anchor['x'], anchor['y']]))
 
             if dir_tgt >= dir_min and dir_tgt <= dir_max and distance_a2t < max_range:
@@ -641,7 +641,7 @@ def spg(spatial_preds, topk=5):
 
     for R in range(len(spatial_preds['grounded_sre_to_preds'])):
         reg_dict = spatial_preds['grounded_sre_to_preds'][R]
-        
+
         # NOTE: the spatial relation is always the first key:
         unmatched_rel = list(reg_dict.keys()).pop()
         grounding_set = sort_by_scores(spatial_preds['grounded_sre_to_preds'][R][unmatched_rel])
