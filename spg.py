@@ -41,9 +41,6 @@ grounding_landmark = [
     },
 ]
 
-# NOTE: robot will always start at what was marked "waypoint_0":
-robot = None
-
 landmarks = None
 
 use_pyproj = False
@@ -105,10 +102,12 @@ def find_closest_relation(rel):
 
 
 def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
-    list_ranges = []
+
+    robot = landmarks['robot']
 
     # NOTE: we want to draw a vector from the anchor's perspective to the robot!
     # -- this gives us a normal vector pointing outside of the anchor object
+    list_ranges = []
 
     # -- compute vector between robot's position and anchor position and get its direction:
     vector_a2r = [robot['x'] - anchor['x'],
@@ -230,12 +229,11 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
 
 
 def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False, do_360_search=False):
-
-    global robot, landmarks, max_range
-
     # -- we cannot evaluate a landmark against itself:
     if target_candidate in anchor_candidates:
         return False
+
+    robot = landmarks['robot']
 
     # -- in this case, we will be given a list of target objects or entities:
     target = landmarks[target_candidate]
@@ -386,6 +384,8 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
         anchor = landmarks[anchor_candidate]
     except KeyError:
         return None
+    
+    robot = landmarks['robot']
 
     # -- get the list of valid ranges (potentially only one) for an anchoring landmark:
     list_ranges = compute_area(spatial_rel, anchor)
@@ -447,12 +447,11 @@ def plot_landmarks(landmarks=None):
     if landmarks:
         plt.scatter(x=[landmarks[L]['x'] for L in landmarks], y=[landmarks[L]['y'] for L in landmarks], c='green', label='landmarks')
         for L in landmarks:
-            if 'osm_name' not in landmarks[L] and L != 'waypoint_0':
+            if 'osm_name' not in landmarks[L] and L != 'robot':
                 plt.text(landmarks[L]['x'], landmarks[L]['y'], L)
 
-    if robot:
-        plt.scatter(x=robot['x'], y=robot['y'], c='orange', label='robot')
-        plt.text(robot['x'], robot['y'], 'robot')
+    plt.scatter(x=landmarks['robot']['x'], y=landmarks['robot']['y'], c='orange', label='robot')
+    plt.text(landmarks['robot']['x'], landmarks['robot']['y'], 'robot')
 
     plt.title('Landmarks: Target and Anchor')
     plt.legend()
@@ -463,45 +462,48 @@ def plot_landmarks(landmarks=None):
 
 def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding_landmark):
 
-    global use_pyproj, robot
+    # -- this dictates the amount of rotation needed to align the Spot's frame to the world Cartesian frame
+    angle_diff = 0
 
-    use_pyproj = False
+    if grounding_landmark:
+        # -- if grounding landmark value is not None, then we will go ahead and figure out alignment issue:        
+        global use_pyproj
 
-    # NOTE: a 2D map actually is projected to the X-Z Cartesian plane, NOT X-Y:
-    # -- for this reason, we only take the x and z coordinates, where the z will be used as Spot's y-axis:
-    if use_pyproj:
-        # -- using pyproj: https://stackoverflow.com/a/69604627
-        from pyproj import Transformer
-        llh_to_xyz = Transformer.from_crs("+proj=latlong +ellps=WGS84 +datum=WGS84", "+proj=geocent +ellps=WGS84 +datum=WGS84")
+        use_pyproj = False
 
-        known_landmark_1 = np.array(llh_to_xyz.transform(grounding_landmark[0]['gps']['long'], grounding_landmark[0]['gps']['lat'], 30, radians=False)[:-1])
-        known_landmark_2 = np.array(llh_to_xyz.transform(grounding_landmark[1]['gps']['long'], grounding_landmark[1]['gps']['lat'], 30, radians=False)[:-1])
-    else:
-        known_landmark_1 = np.array([gps_to_cartesian(grounding_landmark[0]['gps'])[x] for x in [0, 2]])
-        known_landmark_2 = np.array([gps_to_cartesian(grounding_landmark[1]['gps'])[x] for x in [0, 2]])
+        # NOTE: a 2D map actually is projected to the X-Z Cartesian plane, NOT X-Y:
+        # -- for this reason, we only take the x and z coordinates, where the z will be used as Spot's y-axis:
+        if use_pyproj:
+            # -- using pyproj: https://stackoverflow.com/a/69604627
+            from pyproj import Transformer
+            llh_to_xyz = Transformer.from_crs("+proj=latlong +ellps=WGS84 +datum=WGS84", "+proj=geocent +ellps=WGS84 +datum=WGS84")
 
-    known_waypoint_1 = np.array([spot_waypoints[grounding_landmark[0]['waypoint']].waypoint_tform_ko.position.x,
-                              spot_waypoints[grounding_landmark[0]['waypoint']].waypoint_tform_ko.position.y])
-    known_waypoint_2 = np.array([spot_waypoints[grounding_landmark[1]['waypoint']].waypoint_tform_ko.position.x,
-                              spot_waypoints[grounding_landmark[1]['waypoint']].waypoint_tform_ko.position.y])
+            known_landmark_1 = np.array(llh_to_xyz.transform(grounding_landmark[0]['gps']['long'], grounding_landmark[0]['gps']['lat'], 30, radians=False)[:-1])
+            known_landmark_2 = np.array(llh_to_xyz.transform(grounding_landmark[1]['gps']['long'], grounding_landmark[1]['gps']['lat'], 30, radians=False)[:-1])
+        else:
+            known_landmark_1 = np.array([gps_to_cartesian(grounding_landmark[0]['gps'])[x] for x in [0, 2]])
+            known_landmark_2 = np.array([gps_to_cartesian(grounding_landmark[1]['gps'])[x] for x in [0, 2]])
 
-    # -- use the vector from known landmarks to determine the degree of rotation needed:
-    vec_lrk_1_to_2 = known_landmark_2 - known_landmark_1
-    vec_way_1_to_2 = known_waypoint_2 - known_waypoint_1
+        known_waypoint_1 = np.array([spot_waypoints[grounding_landmark[0]['waypoint']].waypoint_tform_ko.position.x,
+                                spot_waypoints[grounding_landmark[0]['waypoint']].waypoint_tform_ko.position.y])
+        known_waypoint_2 = np.array([spot_waypoints[grounding_landmark[1]['waypoint']].waypoint_tform_ko.position.x,
+                                spot_waypoints[grounding_landmark[1]['waypoint']].waypoint_tform_ko.position.y])
 
-    # -- first, we will find the rotation between the known landmark and waypoint:
-    dir_robot = np.arctan2(vec_way_1_to_2[1], vec_way_1_to_2[0])    # i.e., spot coordinate
-    dir_world = np.arctan2(vec_lrk_1_to_2[1], vec_lrk_1_to_2[0])    # i.e., world coordinate
+        # -- use the vector from known landmarks to determine the degree of rotation needed:
+        vec_lrk_1_to_2 = known_landmark_2 - known_landmark_1
+        vec_way_1_to_2 = known_waypoint_2 - known_waypoint_1
 
-    angle_diff = dir_world - dir_robot
+        # -- first, we will find the rotation between the known landmark and waypoint:
+        dir_robot = np.arctan2(vec_way_1_to_2[1], vec_way_1_to_2[0])    # i.e., spot coordinate
+        dir_world = np.arctan2(vec_lrk_1_to_2[1], vec_lrk_1_to_2[0])    # i.e., world coordinate
 
-    # -- use the name of the images taken at each waypoint to indicate the actual waypoints of interest:
-    global spot_waypoints_path
+        angle_diff = dir_world - dir_robot
+
+    landmarks = {}
 
     # -- each image is named after the Spot waypoint name (auto-generated by GraphNav):
     list_waypoints = [os.path.splitext(os.path.basename(W))[0] for W in os.listdir(os.path.join(spot_graph_dpath, 'images'))]
 
-    landmarks = {}
 
     for W in spot_waypoints:
         if W in list_waypoints or spot_waypoints[W].annotations.name == 'waypoint_0':
@@ -519,11 +521,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
                 known_waypoint_2 = spot_coordinate
 
             if spot_waypoints[W].annotations.name == 'waypoint_0':
-                id_name = 'waypoint_0'
-                robot = {
-                    'x': spot_coordinate[0],
-                    'y': spot_coordinate[1],
-                }
+                id_name = 'robot'
             else:
                 id_name = W
 
@@ -532,8 +530,9 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
                 'y': spot_coordinate[1],
             }
 
-    # -- compute an offset that can be used to align the known landmark from world to Spot space:
-    offset = ((known_waypoint_1 - known_landmark_1) + (known_waypoint_2 - known_landmark_2)) / 2.0
+    if grounding_landmark:
+        # -- compute an offset that can be used to align the known landmark from world to Spot space AFTER rotation:
+        offset = ((known_waypoint_1 - known_landmark_1) + (known_waypoint_2 - known_landmark_2)) / 2.0
 
     for L in osm_landmarks:
         # -- replace whitespace with underscore, make lowercase:
