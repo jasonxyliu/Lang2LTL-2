@@ -203,8 +203,8 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
         plt.text(anchor['x'], anchor['y'], s=anchor['name'])
 
         # -- plotting the normal vector from the robot to the anchor:
-        plt.plot(x=[robot['x'], anchor['x']], 
-                 y=[robot['y'], anchor['y']], color='black')
+        plt.plot([robot['x'], anchor['x']], 
+                 [robot['y'], anchor['y']], color='black')
         plt.arrow(x=robot['x'], y=robot['y'], dx=-vector_a2r[0]/2.0, dy=-vector_a2r[1]/2.0, shape='full',
                     width=0.01, head_width=0.1, color='black', label='normal')
 
@@ -224,12 +224,12 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
             plt.scatter(x=[max_pose[0]], y=[max_pose[1]],
                         c='b', marker='x', label=f'max_{r}')
 
-            plt.plot(x=[anchor['x'], mean_pose[0]], 
-                     y=[anchor['y'], mean_pose[1]], linestyle='dashed', c='g')
-            plt.plot(x=[anchor['x'], min_pose[0]], 
-                     y=[anchor['y'], min_pose[1]], linestyle='dotted', c='r')
-            plt.plot(x=[anchor['x'], max_pose[0]], 
-                     y=[anchor['y'], max_pose[1]], linestyle='dotted', c='b')
+            plt.plot([anchor['x'], mean_pose[0]], 
+                     [anchor['y'], mean_pose[1]], linestyle='dashed', c='g')
+            plt.plot([anchor['x'], min_pose[0]], 
+                     [anchor['y'], min_pose[1]], linestyle='dotted', c='r')
+            plt.plot([anchor['x'], max_pose[0]], 
+                     [anchor['y'], max_pose[1]], linestyle='dotted', c='b')
         # endfor
 
         plt.title(f'Evaluated range for spatial relation "{spatial_rel}"')
@@ -241,7 +241,7 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
 # enddef
 
 
-def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False, do_360_search=False):
+def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
     # -- in this case, we will be given a list of target objects or entities:
     target = landmarks[target_candidate]
 
@@ -267,7 +267,7 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
 
         anchor['name'] = anchor_candidates[0]
 
-        list_ranges = compute_area(spatial_rel, anchor, plot=True if spatial_rel=='to the right of' else plot)
+        list_ranges = compute_area(spatial_rel, anchor, plot)
 
         is_valid = False
 
@@ -444,11 +444,11 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
             plt.text(landmarks[A]['x'], landmarks[A]['y'], A)
 
         # -- plot the range as well for visualization:
-        plt.plot(x=[anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']], 
-                 y=[anchor['y'], (R['min'][1] * range_to_anchor) + anchor['y']], 
+        plt.plot([anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']], 
+                 [anchor['y'], (R['min'][1] * range_to_anchor) + anchor['y']], 
                  linestyle='dotted', c='r')
-        plt.plot(x=[anchor['x'], (R['max'][0] * range_to_anchor) + anchor['x']], 
-                 y=[anchor['y'], (R['max'][1] * range_to_anchor) + anchor['y']], 
+        plt.plot([anchor['x'], (R['max'][0] * range_to_anchor) + anchor['x']], 
+                 [anchor['y'], (R['max'][1] * range_to_anchor) + anchor['y']], 
                  linestyle='dotted', c='b')
 
         plt.title(f'Computed Target Position: "{sre}"' if sre else f'Computed Target Position: "{spatial_rel}"')
@@ -478,7 +478,7 @@ def plot_landmarks(landmarks=None):
     plt.title(f'Landmarks: ')
     plt.legend()
     plt.axis('square')
-    plt.show(block=True)
+    plt.show(block=False)
     # plt.savefig('temp.png')
 #enddef
 
@@ -508,7 +508,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
             known_landmark_1 = np.array([gps_to_cartesian(grounding_landmark[0]['gps'])[x] for x in [0, 2]])
             known_landmark_2 = np.array([gps_to_cartesian(grounding_landmark[1]['gps'])[x] for x in [0, 2]])
 
-        known_waypoint_1 = np.array([spot_waypoints[grounding_landmark[0]]['position']['x'], 
+        known_waypoint_1 = np.array([spot_waypoints[grounding_landmark[0]['waypoint']]['position']['x'], 
                                      spot_waypoints[grounding_landmark[0]['waypoint']]['position']['y']])
         known_waypoint_2 = np.array([spot_waypoints[grounding_landmark[1]['waypoint']]['position']['x'],
                                      spot_waypoints[grounding_landmark[1]['waypoint']]['position']['y']])
@@ -557,7 +557,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
                     elif W == grounding_landmark[1]['waypoint']:
                         known_waypoint_2 = spot_coordinate
 
-                landmarks[W if W != 'waypoint_0' else 'robot'] = {
+                landmarks[W if spot_waypoints[W]['name'] != 'waypoint_0' else 'robot'] = {
                     'x': spot_coordinate[0],
                     'y': spot_coordinate[1],
                 }
@@ -590,6 +590,8 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
             'y': landmark_cartesian[1],
         }
 
+    print(landmarks.keys())
+
     return landmarks
 #enddef
 
@@ -600,12 +602,8 @@ def build_object_map(spot_graph_dpath):
     objects = load_from_file(os.path.join(spot_graph_dpath, "objects_map.json"))
 
     robot = None
-    if 'waypoint_0' in objects or 'robot' in objects:
-        for O in ['waypoint_0', 'robot']:
-            try:
-                robot = objects[O]
-            except KeyError:
-                pass
+    if 'waypoint_0' in objects:
+        robot = objects[O]
 
     if not robot:
         print(' >> ERROR: missing robot coordinates! Check your .JSON file!')
@@ -641,7 +639,7 @@ def build_object_map(spot_graph_dpath):
 
 
 def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
-    global landmarks, osm_path
+    global landmarks, osm_path, grounding_landmark
 
     # -- load the waypoints from the provided path to Spot's map (if it exists):
     waypoints = None
@@ -652,7 +650,7 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
         except Exception:
             print(' >> WARNING: no Spot graph file found in provided directory!')
             waypoints = build_object_map(spot_graph_dpath)
-            grounding_landmark = None
+            grounding_landmark = []
         else:
             # -- get the important details from the waypoints and create a dictionary 
             #       instead of using their data structure:
@@ -668,7 +666,7 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
         print(' >> WARNING: no OSM landmarks loaded!')
 
     # -- iterate through all of the Spot waypoints as well as the OSM landmarks and put them in the same space:
-    landmarks = align_coordinates(spot_graph_dpath, osm_landmarks, waypoints, grounding_landmark=grounding_landmark if do_grounding else [])
+    landmarks = align_coordinates(spot_graph_dpath, osm_landmarks, waypoints, grounding_landmark=grounding_landmark)
 
     # -- plot the points for visualization purposes:
     plot_landmarks(landmarks)
