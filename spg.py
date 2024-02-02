@@ -472,6 +472,7 @@ def plot_landmarks(landmarks=None):
     plt.legend()
     plt.axis('square')
     plt.show(block=True)
+    # plt.savefig('temp.png')
 #enddef
 
 
