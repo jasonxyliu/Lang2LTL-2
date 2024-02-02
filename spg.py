@@ -465,8 +465,10 @@ def plot_landmarks(landmarks=None):
             if 'osm_name' not in landmarks[L] and L != 'robot':
                 plt.text(landmarks[L]['x'], landmarks[L]['y'], L)
 
-    plt.scatter(x=landmarks['robot']['x'], y=landmarks['robot']['y'], c='orange', label='robot')
-    plt.text(landmarks['robot']['x'], landmarks['robot']['y'], 'robot')
+    plt.scatter(x=landmarks['robot']['x'], 
+                y=landmarks['robot']['y'], c='orange', label='robot')
+    plt.text(landmarks['robot']['x'], 
+             landmarks['robot']['y'], 'robot')
 
     plt.title(f'Landmarks: ')
     plt.legend()
@@ -501,10 +503,10 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
             known_landmark_1 = np.array([gps_to_cartesian(grounding_landmark[0]['gps'])[x] for x in [0, 2]])
             known_landmark_2 = np.array([gps_to_cartesian(grounding_landmark[1]['gps'])[x] for x in [0, 2]])
 
-        known_waypoint_1 = np.array([spot_waypoints[grounding_landmark[0]]['position']['x'],
-                                spot_waypoints[grounding_landmark[0]['waypoint']]['position']['y']])
+        known_waypoint_1 = np.array([spot_waypoints[grounding_landmark[0]]['position']['x'], 
+                                     spot_waypoints[grounding_landmark[0]['waypoint']]['position']['y']])
         known_waypoint_2 = np.array([spot_waypoints[grounding_landmark[1]['waypoint']]['position']['x'],
-                                spot_waypoints[grounding_landmark[1]['waypoint']]['position']['y']])
+                                     spot_waypoints[grounding_landmark[1]['waypoint']]['position']['y']])
 
         # -- use the vector from known landmarks to determine the degree of rotation needed:
         vec_lrk_1_to_2 = known_landmark_2 - known_landmark_1
@@ -526,10 +528,19 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
         list_waypoints = [os.path.splitext(os.path.basename(W))[0] for W in os.listdir(os.path.join(spot_graph_dpath, 'images'))]
 
         for W in spot_waypoints:
-            if W in list_waypoints or spot_waypoints[W]['name'] in ['waypoint_0', 'robot']:
+            # NOTE: all landmarks are either one of the following:
+            #   1. landmarks where waypoints were manually created by GraphNav (i.e., they have images)
+            #   2. waypoint_0 -- this is where GraphNav starts the robot at
+            is_landmark = False
+            if W in list_waypoints:
+                is_landmark = True
+            elif spot_waypoints[W]['name'] == 'waypoint_0':
+                is_landmark = True
+
+            if is_landmark:
                 # -- just get the x-coordinate and y-coordinate, which would correspond to a top-view 2D map:
                 spot_coordinate = np.array([spot_waypoints[W]['position']['x'],
-                                        spot_waypoints[W]['position']['y']])
+                                            spot_waypoints[W]['position']['y']])
 
                 # -- align the Spot's coordinates to the world frame:
                 spot_coordinate = np.dot(rotation_matrix(angle=angle_diff), spot_coordinate)
@@ -541,12 +552,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
                     elif W == grounding_landmark[1]['waypoint']:
                         known_waypoint_2 = spot_coordinate
 
-                if spot_waypoints[W]['name'] in ['waypoint_0', 'robot']:
-                    id_name = 'robot'
-                else:
-                    id_name = W
-
-                landmarks[id_name] = {
+                landmarks[W if W != 'waypoint_0' else 'robot'] = {
                     'x': spot_coordinate[0],
                     'y': spot_coordinate[1],
                 }
@@ -570,7 +576,8 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
 
         else:
             # NOTE: some points in OSM will have a waypoint associated with it, so just use that x and y:
-            landmark_cartesian = np.array([landmarks[osm_landmarks[L]['wid']]['x'], landmarks[osm_landmarks[L]['wid']]['y']])
+            landmark_cartesian = np.array([landmarks[osm_landmarks[L]['wid']]['x'], 
+                                           landmarks[osm_landmarks[L]['wid']]['y']])
             landmarks[osm_landmarks[L]['wid']]['osm_name'] = id_name
 
         landmarks[id_name] = {
@@ -650,9 +657,9 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
 
     # -- load the OSM landmarks from a JSON file:
     osm_landmarks = []
-    try:
+    if os.path.isfile(osm_path):
         osm_landmarks = load_from_file(osm_path)
-    except Exception:
+    else:
         print(' >> WARNING: no OSM landmarks loaded!')
 
     # -- iterate through all of the Spot waypoints as well as the OSM landmarks and put them in the same space:
