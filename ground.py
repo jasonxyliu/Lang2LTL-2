@@ -8,6 +8,15 @@ from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
 
 
+loc2mid = {
+    "alley": "downloaded_graph_2024-02-02_14-26-54",
+    "indoor_env_0": "downloaded_graph_2024-02-02_10-55-35",
+    "blackstone": "downloaded_graph_2024-01-27_07-48-53",
+    "boston": "downloaded_graph_2024-01-27_07-48-53",
+    "auckland": "",
+}
+
+
 def ground(lifted_utt, model_fpath):
     query = lifted_utt.translate(str.maketrans('', '', ',.'))
     lt_module = Seq2Seq(model_fpath, "t5-base")
@@ -16,13 +25,11 @@ def ground(lifted_utt, model_fpath):
 
 
 if __name__ == "__main__":
-    # -- possible names of maps: ['blackstone', 'auckland', 'boston']
     location = "boston"
 
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", "downloaded_graph_2024-01-27_07-48-53")
-    graph_dpath = os.path.join(data_dpath, "maps", f"{location}")
+    graph_dpath = os.path.join(data_dpath, "maps", loc2mid[location])
     osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
