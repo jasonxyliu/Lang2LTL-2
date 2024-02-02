@@ -25,7 +25,7 @@ def ground(lifted_utt, model_fpath):
 
 
 if __name__ == "__main__":
-    location = "boston"
+    location = "indoor_env_0"
 
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
@@ -47,8 +47,6 @@ if __name__ == "__main__":
         rer_outs.append(rer_out)
     save_to_file(rer_outs, os.path.join(results_dpath, srer_out_fname))
 
-
-    breakpoint()
 
     # Referring Expression Grounding
     reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk)

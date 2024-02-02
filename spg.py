@@ -629,7 +629,7 @@ def build_object_map(spot_graph_dpath):
             'position': {
                 # NOTE: we need to set the origin of the coordinates to the location of the robot:
                 'x': objects[O]['x'],
-                'y': objects[O]['y'] 
+                'y': objects[O]['y']
             },
             'name': O,
         }
@@ -652,7 +652,7 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
             waypoints = build_object_map(spot_graph_dpath)
             grounding_landmark = []
         else:
-            # -- get the important details from the waypoints and create a dictionary 
+            # -- get the important details from the waypoints and create a dictionary
             #       instead of using their data structure:
             waypoints = extract_waypoints(graph)
 
