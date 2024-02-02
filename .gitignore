@@ -1,6 +1,7 @@
 # do not commit files in the data folder
 data/
 spot/graphs/
+*.code-workspace
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
