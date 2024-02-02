@@ -8,13 +8,13 @@ from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
 
 
-loc2mid = {
+loc2gid = {
     "alley": "downloaded_graph_2024-02-02_14-26-54",
     "indoor_env_0": "downloaded_graph_2024-02-02_10-55-35",
     "blackstone": "downloaded_graph_2024-01-27_07-48-53",
     "boston": "downloaded_graph_2024-01-27_07-48-53",
     "auckland": "",
-}
+}  # location to Spot graph ID
 
 
 def ground(lifted_utt, model_fpath):
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", loc2mid[location])
+    graph_dpath = os.path.join(data_dpath, "maps", loc2gid[location])
     osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
