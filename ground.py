@@ -16,13 +16,17 @@ def ground(lifted_utt, model_fpath):
 
 
 if __name__ == "__main__":
+    # -- possible names of maps: ['blackstone', 'auckland', 'boston']
+    location = "boston"
+
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", "downloaded_graph_2024-01-27_07-48-53")
-    osm_fpath = os.path.join(data_dpath, "osm", "blackstone.json")
-    utt_fpath = os.path.join(data_dpath, "utts_blackstone.txt")
+    graph_dpath = os.path.join(data_dpath, "maps", f"{location}")
+    osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
+    utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
-    srer_out_fname = "srer_outs_blackstone.json"
+    srer_out_fname = f"srer_outs_{location}.json"
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
     topk = 3  # top 3 most likely landmarks grounded by REG
