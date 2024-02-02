@@ -94,7 +94,8 @@ def extract_waypoints(graph):
                 'y': w.waypoint_tform_ko.rotation.y,
                 'z': w.waypoint_tform_ko.rotation.z,
                 'w': w.waypoint_tform_ko.rotation.w,
-            }
+            },
+            'name': w.annotations.name,
         }
 
     return list_waypoints
