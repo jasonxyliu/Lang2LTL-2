@@ -66,7 +66,7 @@ def rotation_matrix(angle):
     # Source: https://motion.cs.illinois.edu/RoboticSystems/CoordinateTransformations.html
     return np.array(
         [[np.cos(angle), -np.sin(angle)],
-            [np.sin(angle), np.cos(angle)]])
+         [np.sin(angle), np.cos(angle)]])
 #enddef
 
 
@@ -124,7 +124,7 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
 
     # -- compute vector between robot's position and anchor position and get its direction:
     vector_a2r = [robot['x'] - anchor['x'],
-                    robot['y'] - anchor['y']]
+                  robot['y'] - anchor['y']]
 
     # -- draw a unit vector and multiply it by 10 to get the max distance to consider:
     unit_vec_a2r = np.array(vector_a2r) / np.linalg.norm(vector_a2r)
@@ -177,16 +177,12 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
     # print(rot_a2r)
     for x in rot_a2r:
         # -- rotate the anchor's frame of reference by some angle x:
-        a2r_vector = np.dot(rotation_matrix(
-            angle=np.deg2rad(x)), unit_vec_a2r)
+        a2r_vector = np.dot(rotation_matrix(angle=np.deg2rad(x)), unit_vec_a2r)
 
         # -- compute the mean vector as well as vectors representing min and max proximity range:
-        a2r_mean = np.dot(rotation_matrix(
-            angle=np.deg2rad(mean_angle)), a2r_vector)
-        a2r_min_range = np.dot(rotation_matrix(
-            angle=np.deg2rad(mean_angle-(field_of_view/2))), a2r_vector)
-        a2r_max_range = np.dot(rotation_matrix(
-            angle=np.deg2rad(mean_angle+(field_of_view/2))), a2r_vector)
+        a2r_mean = np.dot(rotation_matrix(angle=np.deg2rad(mean_angle)), a2r_vector)
+        a2r_min_range = np.dot(rotation_matrix(angle=np.deg2rad(mean_angle-(field_of_view/2))), a2r_vector)
+        a2r_max_range = np.dot(rotation_matrix(angle=np.deg2rad(mean_angle+(field_of_view/2))), a2r_vector)
 
         # -- append the vectors to the list of evaluated ranges:
         list_ranges.append({
@@ -197,15 +193,18 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
     # endfor
 
     if plot:
-        # -- plot the computed range:
         plt.figure()
-        plt.title(f'Evaluated range for spatial relation "{spatial_rel}"')
-        plt.scatter(x=[robot['x']], y=[robot['y']], marker='o', color='yellow', label='robot')
-        plt.scatter(x=[anchor['x']], y=[anchor['y']], marker='o', color='orange', label='anchor')
+
+        # -- plotting the robot's position as well as the anchor point:
+        plt.scatter(x=[robot['x']], 
+                    y=[robot['y']], marker='o', color='yellow', label='robot')
+        plt.scatter(x=[anchor['x']], 
+                    y=[anchor['y']], marker='o', color='orange', label='anchor')
         plt.text(anchor['x'], anchor['y'], s=anchor['name'])
 
-        plt.plot([robot['x'], anchor['x']], [
-                    robot['y'], anchor['y']], color='black')
+        # -- plotting the normal vector from the robot to the anchor:
+        plt.plot(x=[robot['x'], anchor['x']], 
+                 y=[robot['y'], anchor['y']], color='black')
         plt.arrow(x=robot['x'], y=robot['y'], dx=-vector_a2r[0]/2.0, dy=-vector_a2r[1]/2.0, shape='full',
                     width=0.01, head_width=0.1, color='black', label='normal')
 
@@ -225,14 +224,15 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
             plt.scatter(x=[max_pose[0]], y=[max_pose[1]],
                         c='b', marker='x', label=f'max_{r}')
 
-            plt.plot([anchor['x'], mean_pose[0]], [
-                        anchor['y'], mean_pose[1]], linestyle='dashed', c='g')
-            plt.plot([anchor['x'], min_pose[0]], [
-                        anchor['y'], min_pose[1]], linestyle='dotted', c='r')
-            plt.plot([anchor['x'], max_pose[0]], [
-                        anchor['y'], max_pose[1]], linestyle='dotted', c='b')
+            plt.plot(x=[anchor['x'], mean_pose[0]], 
+                     y=[anchor['y'], mean_pose[1]], linestyle='dashed', c='g')
+            plt.plot(x=[anchor['x'], min_pose[0]], 
+                     y=[anchor['y'], min_pose[1]], linestyle='dotted', c='r')
+            plt.plot(x=[anchor['x'], max_pose[0]], 
+                     y=[anchor['y'], max_pose[1]], linestyle='dotted', c='b')
         # endfor
 
+        plt.title(f'Evaluated range for spatial relation "{spatial_rel}"')
         plt.legend()
         plt.axis('square')
         plt.show(block=False)
@@ -249,6 +249,7 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
     #       anchor candidates are equal to the target candidate:
     if target_candidate in anchor_candidates:
         return False
+
     for A in anchor_candidates:
         # -- we will check if any anchor has the same (x,y) coordinates as the target:
         if target['x'] == landmarks[A]['x'] and target['y'] == landmarks[A]['y']:
@@ -407,14 +408,15 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
 
     # -- we want to find the closest point from the robot to the anchoring landmark that satisfies the given spatial relation:
     closest_position = 0
+
     for R in range(len(list_ranges)):
 
-        cur_min_pos = {'x': (list_ranges[R]['mean'][0] * range_to_anchor) + anchor['x'], 'y': (
-            list_ranges[R]['mean'][1] * range_to_anchor) + anchor['y']}
+        cur_min_pos = {'x': (list_ranges[R]['mean'][0] * range_to_anchor) + anchor['x'], 
+                       'y': (list_ranges[R]['mean'][1] * range_to_anchor) + anchor['y']}
         cur_min_dist = np.linalg.norm(np.array([cur_min_pos['x'], cur_min_pos['y']]) - np.array([robot['x'], robot['y']]))
 
-        new_min_pos = {'x': (list_ranges[closest_position]['mean'][0] * range_to_anchor) + anchor['x'], 'y': (
-            list_ranges[closest_position]['mean'][1] * range_to_anchor) + anchor['y']}
+        new_min_pos = {'x': (list_ranges[closest_position]['mean'][0] * range_to_anchor) + anchor['x'], 
+                       'y': (list_ranges[closest_position]['mean'][1] * range_to_anchor) + anchor['y']}
         new_min_dist = np.linalg.norm(np.array([new_min_pos['x'], new_min_pos['y']]) - np.array([robot['x'], robot['y']]))
 
         if cur_min_dist > new_min_dist:
@@ -426,27 +428,30 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
 
     # -- use the mean vector to find a point that is within range_to_anchor (2m) of the anchor:
     new_robot_pos = {'x': (R['mean'][0] * range_to_anchor) + anchor['x'],
-                        'y': (R['mean'][1] * range_to_anchor) + anchor['y']}
+                     'y': (R['mean'][1] * range_to_anchor) + anchor['y']}
 
     if plot:
         plt.figure()
-        plt.title(f'Computed Target Position: "{sre}"' if sre else f'Computed Target Position: "{spatial_rel}"')
+
         plt.scatter(x=[robot['x']], y=[robot['y']], marker='o', label='robot')
         plt.scatter(x=[new_robot_pos['x']], y=[new_robot_pos['y']], marker='x', c='g', s=15, label='new robot pose')
 
         # -- plot all anchors and targets provided to the function:
         for A in landmarks:
-            plt.scatter(x=landmarks[A]['x'], y=landmarks[A]['y'],
-                        marker='o', c='darkorange',
-                        label=f"anchor: {A}")
+            plt.scatter(x=landmarks[A]['x'], 
+                        y=landmarks[A]['y'],
+                        marker='o', c='darkorange', label=f"anchor: {A}")
             plt.text(landmarks[A]['x'], landmarks[A]['y'], A)
 
         # -- plot the range as well for visualization:
-        plt.plot([anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']], [anchor['y'],
-                    (R['min'][1] * range_to_anchor) + anchor['y']], linestyle='dotted', c='r')
-        plt.plot([anchor['x'], (R['max'][0] * range_to_anchor) + anchor['x']], [anchor['y'],
-                    (R['max'][1] * range_to_anchor) + anchor['y']], linestyle='dotted', c='b')
+        plt.plot(x=[anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']], 
+                 y=[anchor['y'], (R['min'][1] * range_to_anchor) + anchor['y']], 
+                 linestyle='dotted', c='r')
+        plt.plot(x=[anchor['x'], (R['max'][0] * range_to_anchor) + anchor['x']], 
+                 y=[anchor['y'], (R['max'][1] * range_to_anchor) + anchor['y']], 
+                 linestyle='dotted', c='b')
 
+        plt.title(f'Computed Target Position: "{sre}"' if sre else f'Computed Target Position: "{spatial_rel}"')
         plt.axis('square')
         plt.legend()
         plt.show(block=False)

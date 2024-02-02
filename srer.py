@@ -100,8 +100,8 @@ def parse_LLM_output(output):
 
 def srer(command):
     raw_output = prompt_referring_exp(command)
-    parsed_output['utt'] = command
-    parsed_output = parse_LLM_output(raw_output)
+    parsed_output = {'utt': command}
+    parsed_output.update(parse_LLM_output(raw_output))
     return raw_output, parsed_output
 
 
