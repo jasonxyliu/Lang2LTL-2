@@ -231,7 +231,7 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
 # enddef
 
 
-def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
+def perform_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
     # -- in this case, we will be given a list of target objects or entities:
     target = landmarks[target_candidate]
 
@@ -815,7 +815,7 @@ def spg(spatial_preds, topk=5):
                 for A in range(len(G['anchor'])):
                     anchor_names.append(G['anchor'][A])
 
-                is_valid = evaluate_spg(relation, target_name, anchor_names, sre=sre)
+                is_valid = perform_spg(relation, target_name, anchor_names, sre=sre)
 
                 if is_valid:
                     # print(grounding_set.index(G), ':', G['score'])
