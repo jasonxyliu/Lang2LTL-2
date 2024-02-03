@@ -5,15 +5,15 @@ from srer import srer
 from reg import reg
 from spg import init, spg
 from lt_s2s_sup_tcd import Seq2Seq
-from utils import load_from_file, save_to_file, generate_dataset
+from utils import load_from_file, save_to_file
 
 
 loc2gid = {
     "alley": "downloaded_graph_2024-02-02_14-26-54",
     "indoor_env_0": "downloaded_graph_2024-02-02_10-55-35",
     "blackstone": "downloaded_graph_2024-01-27_07-48-53",
-    "boston": "boston",
-    "auckland": "auckland",
+    "boston": "downloaded_graph_2024-01-27_07-48-53",
+    "auckland": "",
 }  # location to Spot graph ID
 
 
@@ -25,7 +25,8 @@ def ground(lifted_utt, model_fpath):
 
 
 if __name__ == "__main__":
-    location = "auckland"
+    location = "boston"
+    ablation = None  # "text", "image", None
 
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
@@ -33,34 +34,24 @@ if __name__ == "__main__":
     osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
-    srer_out_fname = f"srer_outs_{location}.json"
+    srer_out_fname = f"srer_outs_{location}.json" if ablation else f"srer_outs_{location}_ablate_{ablation}.json"
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
     topk = 3  # top 3 most likely landmarks grounded by REG
 
-    if not os.path.isfile(utt_fpath):
-        generate_dataset(
-            params={
-                'location': location,
-                'gtr': os.path.join(data_dpath, "groundtruth_lmrks.json"),
-                'ltl_samples': os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
-            },
-            fpath=utt_fpath
-        )
 
     # Spatial Referring Expression Recognition
-    rer_outs = []
+    srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
+    srer_outs = []
     utts = load_from_file(utt_fpath)
     for utt in tqdm(utts, desc='Performing spatial referring expression recognition (SRER)...'):
         _, rer_out = srer(utt)
-        rer_outs.append(rer_out)
-    save_to_file(rer_outs, os.path.join(results_dpath, srer_out_fname))
+        srer_outs.append(rer_out)
+    save_to_file(srer_outs, srer_out_fpath)
 
-
-    # breakpoint()
 
     # Referring Expression Grounding
-    reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk)
+    reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk, ablation)
 
 
     # Spatial Predicate Grounding

@@ -7,29 +7,6 @@ from openai_models import GPT4V, get_embed
 from utils import load_from_file, save_to_file
 
 
-class REG():
-    """
-    Referring Expression Grounding (REG) module.
-    Use semantic description of landmarks and objects in text and images.
-    """
-    def __init__(self, img_embeds, txt_embeds):
-        self.img_embeds = np.array(list(img_embeds.values()))
-        self.img_ids = list(img_embeds.keys())
-        self.txt_embeds = np.array(list(txt_embeds.values()))
-        self.txt_ids = list(txt_embeds.keys())
-
-    def query(self, query, topk):
-        query_embeds = get_embed(query)
-        query_scores = cosine_similarity(np.array(query_embeds).reshape(1, -1), np.concatenate((self.img_embeds, self.txt_embeds), axis=0))[0]
-
-        lmks_sorted = sorted(zip(query_scores, self.img_ids+self.txt_ids), reverse=True)
-
-        # for score, sem_id in lmks_sorted:
-        #     print(f"{sem_id}: {score}")
-
-        return lmks_sorted[:topk]
-
-
 def embed_images(img_fpaths, cap_dpath, embed_dpath):
     img_embeds = {}
     for img_fpath in img_fpaths:
@@ -61,6 +38,7 @@ def embed_texts(txts, embed_dpath):
         if os.path.isfile(embed_fpath):
             txt_emebed = load_from_file(embed_fpath)
         else:
+            txt["name"] = lmk_name
             txt_emebed = get_embed(txt)
             save_to_file(txt_emebed, embed_fpath)
 
@@ -68,20 +46,58 @@ def embed_texts(txts, embed_dpath):
     return txt_embeds
 
 
-def reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk):
-    img_cap_dpath = os.path.join(graph_dpath, "image_captions")
-    os.makedirs(img_cap_dpath, exist_ok=True)
-    img_embed_dpath = os.path.join(graph_dpath, "image_embeds")
-    os.makedirs(img_embed_dpath, exist_ok=True)
-    txt_embed_dpath = os.path.join(graph_dpath, "text_embeds")
-    os.makedirs(txt_embed_dpath, exist_ok=True)
 
-    img_dpath = os.path.join(graph_dpath, "images")  # SLAM
-    img_fpaths = sorted([os.path.join(img_dpath, fname) for fname in os.listdir(img_dpath) if "jpg" in fname])
-    img_embeds = embed_images(img_fpaths, img_cap_dpath, img_embed_dpath)
+class REG():
+    """
+    Referring Expression Grounding (REG) module.
+    Use semantic description of landmarks and objects in text and images.
+    """
+    def __init__(self, img_embeds, txt_embeds):
+        sem_embeds, self.sem_ids = [], []
 
-    txts = load_from_file(osm_fpath)  # OSM
-    txt_embeds = embed_texts(txts, txt_embed_dpath)
+        if img_embeds:
+            sem_embeds += list(img_embeds.values())
+            self.img_ids = list(img_embeds.keys())
+            self.sem_ids += self.img_ids
+
+        if txt_embeds:
+            sem_embeds += list(txt_embeds.values())
+            self.txt_ids = list(txt_embeds.keys())
+            self.sem_ids += self.txt_ids
+
+        self.sem_embeds = np.array(sem_embeds)
+
+    def query(self, query, topk):
+        query_embeds = get_embed(query)
+        query_scores = cosine_similarity(np.array(query_embeds).reshape(1, -1), self.sem_embeds)[0]
+
+        lmks_sorted = sorted(zip(query_scores, self.sem_ids), reverse=True)
+
+        # for score, sem_id in lmks_sorted:
+        #     print(f"{sem_id}: {score}")
+
+        return lmks_sorted[:topk]
+
+
+def reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk, ablate):
+    img_embeds, txt_embeds = None, None
+
+    if not ablate or ablate == "text":
+        img_cap_dpath = os.path.join(graph_dpath, "image_captions")
+        os.makedirs(img_cap_dpath, exist_ok=True)
+        img_embed_dpath = os.path.join(graph_dpath, "image_embeds")
+        os.makedirs(img_embed_dpath, exist_ok=True)
+
+        img_dpath = os.path.join(graph_dpath, "images")  # SLAM
+        img_fpaths = sorted([os.path.join(img_dpath, fname) for fname in os.listdir(img_dpath) if "jpg" in fname])
+        img_embeds = embed_images(img_fpaths, img_cap_dpath, img_embed_dpath)
+
+    if not ablate or ablate == "image":
+        txt_embed_dpath = os.path.join(graph_dpath, "text_embeds")
+        os.makedirs(txt_embed_dpath, exist_ok=True)
+
+        txts = load_from_file(osm_fpath)  # OSM
+        txt_embeds = embed_texts(txts, txt_embed_dpath)
 
     reg = REG(img_embeds, txt_embeds)
 
@@ -130,4 +146,4 @@ if __name__ == "__main__":
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     srer_out_fname = "srer_outs_blackstone.json"
 
-    reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk=3)
+    reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk=3, ablate=None)
