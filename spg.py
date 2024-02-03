@@ -42,12 +42,14 @@ try:
     from pyproj import Transformer
 except ImportError:
     print(' >> WARNING: missing "pyproj" library for GPS->Cartesian coordinate conversion!')
+    print('     - Download using "pip install pyproj".')
     use_pyproj = False
 
 try:
     import utm
 except ImportError:
     print(' >> WARNING: missing "utm" library for GPS->Cartesian coordinate conversion!')
+    print('     - Download using "pip install utm".')
     use_pyproj = False
 
 def rotation_matrix(angle):
