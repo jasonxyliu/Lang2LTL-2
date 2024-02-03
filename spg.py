@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools as it
+import math
 
 from load_map import load_map, extract_waypoints
 from openai_models import get_embed
@@ -24,24 +25,6 @@ known_spatial_relations = [
     'north of', 'south of', 'east of', 'west of', 'northeast of', 'northwest of', 'southeast of', 'southwest of'
 ]
 
-# NOTE: this *MUST* be provided when using both robot/Spot map and GPS coordinates:
-grounding_landmark = [
-    {
-        'waypoint': 'rose-barker-SI61poibGHSEpOdZa0lzmQ==',
-        'gps': {'lat': 41.858055308939804, 'long':-71.39119853826014}
-    },
-    {
-        # NOTE: chair: https://maps.app.goo.gl/FAUaqQRXQar9J1P79
-        'waypoint' : 'lossy-beef-zbwSxEF1a4R7bkFu3V9Cyg==',
-        'gps': {'lat': 41.85814693862552, 'long':-71.39127870267093}
-    },
-    {
-        # NOTE: bicycle rack at Blackstone Plaza: https://maps.app.goo.gl/m9iH3Mzj5PVrjeJq9
-        'waypoint': 'pyknic-auk-eHDSWo4QNapDsHViTQRztw==',              # -- this is the name of the Spot waypoint for which we know its GPS position
-        'gps': {'lat': 41.85809499132926, 'long': -71.39110567075839}   # -- this is the GPS location for the waypoint above
-    },
-]
-
 landmarks = None
 
 # -- let's assume that we will only look for an object that is within 25m of the anchor:
@@ -51,16 +34,21 @@ max_range = 25.0
 range_to_anchor = 2.0
 
 # -- this variable controls whether we use a library for converting GPS to Cartesian coordinates:
-use_pyproj = False
+use_pyproj = True
+zone = None
 
 try:
     # -- using pyproj: https://stackoverflow.com/a/69604627
     from pyproj import Transformer
-    llh_to_xyz = Transformer.from_crs("+proj=latlong +ellps=WGS84 +datum=WGS84", "+proj=geocent +ellps=WGS84 +datum=WGS84")
 except ImportError:
     print(' >> WARNING: missing "pyproj" library for GPS->Cartesian coordinate conversion!')
     use_pyproj = False
 
+try:
+    import utm
+except ImportError:
+    print(' >> WARNING: missing "utm" library for GPS->Cartesian coordinate conversion!')
+    use_pyproj = False
 
 def rotation_matrix(angle):
     # Source: https://motion.cs.illinois.edu/RoboticSystems/CoordinateTransformations.html
@@ -475,15 +463,15 @@ def plot_landmarks(landmarks=None):
     plt.text(landmarks['robot']['x'], 
              landmarks['robot']['y'], 'robot')
 
-    plt.title(f'Landmarks: ')
+    plt.title(f'All Landmarks')
     plt.legend()
-    plt.axis('square')
-    plt.show(block=False)
+    # plt.axis('square')
+    plt.show(block=True)
     # plt.savefig('temp.png')
 #enddef
 
 
-def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding_landmark):
+def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, coord_alignment=[], crs=None):
 
     # NOTE: definitions of the following variables:
     # -- angle_diff :- this dictates the amount of rotation needed to
@@ -494,24 +482,22 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
     offset = 0
 
     # NOTE: if not using a Spot map, then there's no need for
-    if bool(grounding_landmark):
+    if bool(coord_alignment):
         # -- if grounding landmark value is not None, then we will go ahead and figure out alignment issue:
 
         print(' >> Computing alignment from robot to world frame...')
 
-        # NOTE: a 2D map actually is projected to the X-Z Cartesian plane, NOT X-Y:
-        # -- for this reason, we only take the x and z coordinates, where the z will be used as Spot's y-axis:
-        if use_pyproj:
-            known_landmark_1 = np.array(llh_to_xyz.transform(grounding_landmark[0]['gps']['long'], grounding_landmark[0]['gps']['lat'], 0, radians=False)[:-1])
-            known_landmark_2 = np.array(llh_to_xyz.transform(grounding_landmark[1]['gps']['long'], grounding_landmark[1]['gps']['lat'], 0, radians=False)[:-1])
+        if crs:
+            known_landmark_1 = np.array(crs.transform(coord_alignment[0]['long'], coord_alignment[0]['lat'], 0, radians=False)[:-1])
+            known_landmark_2 = np.array(crs.transform(coord_alignment[1]['long'], coord_alignment[1]['lat'], 0, radians=False)[:-1])
         else:
-            known_landmark_1 = np.array([gps_to_cartesian(grounding_landmark[0]['gps'])[x] for x in [0, 2]])
-            known_landmark_2 = np.array([gps_to_cartesian(grounding_landmark[1]['gps'])[x] for x in [0, 2]])
+            known_landmark_1 = np.array([gps_to_cartesian(coord_alignment[0])[x] for x in [0, 2]])
+            known_landmark_2 = np.array([gps_to_cartesian(coord_alignment[1])[x] for x in [0, 2]])
 
-        known_waypoint_1 = np.array([spot_waypoints[grounding_landmark[0]['waypoint']]['position']['x'], 
-                                     spot_waypoints[grounding_landmark[0]['waypoint']]['position']['y']])
-        known_waypoint_2 = np.array([spot_waypoints[grounding_landmark[1]['waypoint']]['position']['x'],
-                                     spot_waypoints[grounding_landmark[1]['waypoint']]['position']['y']])
+        known_waypoint_1 = np.array([spot_waypoints[coord_alignment[0]['waypoint']]['position']['x'], 
+                                        spot_waypoints[coord_alignment[0]['waypoint']]['position']['y']])
+        known_waypoint_2 = np.array([spot_waypoints[coord_alignment[1]['waypoint']]['position']['x'],
+                                        spot_waypoints[coord_alignment[1]['waypoint']]['position']['y']])
 
         # -- use the vector from known landmarks to determine the degree of rotation needed:
         vec_lrk_1_to_2 = known_landmark_2 - known_landmark_1
@@ -550,11 +536,11 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
                 # -- align the Spot's coordinates to the world frame:
                 spot_coordinate = np.dot(rotation_matrix(angle=angle_diff), spot_coordinate)
 
-                if bool(grounding_landmark):
+                if bool(coord_alignment):
                     # -- we will use the newly rotated point to figure out the offset:
-                    if W == grounding_landmark[0]['waypoint']:
+                    if W == coord_alignment[0]['waypoint']:
                         known_waypoint_1 = spot_coordinate
-                    elif W == grounding_landmark[1]['waypoint']:
+                    elif W == coord_alignment[1]['waypoint']:
                         known_waypoint_2 = spot_coordinate
 
                 landmarks[W if spot_waypoints[W]['name'] != 'waypoint_0' else 'robot'] = {
@@ -562,7 +548,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
                     'y': spot_coordinate[1],
                 }
 
-        if bool(grounding_landmark):
+        if bool(coord_alignment):
             # -- compute an offset that can be used to align the known landmark from world to Spot space AFTER rotation:
             offset = ((known_waypoint_1 - known_landmark_1) + (known_waypoint_2 - known_landmark_2)) / 2.0
 
@@ -572,8 +558,8 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
 
         if 'wid' not in osm_landmarks[L]:
             # -- we first need to convert each point into its Cartesian equivalent, then add the computed offset from above:
-            if use_pyproj:
-                landmark_cartesian = np.array(llh_to_xyz.transform(osm_landmarks[L]['long'], osm_landmarks[L]['lat'], 0, radians=False)[:-1])
+            if crs:
+                landmark_cartesian = np.array(crs.transform(osm_landmarks[L]['long'], osm_landmarks[L]['lat'], 0, radians=False)[:-1])
             else:
                 landmark_cartesian = np.array([gps_to_cartesian(osm_landmarks[L])[x] for x in [0, 2]])
 
@@ -590,32 +576,34 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, grounding
             'y': landmark_cartesian[1],
         }
 
-    print(landmarks.keys())
-
     return landmarks
 #enddef
 
 
-def build_object_map(spot_graph_dpath):
+def fake_spot_waypoints(spot_graph_dpath, crs=None):
     # NOTE: this function is used to create a "fake" robot map of objects similar to that created by GraphNav:
 
     objects = load_from_file(os.path.join(spot_graph_dpath, "objects_map.json"))
 
     robot = None
     if 'waypoint_0' in objects:
-        robot = objects[O]
-
-    if not robot:
+        robot = objects['waypoint_0']
+    else:
         print(' >> ERROR: missing robot coordinates! Check your .JSON file!')
         exit()
 
+    if not crs:
+        (_, _, zone, _) = utm.from_latlon(robot['lat'], robot['long'])
+        crs = Transformer.from_crs(crs_from="+proj=latlong +ellps=WGS84 +datum=WGS84", 
+                                   crs_to=f"+proj=utm +ellps=WGS84 +datum=WGS84 +south +units=m +zone={zone}")
+    
     for O in objects:
         # -- we will go through each object obtained from the world map and set it to Cartesian coordinates:
 
         # NOTE: a 2D map actually is projected to the X-Z Cartesian plane, NOT X-Y:
         # -- for this reason, we only take the x and z coordinates, where the z will be used as Spot's y-axis:
-        if use_pyproj:
-            landmark_cartesian = np.array(llh_to_xyz.transform(objects[O]['long'], objects[O]['lat'], 0, radians=False)[:-1])
+        if crs:
+            landmark_cartesian = np.array(crs.transform(objects[O]['long'], objects[O]['lat'], 0, radians=False)[:-1])
         else:
             landmark_cartesian = np.array([gps_to_cartesian(objects[O])[x] for x in [0, 2]])
 
@@ -634,27 +622,27 @@ def build_object_map(spot_graph_dpath):
             'name': O,
         }
 
-    return waypoints
+    return waypoints, crs
 #enddef
 
 
 def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
-    global landmarks, osm_path, grounding_landmark
+    global landmarks, osm_path, use_pyproj
 
     # -- load the waypoints from the provided path to Spot's map (if it exists):
     waypoints = None
-    if spot_graph_dpath:
-        try:
-            # -- load the waypoints recorded using Spot's GraphNav:
-            (graph, _, _, _, _, _) = load_map(spot_graph_dpath)
-        except Exception:
-            print(' >> WARNING: no Spot graph file found in provided directory!')
-            waypoints = build_object_map(spot_graph_dpath)
-            grounding_landmark = []
-        else:
-            # -- get the important details from the waypoints and create a dictionary 
-            #       instead of using their data structure:
-            waypoints = extract_waypoints(graph)
+    transformer = None
+
+    try:
+        (graph, _, _, _, _, _) = load_map(spot_graph_dpath)
+    except Exception:
+        print(' >> WARNING: no Spot graph file found in provided directory!')
+        waypoints, transformer = fake_spot_waypoints(spot_graph_dpath, crs=None)
+    else:
+        # -- get the important details from the waypoints and create a dictionary 
+        #       instead of using their data structure:
+        waypoints = extract_waypoints(graph)
+
 
     osm_path = osm_landmark_file
 
@@ -665,8 +653,29 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
     else:
         print(' >> WARNING: no OSM landmarks loaded!')
 
+    # -- this is a JSON file containing a dictionary of waypoints (i.e., in Spot map) to GPS coordinates:
+    alignment_lmrks = []
+    alignment_fpath = os.path.join(spot_graph_dpath, "alignment.json")
+    if os.path.isfile(alignment_fpath):
+        alignment_lmrks = load_from_file(alignment_fpath)
+
+    if use_pyproj:
+        # -- we need to calculate a zone number for UTM conversion:
+        if osm_landmarks:
+            # -- get the first key in the landmarks dictionary for a single entry 
+            #       that we can use to get UTM zone:
+            O = list(osm_landmarks.keys()).pop()
+            (_, _, zone, _) = utm.from_latlon(osm_landmarks[O]['lat'], 
+                                              osm_landmarks[O]['long'])
+            transformer = Transformer.from_crs(crs_from="+proj=latlong +ellps=WGS84 +datum=WGS84", 
+                                            crs_to=f"+proj=utm +ellps=WGS84 +datum=WGS84 +south +units=m +zone={zone}")
+
     # -- iterate through all of the Spot waypoints as well as the OSM landmarks and put them in the same space:
-    landmarks = align_coordinates(spot_graph_dpath, osm_landmarks, waypoints, grounding_landmark=grounding_landmark)
+    landmarks = align_coordinates(spot_graph_dpath, 
+                                  osm_landmarks, 
+                                  spot_waypoints=waypoints, 
+                                  coord_alignment=alignment_lmrks, 
+                                  crs=transformer)
 
     # -- plot the points for visualization purposes:
     plot_landmarks(landmarks)
