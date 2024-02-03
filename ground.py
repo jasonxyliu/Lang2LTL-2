@@ -5,15 +5,15 @@ from srer import srer
 from reg import reg
 from spg import init, spg
 from lt_s2s_sup_tcd import Seq2Seq
-from utils import load_from_file, save_to_file
+from utils import load_from_file, save_to_file, generate_dataset
 
 
 loc2gid = {
     "alley": "downloaded_graph_2024-02-02_14-26-54",
     "indoor_env_0": "downloaded_graph_2024-02-02_10-55-35",
     "blackstone": "downloaded_graph_2024-01-27_07-48-53",
-    "boston": "downloaded_graph_2024-01-27_07-48-53",
-    "auckland": "",
+    "boston": "boston",
+    "auckland": "auckland",
 }  # location to Spot graph ID
 
 
@@ -25,7 +25,7 @@ def ground(lifted_utt, model_fpath):
 
 
 if __name__ == "__main__":
-    location = "boston"
+    location = "auckland"
 
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
@@ -38,6 +38,15 @@ if __name__ == "__main__":
     spg_out_fname = srer_out_fname.replace("srer", "spg")
     topk = 3  # top 3 most likely landmarks grounded by REG
 
+    if not os.path.isfile(utt_fpath):
+        generate_dataset(
+            params={
+                'location': location,
+                'gtr': os.path.join(data_dpath, "groundtruth_lmrks.json"),
+                'ltl_samples': os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
+            },
+            fpath=utt_fpath
+        )
 
     # Spatial Referring Expression Recognition
     rer_outs = []
@@ -48,7 +57,7 @@ if __name__ == "__main__":
     save_to_file(rer_outs, os.path.join(results_dpath, srer_out_fname))
 
 
-    breakpoint()
+    # breakpoint()
 
     # Referring Expression Grounding
     reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk)
