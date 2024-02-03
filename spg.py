@@ -184,14 +184,14 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
         plt.figure()
 
         # -- plotting the robot's position as well as the anchor point:
-        plt.scatter(x=[robot['x']], 
+        plt.scatter(x=[robot['x']],
                     y=[robot['y']], marker='o', color='yellow', label='robot')
-        plt.scatter(x=[anchor['x']], 
+        plt.scatter(x=[anchor['x']],
                     y=[anchor['y']], marker='o', color='orange', label='anchor')
         plt.text(anchor['x'], anchor['y'], s=anchor['name'])
 
         # -- plotting the normal vector from the robot to the anchor:
-        plt.plot([robot['x'], anchor['x']], 
+        plt.plot([robot['x'], anchor['x']],
                  [robot['y'], anchor['y']], color='black')
         plt.arrow(x=robot['x'], y=robot['y'], dx=-vector_a2r[0]/2.0, dy=-vector_a2r[1]/2.0, shape='full',
                     width=0.01, head_width=0.1, color='black', label='normal')
@@ -212,11 +212,11 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
             plt.scatter(x=[max_pose[0]], y=[max_pose[1]],
                         c='b', marker='x', label=f'max_{r}')
 
-            plt.plot([anchor['x'], mean_pose[0]], 
+            plt.plot([anchor['x'], mean_pose[0]],
                      [anchor['y'], mean_pose[1]], linestyle='dashed', c='g')
-            plt.plot([anchor['x'], min_pose[0]], 
+            plt.plot([anchor['x'], min_pose[0]],
                      [anchor['y'], min_pose[1]], linestyle='dotted', c='r')
-            plt.plot([anchor['x'], max_pose[0]], 
+            plt.plot([anchor['x'], max_pose[0]],
                      [anchor['y'], max_pose[1]], linestyle='dotted', c='b')
         # endfor
 
@@ -399,11 +399,11 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
 
     for R in range(len(list_ranges)):
 
-        cur_min_pos = {'x': (list_ranges[R]['mean'][0] * range_to_anchor) + anchor['x'], 
+        cur_min_pos = {'x': (list_ranges[R]['mean'][0] * range_to_anchor) + anchor['x'],
                        'y': (list_ranges[R]['mean'][1] * range_to_anchor) + anchor['y']}
         cur_min_dist = np.linalg.norm(np.array([cur_min_pos['x'], cur_min_pos['y']]) - np.array([robot['x'], robot['y']]))
 
-        new_min_pos = {'x': (list_ranges[closest_position]['mean'][0] * range_to_anchor) + anchor['x'], 
+        new_min_pos = {'x': (list_ranges[closest_position]['mean'][0] * range_to_anchor) + anchor['x'],
                        'y': (list_ranges[closest_position]['mean'][1] * range_to_anchor) + anchor['y']}
         new_min_dist = np.linalg.norm(np.array([new_min_pos['x'], new_min_pos['y']]) - np.array([robot['x'], robot['y']]))
 
@@ -426,17 +426,17 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
 
         # -- plot all anchors and targets provided to the function:
         for A in landmarks:
-            plt.scatter(x=landmarks[A]['x'], 
+            plt.scatter(x=landmarks[A]['x'],
                         y=landmarks[A]['y'],
                         marker='o', c='darkorange', label=f"anchor: {A}")
             plt.text(landmarks[A]['x'], landmarks[A]['y'], A)
 
         # -- plot the range as well for visualization:
-        plt.plot([anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']], 
-                 [anchor['y'], (R['min'][1] * range_to_anchor) + anchor['y']], 
+        plt.plot([anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']],
+                 [anchor['y'], (R['min'][1] * range_to_anchor) + anchor['y']],
                  linestyle='dotted', c='r')
-        plt.plot([anchor['x'], (R['max'][0] * range_to_anchor) + anchor['x']], 
-                 [anchor['y'], (R['max'][1] * range_to_anchor) + anchor['y']], 
+        plt.plot([anchor['x'], (R['max'][0] * range_to_anchor) + anchor['x']],
+                 [anchor['y'], (R['max'][1] * range_to_anchor) + anchor['y']],
                  linestyle='dotted', c='b')
 
         plt.title(f'Computed Target Position: "{sre}"' if sre else f'Computed Target Position: "{spatial_rel}"')
@@ -458,9 +458,9 @@ def plot_landmarks(landmarks=None):
             if 'osm_name' not in landmarks[L] and L != 'robot':
                 plt.text(landmarks[L]['x'], landmarks[L]['y'], L)
 
-    plt.scatter(x=landmarks['robot']['x'], 
+    plt.scatter(x=landmarks['robot']['x'],
                 y=landmarks['robot']['y'], c='orange', label='robot')
-    plt.text(landmarks['robot']['x'], 
+    plt.text(landmarks['robot']['x'],
              landmarks['robot']['y'], 'robot')
 
     plt.title(f'All Landmarks')
@@ -494,7 +494,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, coord_ali
             known_landmark_1 = np.array([gps_to_cartesian(coord_alignment[0])[x] for x in [0, 2]])
             known_landmark_2 = np.array([gps_to_cartesian(coord_alignment[1])[x] for x in [0, 2]])
 
-        known_waypoint_1 = np.array([spot_waypoints[coord_alignment[0]['waypoint']]['position']['x'], 
+        known_waypoint_1 = np.array([spot_waypoints[coord_alignment[0]['waypoint']]['position']['x'],
                                         spot_waypoints[coord_alignment[0]['waypoint']]['position']['y']])
         known_waypoint_2 = np.array([spot_waypoints[coord_alignment[1]['waypoint']]['position']['x'],
                                         spot_waypoints[coord_alignment[1]['waypoint']]['position']['y']])
@@ -567,7 +567,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, coord_ali
 
         else:
             # NOTE: some points in OSM will have a waypoint associated with it, so just use that x and y:
-            landmark_cartesian = np.array([landmarks[osm_landmarks[L]['wid']]['x'], 
+            landmark_cartesian = np.array([landmarks[osm_landmarks[L]['wid']]['x'],
                                            landmarks[osm_landmarks[L]['wid']]['y']])
             landmarks[osm_landmarks[L]['wid']]['osm_name'] = id_name
 
@@ -594,9 +594,9 @@ def fake_spot_waypoints(spot_graph_dpath, crs=None):
 
     if not crs:
         (_, _, zone, _) = utm.from_latlon(robot['lat'], robot['long'])
-        crs = Transformer.from_crs(crs_from="+proj=latlong +ellps=WGS84 +datum=WGS84", 
+        crs = Transformer.from_crs(crs_from="+proj=latlong +ellps=WGS84 +datum=WGS84",
                                    crs_to=f"+proj=utm +ellps=WGS84 +datum=WGS84 +south +units=m +zone={zone}")
-    
+
     for O in objects:
         # -- we will go through each object obtained from the world map and set it to Cartesian coordinates:
 
@@ -617,7 +617,7 @@ def fake_spot_waypoints(spot_graph_dpath, crs=None):
             'position': {
                 # NOTE: we need to set the origin of the coordinates to the location of the robot:
                 'x': objects[O]['x'],
-                'y': objects[O]['y'] 
+                'y': objects[O]['y']
             },
             'name': O,
         }
@@ -639,7 +639,7 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
         print(' >> WARNING: no Spot graph file found in provided directory!')
         waypoints, transformer = fake_spot_waypoints(spot_graph_dpath, crs=None)
     else:
-        # -- get the important details from the waypoints and create a dictionary 
+        # -- get the important details from the waypoints and create a dictionary
         #       instead of using their data structure:
         waypoints = extract_waypoints(graph)
 
@@ -662,19 +662,19 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
     if use_pyproj:
         # -- we need to calculate a zone number for UTM conversion:
         if osm_landmarks:
-            # -- get the first key in the landmarks dictionary for a single entry 
+            # -- get the first key in the landmarks dictionary for a single entry
             #       that we can use to get UTM zone:
             O = list(osm_landmarks.keys()).pop()
-            (_, _, zone, _) = utm.from_latlon(osm_landmarks[O]['lat'], 
+            (_, _, zone, _) = utm.from_latlon(osm_landmarks[O]['lat'],
                                               osm_landmarks[O]['long'])
-            transformer = Transformer.from_crs(crs_from="+proj=latlong +ellps=WGS84 +datum=WGS84", 
+            transformer = Transformer.from_crs(crs_from="+proj=latlong +ellps=WGS84 +datum=WGS84",
                                             crs_to=f"+proj=utm +ellps=WGS84 +datum=WGS84 +south +units=m +zone={zone}")
 
     # -- iterate through all of the Spot waypoints as well as the OSM landmarks and put them in the same space:
-    landmarks = align_coordinates(spot_graph_dpath, 
-                                  osm_landmarks, 
-                                  spot_waypoints=waypoints, 
-                                  coord_alignment=alignment_lmrks, 
+    landmarks = align_coordinates(spot_graph_dpath,
+                                  osm_landmarks,
+                                  spot_waypoints=waypoints,
+                                  coord_alignment=alignment_lmrks,
                                   crs=transformer)
 
     # -- plot the points for visualization purposes:
