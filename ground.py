@@ -12,8 +12,8 @@ loc2gid = {
     "alley": "downloaded_graph_2024-02-02_14-26-54",
     "indoor_env_0": "downloaded_graph_2024-02-02_10-55-35",
     "blackstone": "downloaded_graph_2024-01-27_07-48-53",
-    "boston": "downloaded_graph_2024-01-27_07-48-53",
-    "auckland": "",
+    "boston": "boston",
+    "auckland": "auckland",
 }  # location to Spot graph ID
 
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
-    srer_out_fname = f"srer_outs_{location}_ablate_{ablation}.json" if ablation else f"srer_outs_{location}.json" 
+    srer_out_fname = f"srer_outs_{location}_ablate_{ablation}.json" if ablation else f"srer_outs_{location}.json"
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
     topk = 3  # top 3 most likely landmarks grounded by REG
@@ -51,12 +51,13 @@ if __name__ == "__main__":
 
     # Spatial Referring Expression Recognition
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
-    srer_outs = []
-    utts = load_from_file(utt_fpath)
-    for utt in tqdm(utts, desc='Performing spatial referring expression recognition (SRER)...'):
-        _, rer_out = srer(utt)
-        srer_outs.append(rer_out)
-    save_to_file(srer_outs, srer_out_fpath)
+    if os.path.isfile(srer_out_fpath):
+        srer_outs = []
+        utts = load_from_file(utt_fpath)
+        for utt in tqdm(utts, desc='Performing spatial referring expression recognition (SRER)...'):
+            _, rer_out = srer(utt)
+            srer_outs.append(rer_out)
+        save_to_file(srer_outs, srer_out_fpath)
 
 
     # Referring Expression Grounding
