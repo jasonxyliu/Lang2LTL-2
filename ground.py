@@ -34,7 +34,7 @@ if __name__ == "__main__":
     osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
-    srer_out_fname = f"srer_outs_{location}.json" if ablation else f"srer_outs_{location}_ablate_{ablation}.json"
+    srer_out_fname = f"srer_outs_{location}_ablate_{ablation}.json" if ablation else f"srer_outs_{location}.json" 
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
     topk = 3  # top 3 most likely landmarks grounded by REG
