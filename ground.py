@@ -5,7 +5,7 @@ from srer import srer
 from reg import reg
 from spg import init, spg
 from lt_s2s_sup_tcd import Seq2Seq
-from utils import load_from_file, save_to_file
+from utils import load_from_file, save_to_file, generate_dataset
 
 
 loc2gid = {
@@ -39,6 +39,15 @@ if __name__ == "__main__":
     spg_out_fname = srer_out_fname.replace("srer", "spg")
     topk = 3  # top 3 most likely landmarks grounded by REG
 
+    if not os.path.isfile(utt_fpath):
+        generate_dataset(
+            params={
+                'location': location,
+                'gtr': os.path.join(data_dpath, "groundtruth_lmrks.json"),
+                'ltl_samples': os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
+            },
+            fpath=utt_fpath
+        )
 
     # Spatial Referring Expression Recognition
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
