@@ -25,7 +25,7 @@ def ground(lifted_utt, model_fpath):
 
 
 if __name__ == "__main__":
-    location = "boston"
+    location = "indoor_env_0"
     ablation = None  # "text", "image", None
 
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     # Spatial Referring Expression Recognition
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
-    if os.path.isfile(srer_out_fpath):
+    if not os.path.isfile(srer_out_fpath):
         srer_outs = []
         utts = load_from_file(utt_fpath)
         for utt in tqdm(utts, desc='Performing spatial referring expression recognition (SRER)...'):
