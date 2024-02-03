@@ -46,7 +46,8 @@ if __name__ == "__main__":
                 'gtr': os.path.join(data_dpath, "groundtruth_lmrks.json"),
                 'ltl_samples': os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
             },
-            fpath=utt_fpath
+            utts_fpath=utt_fpath,
+            gtr_fpath=os.path.join(data_dpath, f"groundtruth_{location}.json")
         )
 
     # Spatial Referring Expression Recognition
