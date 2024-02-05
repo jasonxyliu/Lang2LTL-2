@@ -8,6 +8,7 @@ import re
 from random import randint, choice
 from pandas import read_csv
 from tqdm import tqdm
+from time import sleep
 
 def deserialize_props_str(props_str):
     """
@@ -63,7 +64,7 @@ def save_to_file(data, fpth, mode=None):
         raise ValueError(f"ERROR: file type {ftype} not recognized")
 
 
-def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props=2):
+def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props=1, max_props=5):
 
     def load_ltl_samples(fpath):
         return read_csv(open(fpath, 'r'))
@@ -84,13 +85,14 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
 
     count = 0
 
-    for N in tqdm(range(num_utterances), desc="Generating synthetic dataset and groundtruth file..."):
+    progress_bar = tqdm(total=num_utterances, desc="Generating synthetic dataset and groundtruth file...")
+
+    while count < num_utterances:
         # -- use the eval function to get the list of props for a randomly selected row from the set of LTL blueprints:
         ltl_sample = ltl_samples.iloc[randint(0, len(ltl_samples)-1)]
         ltl_props = list(set(eval(ltl_sample['props'])))
 
-        if len(ltl_props) < min_props:
-            N -= 1
+        if len(ltl_props) < min_props or len(ltl_props) > max_props:
             continue
 
         ltl_blueprint = ltl_sample['utterance']
@@ -103,34 +105,86 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
         if not ltl_blueprint.startswith('.'):
             ltl_blueprint = '.' + ltl_blueprint
 
-        list_true_srer = []
-        list_true_sre = []
-
         new_command = ltl_blueprint
-        for x in range(len(ltl_props)):
 
-            target = choice(landmarks)
+        list_true_sre = []
+        list_true_srer = []
+        list_true_reg_spg = []
+
+        existing_targets = []
+        for P in range(len(ltl_props)):
 
             new_sre = None
+            new_srer = {}
+
             while not bool(new_sre):
-                random_pred = choice(gtr[target])
+                random_pred = choice(gtr[choice(landmarks)])
                 # -- this is an element without any spatial relation:
+
+                target = None
+
                 if "*" in random_pred:
                     new_sre = random_pred["*"]
-                    random_pred = {new_sre : {}}
+                    new_srer = {new_sre : {}}
+
+                    possible_targets = []
+                    for x in landmarks:
+                        for y in gtr[x]:
+                            if '*' in y and y["*"] == new_sre:
+                                possible_targets.append(x)
+
+                    target = choice(possible_targets)
+
+                    random_pred = {new_sre: target}
                 else:
+                    # -- this means we are using one of the groundtruth entries that have specific object instances:
+
+                    # -- get the relation in this predicate:
                     rel = list(random_pred.keys())[0]
-                    if len(random_pred[rel]) == 2:
-                        new_sre = f'{random_pred[rel][0]} {rel} {random_pred[rel][1]}'
-                    elif len(random_pred[rel]) == 3:
-                        new_sre = f'{random_pred[rel][0]} {rel} {random_pred[rel][1]} and {random_pred[rel][2]}'
+
+                    if len(random_pred[rel]) == 2 or len(random_pred[rel]) == 3:
+                        target = random_pred[rel][0]
+
+                        # -- we will do some "lifting" of the specific landmarks assigned to this SRE:
+                        lifted_target = choice([x['@'] for x in gtr[random_pred[rel][0]] if '@' in x] +
+                                                [x['*'] for x in gtr[random_pred[rel][0]] if '*' in x])
+
+                        if len(random_pred[rel]) == 2:
+                            try:
+                                lifted_anchor = choice([x['*'] for x in gtr[random_pred[rel][1]] if '*' in x])
+                            except IndexError:
+                                continue
+
+                            new_sre = f'{lifted_target} {rel} {lifted_anchor}'
+                            new_srer[rel] = [lifted_target, lifted_anchor]
+
+                        elif len(random_pred[rel]) == 3:
+                            try:
+                                lifted_anchor_1 = choice([x['*'] for x in gtr[random_pred[rel][1]] if '*' in x])
+                            except IndexError:
+                                continue
+
+                            try:
+                                lifted_anchor_2 = choice([x['*'] for x in gtr[random_pred[rel][2]] if '*' in x])
+                            except IndexError:
+                                continue
+
+                            new_sre = f'{lifted_target} {rel} {lifted_anchor_1} and {lifted_anchor_2}'
+                            new_srer[rel] = [lifted_target, lifted_anchor_1, lifted_anchor_2]
+
+                if target in existing_targets:
+                    new_sre = None
+
+                # NOTE: we will keep track of all targets we have already added to make sure we don't get repeats:
+                existing_targets.append(target)
 
             list_true_sre.append(new_sre)
-            list_true_srer.append(random_pred)
+            list_true_srer.append(new_srer)
+            list_true_reg_spg.append(random_pred)
 
             # NOTE: to do replacement of the lifted proposition with the generated one, we need to account for
             # different ways it would be written preceded by a whitespace character, i.e., ' a ', ' a,', ' a.'
-            new_command = re.sub(rf"(\W)([{ltl_props[x]}])(\W)", rf'\1{new_sre}\3', new_command)
+            new_command = re.sub(rf"(\b)([{ltl_props[P]}])(\W)", rf'\1{new_sre}\3', new_command)
 
             # NOTE: some utterances will be missing some propositions
 
@@ -139,9 +193,18 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
         list_true_results.append({
             "utt": list_utterances[-1],
             "true_ltl": ltl_formula,
+            "true_sre": list_true_sre,
             "true_srer": list_true_srer,
-            "true_sre": list_true_sre
+            "true_reg_spg": list_true_reg_spg
         })
+
+        count += 1
+
+        sleep(0.001)
+        progress_bar.update(1)
+
+    progress_bar.close()
+    print()
 
     utts_for_file = ""
     for command in list_utterances:
@@ -150,4 +213,3 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
     save_to_file(utts_for_file, utts_fpath)
     save_to_file(list_true_results, gtr_fpath)
 
-    print()
