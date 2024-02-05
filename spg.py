@@ -18,7 +18,7 @@ osm_path = os.path.join(os.path.expanduser("~"), "ground", "data", "osm", "black
 # NOTE: reg_output_path :- file path to the output of the RER process (obtained from Jason):
 reg_output_path = os.path.join(os.path.expanduser("~"), "ground", "data", "reg_outs_blackstone.json")
 
-known_spatial_relations = [
+KNOWN_RELATIONS = [
     'left', 'left of', 'to the left of', 'right', 'right of', 'to the right of',
     'in front of', 'opposite', 'opposite to', 'behind', 'behind of', 'at the rear of',
     'near', 'near to', 'next', 'next to', 'adjacent to', 'close', 'close to', 'at', 'by', 'between',
@@ -28,10 +28,10 @@ known_spatial_relations = [
 landmarks = None
 
 # -- let's assume that we will only look for an object that is within 25m of the anchor:
-max_range = 25.0
+MAX_RANGE = 25.0
 
 # -- this variable indicates the offset to compute a target location for SREs without a target:
-range_to_anchor = 2.0
+RANGE_TO_ANCHOR = 2.0
 
 # -- this variable controls whether we use a library for converting GPS to Cartesian coordinates:
 use_pyproj = True
@@ -82,7 +82,7 @@ def find_closest_relation(rel):
     # -- precompute the embedding for the unseen relation:
     unseen_rel_embedding = get_embed(rel)
 
-    for R in known_spatial_relations:
+    for R in KNOWN_RELATIONS:
 
         # -- get an embedding for each predefined relation:
         candidate_embedding = get_embed(R)
@@ -199,18 +199,18 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
                     width=0.01, head_width=0.1, color='black', label='normal')
 
         for r in range(len(list_ranges)):
-            mean_pose = [(list_ranges[r]['mean'][0] * max_range) + anchor['x'],
-                            (list_ranges[r]['mean'][1] * max_range) + anchor['y']]
+            mean_pose = [(list_ranges[r]['mean'][0] * MAX_RANGE) + anchor['x'],
+                            (list_ranges[r]['mean'][1] * MAX_RANGE) + anchor['y']]
             plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]],
                         c='g', marker='o', label=f'mean_{r}')
 
-            min_pose = [(list_ranges[r]['min'][0] * max_range) + anchor['x'],
-                        (list_ranges[r]['min'][1] * max_range) + anchor['y']]
+            min_pose = [(list_ranges[r]['min'][0] * MAX_RANGE) + anchor['x'],
+                        (list_ranges[r]['min'][1] * MAX_RANGE) + anchor['y']]
             plt.scatter(x=[min_pose[0]], y=[min_pose[1]],
                         c='r', marker='x', label=f'min_{r}')
 
-            max_pose = [(list_ranges[r]['max'][0] * max_range) + anchor['x'],
-                        (list_ranges[r]['max'][1] * max_range) + anchor['y']]
+            max_pose = [(list_ranges[r]['max'][0] * MAX_RANGE) + anchor['x'],
+                        (list_ranges[r]['max'][1] * MAX_RANGE) + anchor['y']]
             plt.scatter(x=[max_pose[0]], y=[max_pose[1]],
                         c='b', marker='x', label=f'max_{r}')
 
@@ -272,7 +272,7 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
 
             a2t_distance = np.linalg.norm(np.array([target['x'], target['y']]) - np.array([anchor['x'], anchor['y']]))
 
-            if is_within_vectors and a2t_distance <= max_range:
+            if is_within_vectors and a2t_distance <= MAX_RANGE:
                 print(f'    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates[0]}')
                 is_valid = True
                 break
@@ -292,22 +292,22 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
                 plt.text(target['x'], target['y'], s=target_candidate)
 
                 for R in range(len(list_ranges)):
-                    mean_pose = np.array([(list_ranges[R]['mean'][0] * max_range) + anchor['x'],
-                                    (list_ranges[R]['mean'][1] * max_range) + anchor['y']])
+                    mean_pose = np.array([(list_ranges[R]['mean'][0] * MAX_RANGE) + anchor['x'],
+                                    (list_ranges[R]['mean'][1] * MAX_RANGE) + anchor['y']])
                     # plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c='g', marker='o', label='mean')
 
-                    min_pose = np.array([(list_ranges[R]['min'][0] * max_range) + anchor['x'],
-                                (list_ranges[R]['min'][1] * max_range) + anchor['y']])
+                    min_pose = np.array([(list_ranges[R]['min'][0] * MAX_RANGE) + anchor['x'],
+                                (list_ranges[R]['min'][1] * MAX_RANGE) + anchor['y']])
                     # plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c='r', marker='x', label='min')
 
-                    max_pose = np.array([(list_ranges[R]['max'][0] * max_range) + anchor['x'],
-                                (list_ranges[R]['max'][1] * max_range) + anchor['y']])
+                    max_pose = np.array([(list_ranges[R]['max'][0] * MAX_RANGE) + anchor['x'],
+                                (list_ranges[R]['max'][1] * MAX_RANGE) + anchor['y']])
                     # plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c='b', marker='x', label='max')
 
                     if R == (len(list_ranges) - 1):
                         # plt.plot([anchor['x'], mean_pose[0]], [anchor['y'], mean_pose[1]], linestyle='dotted', c='g', label='mean_range' )
                         plt.plot([anchor['x'], min_pose[0]], [anchor['y'], min_pose[1]], linestyle='dotted', c='r', label='min_range')
-                        plt.plot([anchor['x'], max_pose[0]], [anchor['y'], max_pose[1]], linestyle='dotted', c='b', label='max_range')
+                        plt.plot([anchor['x'], max_pose[0]], [anchor['y'], max_pose[1]], linestyle='dotted', c='b', label='MAX_RANGE')
                     else:
                         # plt.plot([anchor['x'], mean_pose[0]], [anchor['y'], mean_pose[1]], linestyle='dotted', c='g', )
                         plt.plot([anchor['x'], min_pose[0]], [anchor['y'], min_pose[1]], linestyle='dotted', c='r')
@@ -345,8 +345,8 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
         # -- computing vectors perpendicular to each anchoring point:
         vec_a1_to_a2 = anchor_2 - anchor_1; vec_a1_to_a2 /= np.linalg.norm(vec_a1_to_a2)
         vec_a2_to_a1 = anchor_1 - anchor_2; vec_a2_to_a1 /= np.linalg.norm(vec_a2_to_a1)
-        A, B = np.dot(rotation_matrix(np.deg2rad(-90)), vec_a1_to_a2 * max_range) + anchor_1, np.dot(rotation_matrix(np.deg2rad(90)), vec_a1_to_a2 * max_range) + anchor_1
-        C, D = np.dot(rotation_matrix(np.deg2rad(-90)), vec_a2_to_a1 * max_range) + anchor_2, np.dot(rotation_matrix(np.deg2rad(90)), vec_a2_to_a1 * max_range) + anchor_2
+        A, B = np.dot(rotation_matrix(np.deg2rad(-90)), vec_a1_to_a2 * MAX_RANGE) + anchor_1, np.dot(rotation_matrix(np.deg2rad(90)), vec_a1_to_a2 * MAX_RANGE) + anchor_1
+        C, D = np.dot(rotation_matrix(np.deg2rad(-90)), vec_a2_to_a1 * MAX_RANGE) + anchor_2, np.dot(rotation_matrix(np.deg2rad(90)), vec_a2_to_a1 * MAX_RANGE) + anchor_2
 
         dot_ABAM = np.dot(B-A, target-A)
         dot_ABAB = np.dot(B-A, B-A)
@@ -401,12 +401,12 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
 
     for R in range(len(list_ranges)):
 
-        cur_min_pos = {'x': (list_ranges[R]['mean'][0] * range_to_anchor) + anchor['x'],
-                       'y': (list_ranges[R]['mean'][1] * range_to_anchor) + anchor['y']}
+        cur_min_pos = {'x': (list_ranges[R]['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
+                       'y': (list_ranges[R]['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
         cur_min_dist = np.linalg.norm(np.array([cur_min_pos['x'], cur_min_pos['y']]) - np.array([robot['x'], robot['y']]))
 
-        new_min_pos = {'x': (list_ranges[closest_position]['mean'][0] * range_to_anchor) + anchor['x'],
-                       'y': (list_ranges[closest_position]['mean'][1] * range_to_anchor) + anchor['y']}
+        new_min_pos = {'x': (list_ranges[closest_position]['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
+                       'y': (list_ranges[closest_position]['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
         new_min_dist = np.linalg.norm(np.array([new_min_pos['x'], new_min_pos['y']]) - np.array([robot['x'], robot['y']]))
 
         if cur_min_dist > new_min_dist:
@@ -416,9 +416,9 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
     # -- select the index that was found to be closest to the robot:
     R = list_ranges[closest_position]
 
-    # -- use the mean vector to find a point that is within range_to_anchor (2m) of the anchor:
-    new_robot_pos = {'x': (R['mean'][0] * range_to_anchor) + anchor['x'],
-                     'y': (R['mean'][1] * range_to_anchor) + anchor['y']}
+    # -- use the mean vector to find a point that is within RANGE_TO_ANCHOR (2m) of the anchor:
+    new_robot_pos = {'x': (R['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
+                     'y': (R['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
 
     if plot:
         plt.figure()
@@ -434,11 +434,11 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
             plt.text(landmarks[A]['x'], landmarks[A]['y'], A)
 
         # -- plot the range as well for visualization:
-        plt.plot([anchor['x'], (R['min'][0] * range_to_anchor) + anchor['x']],
-                 [anchor['y'], (R['min'][1] * range_to_anchor) + anchor['y']],
+        plt.plot([anchor['x'], (R['min'][0] * RANGE_TO_ANCHOR) + anchor['x']],
+                 [anchor['y'], (R['min'][1] * RANGE_TO_ANCHOR) + anchor['y']],
                  linestyle='dotted', c='r')
-        plt.plot([anchor['x'], (R['max'][0] * range_to_anchor) + anchor['x']],
-                 [anchor['y'], (R['max'][1] * range_to_anchor) + anchor['y']],
+        plt.plot([anchor['x'], (R['max'][0] * RANGE_TO_ANCHOR) + anchor['x']],
+                 [anchor['y'], (R['max'][1] * RANGE_TO_ANCHOR) + anchor['y']],
                  linestyle='dotted', c='b')
 
         plt.title(f'Computed Target Position: "{sre}"' if sre else f'Computed Target Position: "{spatial_rel}"')
@@ -715,7 +715,7 @@ def sort_by_scores(spatial_pred_dict):
 
 def spg(spatial_preds, topk=5):
 
-    global landmarks, known_spatial_relations
+    global landmarks, KNOWN_RELATIONS
 
     # -- find the closest waypoint to each anchor from OSM:
     # anchor_to_target = {}
@@ -766,7 +766,7 @@ def spg(spatial_preds, topk=5):
             }
             for G in grounding_set:
                 output['groundings'].append({
-                        'target': G['target']
+                        'target': G['target'][0]
                     })
 
             spg_output.append(output)
@@ -776,7 +776,7 @@ def spg(spatial_preds, topk=5):
         relation = unmatched_rel
 
         # TODO: check if spatial relation is predefined:
-        if unmatched_rel not in known_spatial_relations:
+        if unmatched_rel not in KNOWN_RELATIONS:
             # -- find the closest spatial relation:
             relation = find_closest_relation(unmatched_rel)
             print(f'    - UNSEEN RELATION:\t"{unmatched_rel}" is closest to "{relation}"!')
