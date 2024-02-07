@@ -16,6 +16,9 @@ LOC2GID = {
 
 
 def ground(graph_dpath, osm_fpath, model_fpath, utt):
+    """
+    Grounding API function
+    """
     # Spatial Referring Expression Recognition (SRER)
     _, srer_out = srer(utt)
 
