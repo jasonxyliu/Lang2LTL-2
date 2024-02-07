@@ -1,5 +1,5 @@
-# grounding
-Codebase for the Spatio-temporal grounding paper
+# Spatio-temporal Language Grounding
+Codebase for the paper Grounding Spatio-temporal Language Commands.
 
 # Installation
 ```
@@ -9,3 +9,6 @@ conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvi
 conda install pytorch torchdata -c pytorch  # CPU
 conda install -c conda-forge pyproj
 ```
+
+# Lifted Command Translation Module
+Download finetuned T5-base model weights at [drive](https://drive.google.com/drive/folders/1rZl8tblyVj-pZZW4OgbO1NJwMIT2fwx9?usp=sharing)
