@@ -110,7 +110,6 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
                 lmk_candidates = reg.query(query, topk=topk)
                 grounded_res.append(lmk_candidates)
                 print(f"{idx}: {sre}\n{query}\n{lmk_candidates}\n")
-
             grounded_sre_to_preds[sre] = {spatil_relation: grounded_res}
 
         srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
