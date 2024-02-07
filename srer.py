@@ -76,12 +76,12 @@ def parse_LLM_output(output):
         found = False
 
         for pred in spatial_preds:
-            # -- get the spatial relation phrase and check if 
+            # -- get the spatial relation phrase and check if
             #       it exists in the SRE we are checking for match:
             relation = list(pred.keys()).pop()
 
             if relation in sre:
-                # -- check if each landmark exists in the            
+                # -- check if each landmark exists in the
                 num_matches = 0
                 for lmrk in pred[relation]:
                     if lmrk in sre:
@@ -90,7 +90,7 @@ def parse_LLM_output(output):
                 if len(pred[relation]) == num_matches:
                     llm_output['sre_to_preds'][sre] = pred
                     found = True
-            
+
         if not found:
             # -- this means we have a referring expression without spatial relations:
             llm_output['sre_to_preds'][sre] = {}

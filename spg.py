@@ -760,15 +760,7 @@ def spg(spatial_preds, topk=5):
 
         if unmatched_rel == 'None':
             # TODO: what to do for non-spatial referring expressions?
-            output = {
-                'sre' : sre,
-                'groundings': []
-            }
-            for G in grounding_set:
-                output['groundings'].append({
-                        'target': G['target'][0]
-                    })
-
+            output[sre] = [{'target': G['target'][0]} for G in grounding_set]
             spg_output.append(output)
             continue
 
@@ -803,11 +795,7 @@ def spg(spatial_preds, topk=5):
             #   2. two anchors (e.g., <tgt> between <anc1> and <anc2>):
 
             is_valid = False
-
-            output = {
-                'sre' : sre,
-                'groundings': []
-            }
+            groundings = []
 
             for G in grounding_set:
                 target_name = G['target'].pop()
@@ -819,7 +807,7 @@ def spg(spatial_preds, topk=5):
 
                 if is_valid:
                     # print(grounding_set.index(G), ':', G['score'])
-                    output['groundings'].append({
+                    groundings.append({
                         'target': target_name,
                         'anchor': anchor_names
                     })
@@ -830,6 +818,7 @@ def spg(spatial_preds, topk=5):
                     # print(output['groundings'])
                     break
 
+            output[sre] = groundings
             spg_output.append(output)
 
         plt.close('all')

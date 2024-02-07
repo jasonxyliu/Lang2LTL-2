@@ -11,18 +11,16 @@ def embed_images(img_fpaths, cap_dpath, embed_dpath):
     img_embeds = {}
     for img_fpath in img_fpaths:
         img_id = Path(img_fpath).stem
-        cap_fpath = os.path.join(cap_dpath, f"{img_id}.pkl")
+        cap_fpath = os.path.join(cap_dpath, f"{img_id}.txt")
         embed_fpath = os.path.join(embed_dpath, f"{img_id}.pkl")
 
         if os.path.isfile(embed_fpath):
             img_cap = load_from_file(cap_fpath)
             img_embed = load_from_file(embed_fpath)
         else:
-            img_cap = GPT4V().caption(img_fpath)
+            img_cap = GPT4V().caption(img_fpath)  # image caption
             save_to_file(img_cap, cap_fpath)
-            save_to_file(img_cap, os.path.join(cap_dpath, f"{img_id}.txt"))
-
-            img_embed = get_embed(img_cap)
+            img_embed = get_embed(img_cap)  # embed image captioin
             save_to_file(img_embed, embed_fpath)
 
         img_embeds[img_id] = img_embed
@@ -38,13 +36,12 @@ def embed_texts(txts, embed_dpath):
         if os.path.isfile(embed_fpath):
             txt_emebed = load_from_file(embed_fpath)
         else:
-            txt["name"] = lmk_name
+            txt["name"] = lmk_name  # add landmark name into its textual description
             txt_emebed = get_embed(txt)
             save_to_file(txt_emebed, embed_fpath)
 
         txt_embeds[txt_id] = txt_emebed
     return txt_embeds
-
 
 
 class REG():
@@ -53,33 +50,26 @@ class REG():
     Use semantic description of landmarks and objects in text and images.
     """
     def __init__(self, img_embeds, txt_embeds):
-        sem_embeds, self.sem_ids = [], []
+        self.sem_ids, sem_embeds = [], []
 
         if img_embeds:
+            self.sem_ids += list(img_embeds.keys())
             sem_embeds += list(img_embeds.values())
-            self.img_ids = list(img_embeds.keys())
-            self.sem_ids += self.img_ids
 
         if txt_embeds:
+            self.sem_ids += list(txt_embeds.keys())
             sem_embeds += list(txt_embeds.values())
-            self.txt_ids = list(txt_embeds.keys())
-            self.sem_ids += self.txt_ids
 
         self.sem_embeds = np.array(sem_embeds)
 
     def query(self, query, topk):
         query_embeds = get_embed(query)
         query_scores = cosine_similarity(np.array(query_embeds).reshape(1, -1), self.sem_embeds)[0]
-
         lmks_sorted = sorted(zip(query_scores, self.sem_ids), reverse=True)
-
-        # for score, sem_id in lmks_sorted:
-        #     print(f"{sem_id}: {score}")
-
         return lmks_sorted[:topk]
 
 
-def reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk, ablate):
+def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
     img_embeds, txt_embeds = None, None
 
     if not ablate or ablate == "text":
@@ -102,18 +92,17 @@ def reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk, ablate):
     reg = REG(img_embeds, txt_embeds)
 
     reg_outs = []
-    srer_outs = load_from_file(os.path.join(results_dpath, srer_out_fname))
 
     for srer_out in srer_outs:
         print(f"command: {srer_out['utt']}")
         grounded_sre_to_preds = {}
 
         for sre, spatial_pred in srer_out["sre_to_preds"].items():
-            if spatial_pred:
+            if spatial_pred:  # spatial referring expression
                 spatil_relation = list(spatial_pred.keys())[0]
                 res =  list(spatial_pred.values())[0]
             else:
-                spatil_relation = "None"  # reference expression w/o spatial relation
+                spatil_relation = "None"  # reference expression without spatial relation
                 res = [sre]
 
             grounded_res = []
@@ -125,18 +114,9 @@ def reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk, ablate):
             grounded_sre_to_preds[sre] = {spatil_relation: grounded_res}
 
         srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
-
         reg_outs.append(srer_out)
-    save_to_file(reg_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "reg")))
 
-    # queries = ["bookshelf", "desk and chair", "kitchen cabinet", "blue couch", "red couch", "refrigerator", "door", "white board", "TV"]
-    # for idx, query in enumerate(queries):
-    #     print(f"{idx}: {query}")
-    #     reg = REG(img_embeds, txt_embeds)
-    #     # reg = REG(np.array(list(img_embeds.values())), np.array(list(txt_embeds.values())))
-    #     lmk_candidates = reg.query(query, topk=5)
-
-    #     print("\n\n")
+    return reg_outs
 
 
 if __name__ == "__main__":
@@ -146,4 +126,6 @@ if __name__ == "__main__":
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     srer_out_fname = "srer_outs_blackstone.json"
 
-    reg(results_dpath, graph_dpath, osm_fpath, srer_out_fname, topk=3, ablate=None)
+    srer_outs = load_from_file(os.path.join(results_dpath, srer_out_fname))
+    reg_outs = reg(graph_dpath, osm_fpath, srer_out_fname, topk=5, ablate=None)
+    save_to_file(reg_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "reg")))
