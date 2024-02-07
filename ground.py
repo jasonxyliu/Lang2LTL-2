@@ -8,9 +8,9 @@ from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file, generate_dataset
 
 
-loc2gid = {
-    "alley": "downloaded_graph_2024-02-02_14-26-54",
+LOC2GID = {
     "indoor_env_0": "downloaded_graph_2024-02-02_10-55-35",
+    "alley": "downloaded_graph_2024-02-02_14-26-54",
     "blackstone": "downloaded_graph_2024-01-27_07-48-53",
     "boston": "boston",
     "auckland": "auckland",
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", loc2gid[location])
+    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[location])
     osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
@@ -38,17 +38,6 @@ if __name__ == "__main__":
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
     topk = 3  # top 3 most likely landmarks grounded by REG
-
-    if not os.path.isfile(utt_fpath):
-        generate_dataset(
-            params={
-                'location': location,
-                'gtr': os.path.join(data_dpath, "groundtruth_lmrks.json"),
-                'ltl_samples': os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
-            },
-            utts_fpath=utt_fpath,
-            gtr_fpath=os.path.join(data_dpath, f"groundtruth_{location}.json")
-        )
 
     # Spatial Referring Expression Recognition
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
