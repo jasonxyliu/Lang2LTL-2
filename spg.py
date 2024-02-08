@@ -762,7 +762,7 @@ def spg(spatial_preds, topk=5):
 
         if unmatched_rel == 'None':
             # TODO: what to do for non-spatial referring expressions?
-            groundings = [{'target': G['target'][0]} for G in grounding_set][0:topk]
+            groundings = [{'target': G['target'][0]} for G in grounding_set[:topk]]
 
         else:
             # -- relation is the string that *should* be in the listed of evaluated predicates:
@@ -815,9 +815,7 @@ def spg(spatial_preds, topk=5):
                         # print(output['groundings'])
                         break
 
-        spg_output.append({
-            sre: groundings
-        })
+        spg_output.append({sre: groundings})
 
         plt.close('all')
 
