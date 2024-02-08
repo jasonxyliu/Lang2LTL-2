@@ -150,9 +150,9 @@ if __name__ == "__main__":
         generate_dataset(
             params={
                 "location": args.location,
-                "gtr": os.path.join(data_dpath, "groundtruth_lmrks.json"),
+                "gtr": os.path.join(data_dpath, "true_lmk_grounds.json"),
                 "ltl_samples": os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
             },
             utts_fpath=utt_fpath,
-            gtr_fpath=os.path.join(data_dpath, f"groundtruth_{args.location}.json")
+            gtr_fpath=os.path.join(data_dpath, f"true_results_{args.location}.json")
         )

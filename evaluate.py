@@ -1,25 +1,25 @@
 from utils import load_from_file
 
 
-def evaluate_spg(spg_output_fpth, gtr_fpath, topk):
-	# NOTE: this function will take in a JSON outputted by the SPG module and it will produce a report
-	#		of how many matches it gets right.
-
+def evaluate_spg(spg_outs_fpth, true_results_fpath, topk):
+	"""
+	Compute the top K accuracy of Spatial Predicate Groudning module.
+	"""
 	# -- we need to count the total number of SREs across all commands in the JSON file:
 	total_sres = 0
 	total_topk = {f'top-{x+1}': 0 for x in range(topk)}
 
-	spg_output = load_from_file(spg_output_fpth)
-	gtr_data = load_from_file(gtr_fpath)
-	gtr_utt_to_results = {x['utt']: x for x in gtr_data}
+	spg_outs = load_from_file(spg_outs_fpth)
+	true_results = load_from_file(true_results_fpath)
+	gtr_utt_to_results = {x['utt']: x for x in true_results}
 
-	for result in spg_output:
-		print(result['utt'])
-		gtr = gtr_utt_to_results[result['utt']]
+	for spg_out in spg_outs:
+		print(f"Command: {spg_out['utt']}")
+		gtr = gtr_utt_to_results[spg_out['utt']]
 		total_sres += len(gtr['true_reg_spg'])
 
 		spgs_gtr = gtr['true_reg_spg']
-		spgs_gen = result['spg_results']
+		spgs_gen = spg_out['spg_results']
 
 		for spg_gtr in spgs_gtr:
 			spg_gen = None
