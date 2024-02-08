@@ -20,29 +20,29 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt):
     Grounding API function
     """
     # Spatial Referring Expression Recognition (SRER)
-    _, srer_out = srer(utt)
+    _, srer_out = srer(utt)  # subsequent module outputs also stored in this dict
 
     # Referring Expression Grounding (REG)
-    reg_out = reg(graph_dpath, osm_fpath, [srer_out], topk, ablation)[0]
+    reg(graph_dpath, osm_fpath, [srer_out], topk, ablation)
 
     # Spatial Predicate Grounding (SPG)
     init(graph_dpath, osm_fpath)
-    reg_out['spg_results'] = spg(reg_out, topk)
+    srer_out['spg_results'] = spg(srer_out, topk)
 
     # Lifted Translation (LT)
     lifted_utt = srer_out["lifted_utt"]
     query = lifted_utt.translate(str.maketrans('', '', ',.'))
     lt_module = Seq2Seq(model_fpath, "t5-base")
-    reg_out["lifted_ltl"] = lt_module.type_constrained_decode([query])[0]
+    srer_out["lifted_ltl"] = lt_module.type_constrained_decode([query])[0]
 
     # Substitute symbols by groundings of spatial referring expressions
-    grounded_ltl = reg_out["lifted_ltl"]
-    for symbol, sre in reg_out["lifted_symbol_map"].items():
-        grounding = reg_out["spg_results"][sre][0]["target"]
+    grounded_ltl = srer_out["lifted_ltl"]
+    for symbol, sre in srer_out["lifted_symbol_map"].items():
+        grounding = srer_out["spg_results"][sre][0]["target"]
         grounded_ltl.replace(symbol, grounding)
-    reg_out["grounded_ltl"] = grounded_ltl
+    srer_out["grounded_ltl"] = grounded_ltl
 
-    return reg_out
+    return srer_out
 
 
 if __name__ == "__main__":
