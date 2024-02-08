@@ -21,7 +21,7 @@ reg_output_path = os.path.join(os.path.expanduser("~"), "ground", "data", "reg_o
 KNOWN_RELATIONS = [
     'left', 'left of', 'to the left of', 'right', 'right of', 'to the right of',
     'in front of', 'opposite', 'opposite to', 'behind', 'behind of', 'at the rear of',
-    'near', 'near to', 'next', 'next to', 'adjacent to', 'close', 'close to', 'at', 'by', 'between',
+    'near', 'next', 'next to', 'adjacent to', 'close', 'close to', 'at', 'by', 'between',
     'north of', 'south of', 'east of', 'west of', 'northeast of', 'northwest of', 'southeast of', 'southwest of'
 ]
 
@@ -71,36 +71,6 @@ def gps_to_cartesian(landmark):
     y = radius_earth * np.cos(np.deg2rad(lat)) * np.sin(np.deg2rad(long))
     z = radius_earth * np.sin(np.deg2rad(lat))
     return [x, y, z]
-#enddef
-
-
-def find_closest_relation(rel):
-    # -- using text embedding model provided by OpenAI:
-    closest_rel = None
-    closest_rel_embedding = None
-
-    # -- precompute the embedding for the unseen relation:
-    unseen_rel_embedding = get_embed(rel)
-
-    for R in KNOWN_RELATIONS:
-
-        # -- get an embedding for each predefined relation:
-        candidate_embedding = get_embed(R)
-
-        if not closest_rel:
-            closest_rel = R
-            closest_rel_embedding = candidate_embedding
-
-        else:
-            # -- compute cosine similarity between words and pick the higher (i.e., most similar) word:
-            current_score = np.dot(unseen_rel_embedding, closest_rel_embedding)
-            new_rel_score = np.dot(unseen_rel_embedding, candidate_embedding)
-
-            if current_score < new_rel_score:
-                closest_rel = R
-                closest_rel_embedding =candidate_embedding
-
-    return closest_rel
 #enddef
 
 
@@ -713,9 +683,35 @@ def sort_by_scores(spatial_pred_dict):
 #enddef
 
 
-def spg(spatial_preds, topk=5):
+def find_match_relation(unseen_rel):
+    """
+    Use cosine similatiry between text embeddings to find best matching known spatil relation to the unseen input
+    """
+    closest_rel, closest_rel_embed = None, None
+    unseen_rel_embed = get_embed(unseen_rel)
 
-    global landmarks, KNOWN_RELATIONS
+    for known_rel in KNOWN_RELATIONS:
+        candidate_embed = get_embed(known_rel)
+
+        if not closest_rel:
+            closest_rel = known_rel
+            closest_rel_embed = candidate_embed
+        else:
+            current_score = np.dot(unseen_rel_embed, closest_rel_embed)
+            new_rel_score = np.dot(unseen_rel_embed, candidate_embed)
+
+            if current_score < new_rel_score:
+                closest_rel = known_rel
+                closest_rel_embed = candidate_embed
+
+    return closest_rel
+#enddef
+
+
+def spg(spatial_preds, topk):
+    print(f"Command: spatial_preds['utt']\n")
+
+    global landmarks
 
     # -- find the closest waypoint to each anchor from OSM:
     # anchor_to_target = {}
@@ -741,8 +737,6 @@ def spg(spatial_preds, topk=5):
     #     # print(A, anchor_to_target[A])
 
     spg_output = {}
-
-    print(spatial_preds['utt'])
 
     for R in spatial_preds['grounded_sre_to_preds']:
         # -- extract the name of the SRE, which is a key in spatial_preds['grounded_sre_to_preds']:
@@ -830,4 +824,4 @@ if __name__ == '__main__':
     init()
     reg_outputs = load_from_file(reg_output_path)
     for reg_output in reg_outputs:
-        spg(reg_output)
+        spg(reg_output, topk=5)
