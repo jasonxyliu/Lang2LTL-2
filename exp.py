@@ -35,11 +35,11 @@ if __name__ == "__main__":
     utt_fpath = os.path.join(data_dpath, f"utts_{args.location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     srer_out_fname = f"srer_outs_{args.location}_ablate_{args.ablate}.json" if args.ablate else f"srer_outs_{args.location}.json"
+    srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
 
     # Spatial Referring Expression Recognition (SRER)
-    srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     if not os.path.isfile(srer_out_fpath):
         srer_outs = []
         utts = load_from_file(utt_fpath)
