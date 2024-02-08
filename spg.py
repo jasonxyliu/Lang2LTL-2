@@ -737,7 +737,7 @@ def spg(spatial_preds, topk=5):
 
         # Referring expression without spatial relation
         if input_rel == "None":
-            output[sre] = [{"target": lmk_ground["target"][0]} for lmk_ground in lmk_grounds_sorted]
+            output[sre] = [{"target": lmk_ground["target"][0]} for lmk_ground in lmk_grounds_sorted[:topk]]
             spg_output.append(output)
             continue
 
@@ -778,7 +778,7 @@ def spg(spatial_preds, topk=5):
                 for A in range(len(lmk_ground['anchor'])):
                     anchor_names.append(lmk_ground['anchor'][A])
 
-                is_valid = evaluate_spg(relation, target_name, anchor_names, sre=sre)
+                # -- we will keep a list of target positions in order of confidence scores from REG:
 
                 if is_valid:
                     # print(lmk_grounds_sorted.index(G), ':', G['score'])
@@ -793,8 +793,35 @@ def spg(spatial_preds, topk=5):
                     # print(groundings)
                     break
 
-            output[sre] = groundings
-            spg_output.append(output)
+            else:
+                # NOTE: this means we only have a single target and either:
+                #   1. a single anchor (e.g., <tgt> left of <anc1>)
+                #   2. two anchors (e.g., <tgt> between <anc1> and <anc2>):
+
+                is_valid = False
+
+                for lmk_ground in lmk_grounds_sorted:
+                    target_name = lmk_ground['target'].pop()
+                    anchor_names = []
+                    for A in range(len(lmk_ground['anchor'])):
+                        anchor_names.append(lmk_ground['anchor'][A])
+
+                    is_valid = evaluate_spg(relation, target_name, anchor_names, sre=sre)
+
+                    if is_valid:
+                        # print(grounding_set.index(G), ':', G['score'])
+                        groundings.append({
+                            'target': target_name,
+                            'anchor': anchor_names
+                        })
+
+                    if len(groundings) == topk:
+                        # TODO: we are currently going by top groundings based on joint cosine similarity score;
+                        #   is there some other way that can weigh both distance of target and the joint score?
+                        # print(output['groundings'])
+                        break
+
+        spg_output.append({sre: groundings})
 
         plt.close('all')
 

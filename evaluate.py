@@ -16,23 +16,39 @@ def evaluate_spg(spg_output_fpth, gtr_fpath, topk=3):
 	gtr_utt_to_results = {x['utt']: x for x in gtr_data}
 
 	for result in spg_output:
-		gtr = gtr_utt_to_results[result['utt']]
-		total_sres += len(result['spg_results'])
-
 		print(result['utt'])
-		for P in result['spg_results']:
-			gtr_spg = gtr['true_reg_spg'][result['spg_results'].index(P)]
-			gtr_rel = list(gtr_spg.keys()).pop()
-			gtr_target = gtr_spg[gtr_rel][0] if isinstance(gtr_spg[gtr_rel], list) else gtr_spg[gtr_rel]
+		gtr = gtr_utt_to_results[result['utt']]
+		total_sres += len(gtr['true_reg_spg'])
 
-			print(P)
+		spgs_gtr = gtr['true_reg_spg']
+		spgs_gen = result['spg_results']
 
-			for k in range(min(topk, len(P['groundings']))):
-				print(P['groundings'][k]['target'], gtr_target)
-				if P['groundings'][k]['target'] == gtr_target:
+		for spg_gtr in spgs_gtr:
+			spg_gen = None
+			for GR in spgs_gen:
+				# for each groundtruth SPG result, we check if there is a computed result for it as well:
+				if list(spg_gtr)[0] == list(GR)[0]:
+					spg_gen = GR
+
+			if not spg_gen:
+				continue
+
+			current_sre = list(spg_gtr)[0]
+
+			print(current_sre)
+
+			for k in range(topk):
+				if spg_gen[current_sre][k]['target'] in spg_gtr[current_sre]:
+					print(spg_gen[current_sre][k]['target'])
+					print(spg_gtr[current_sre])
+					print(k)
 					for j in range(k, topk):
 						total_topk[f'top-{j+1}'] += 1
-				break
+					break
+
+		print(len(gtr['true_reg_spg']))
+		print(total_topk)
+		input()
 
 	print(total_sres)
 	print(total_topk)
