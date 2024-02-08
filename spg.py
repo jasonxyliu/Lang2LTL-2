@@ -765,7 +765,7 @@ def spg(spatial_preds, topk):
             # TODO: check if spatial relation is predefined:
             if unmatched_rel not in KNOWN_RELATIONS:
                 # -- find the closest spatial relation:
-                relation = find_closest_relation(unmatched_rel)
+                relation = find_match_relation(unmatched_rel)
                 print(f'    - UNSEEN RELATION:\t"{unmatched_rel}" is closest to "{relation}"!')
 
             if len(reg_dict) == 1:
