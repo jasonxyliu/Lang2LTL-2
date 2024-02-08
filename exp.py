@@ -24,7 +24,7 @@ def lt(spg_outs, model_fpath):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--location", type=str, default="blackstone", choices=["indoor_env_0", "alley", "blackstone", "boston", "auckland"], help="domain name.")
-    parser.add_argument("--ablate", type=str, default="None", choices=["text", "image", "None"], help="ablate out")
+    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
     args = parser.parse_args()
 
