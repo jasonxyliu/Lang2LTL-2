@@ -52,6 +52,7 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
 
             new_sre = None
             new_srer = {}
+            new_spg = {}
 
             while not bool(new_sre):
                 random_pred = choice(gtr[choice(landmarks)])
@@ -69,9 +70,7 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
                             if '*' in y and y["*"] == new_sre:
                                 possible_targets.append(x)
 
-                    target = choice(possible_targets)
-
-                    random_pred = {new_sre: target}
+                    new_spg = {new_sre: possible_targets}
                 else:
                     # -- this means we are using one of the groundtruth entries that have specific object instances:
 
@@ -108,6 +107,9 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
                             new_sre = f'{lifted_target} {rel} {lifted_anchor_1} and {lifted_anchor_2}'
                             new_srer[rel] = [lifted_target, lifted_anchor_1, lifted_anchor_2]
 
+
+                        new_spg = {new_sre: random_pred[rel][0]}
+
                 if target in existing_targets:
                     new_sre = None
 
@@ -116,7 +118,7 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
 
             list_true_sre.append(new_sre)
             list_true_srer.append(new_srer)
-            list_true_reg_spg.append(random_pred)
+            list_true_reg_spg.append(new_spg)
 
             # NOTE: to do replacement of the lifted proposition with the generated one, we need to account for
             # different ways it would be written preceded by a whitespace character, i.e., ' a ', ' a,', ' a.'
