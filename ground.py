@@ -15,7 +15,7 @@ LOC2GID = {
 }  # location to Spot graph ID
 
 
-def ground(graph_dpath, osm_fpath, model_fpath, utt):
+def ground(graph_dpath, osm_fpath, model_fpath, utt, topk):
     """
     Grounding API function
     """
@@ -50,7 +50,7 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt):
 
 if __name__ == "__main__":
     location = "indoor_env_0"
-    ablation = "text"  # "text", "image", None
+    ablate = "text"  # "text", "image", None
     topk = 5  # top k most likely landmarks grounded by REG
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
@@ -59,10 +59,10 @@ if __name__ == "__main__":
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
-    srer_out_fname = f"srer_outs_{location}_ablate_{ablation}.json" if ablation else f"srer_outs_{location}.json"
+    srer_out_fname = f"srer_outs_{location}_ablate_{ablate}.json" if ablate else f"srer_outs_{location}.json"
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
 
     utt = "go to the couch in front of the TV, the couch to the left of the kitchen counter, the kitchen counter between the couch and the refrigerator, the table next to the door, and the chair on the left of the bookshelf in any order"
-    ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt)
+    ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt, topk)
     print(ground_out["grounded_ltl"])
