@@ -23,20 +23,18 @@ def lt(spg_outs, model_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="boston", choices=["indoor_env_0", "alley", "blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--location", type=str, default="blackstone", choices=["indoor_env_0", "alley", "blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--ablate", type=str, default="None", choices=["text", "image", "None"], help="ablate out")
+    parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
     args = parser.parse_args()
 
-    location = args.location
-    ablation = "text"  # "text", "image", None
-    topk = 5  # top k most likely landmarks grounded by REG
-
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[location])
-    osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
+    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.location])
+    osm_fpath = os.path.join(data_dpath, "osm", f"{args.location}.json")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
-    utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
+    utt_fpath = os.path.join(data_dpath, f"utts_{args.location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
-    srer_out_fname = f"srer_outs_{location}_ablate_{ablation}.json" if ablation else f"srer_outs_{location}.json"
+    srer_out_fname = f"srer_outs_{args.location}_ablate_{args.ablate}.json" if args.ablate else f"srer_outs_{args.location}.json"
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
 
@@ -53,7 +51,7 @@ if __name__ == "__main__":
     # Referring Expression Grounding (REG)
     if not os.path.isfile(reg_out_fpath):
         srer_outs = load_from_file(os.path.join(results_dpath, srer_out_fname))
-        reg(graph_dpath, osm_fpath, srer_outs, topk, ablation)
+        reg(graph_dpath, osm_fpath, srer_outs, args.topk, args.ablate)
         save_to_file(srer_outs, reg_out_fpath)
 
     # Spatial Predicate Grounding (SPG)
@@ -61,13 +59,13 @@ if __name__ == "__main__":
     if not os.path.isfile(spg_out_fpath):
         init(graph_dpath, osm_fpath)
         for reg_out in reg_outs:
-            reg_out['spg_results'] = spg(reg_out, topk)
+            reg_out['spg_results'] = spg(reg_out, args.topk)
         save_to_file(reg_outs, spg_out_fpath)
 
-    # Lifted Translation (LT)
-    # spg_outs = load_from_file(spg_out_fpath)
-    # lt(spg_outs, model_fpath)
-    # save_to_file(spg_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "lt")))
+    gtr_fpath = os.path.join(data_dpath, f"groundtruth_{args.location}.json")
+    evaluate_spg(spg_out_fpath, gtr_fpath, args.topk)
 
-    gtr_fpath = os.path.join(data_dpath, f"groundtruth_{location}.json")
-    evaluate_spg(spg_out_fpath, gtr_fpath, topk)
+    # Lifted Translation (LT)
+    spg_outs = load_from_file(spg_out_fpath)
+    lt(spg_outs, model_fpath)
+    save_to_file(spg_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "lt")))
