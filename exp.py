@@ -24,7 +24,7 @@ def lt(spg_outs, model_fpath):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--location", type=str, default="blackstone", choices=["indoor_env_0", "alley", "blackstone", "boston", "auckland"], help="domain name.")
-    parser.add_argument("--ablate", type=str, default="None", choices=["text", "image", "None"], help="ablate out")
+    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
     args = parser.parse_args()
 
@@ -35,11 +35,11 @@ if __name__ == "__main__":
     utt_fpath = os.path.join(data_dpath, f"utts_{args.location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     srer_out_fname = f"srer_outs_{args.location}_ablate_{args.ablate}.json" if args.ablate else f"srer_outs_{args.location}.json"
+    srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
 
     # Spatial Referring Expression Recognition (SRER)
-    srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     if not os.path.isfile(srer_out_fpath):
         srer_outs = []
         utts = load_from_file(utt_fpath)
@@ -62,8 +62,8 @@ if __name__ == "__main__":
             reg_out['spg_results'] = spg(reg_out, args.topk)
         save_to_file(reg_outs, spg_out_fpath)
 
-    gtr_fpath = os.path.join(data_dpath, f"groundtruth_{args.location}.json")
-    evaluate_spg(spg_out_fpath, gtr_fpath, args.topk)
+    true_results_fpath = os.path.join(data_dpath, f"true_results_{args.location}.json")
+    evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)
 
     # Lifted Translation (LT)
     spg_outs = load_from_file(spg_out_fpath)

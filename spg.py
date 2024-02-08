@@ -71,6 +71,10 @@ def gps_to_cartesian(landmark):
     y = radius_earth * np.cos(np.deg2rad(lat)) * np.sin(np.deg2rad(long))
     z = radius_earth * np.sin(np.deg2rad(lat))
     return [x, y, z]
+<<<<<<< HEAD
+=======
+#enddef
+>>>>>>> main
 
 
 def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
@@ -821,7 +825,7 @@ def spg(spatial_preds, topk=5):
                         # print(output['groundings'])
                         break
 
-        spg_output.append({sre: groundings})
+        spg_output[sre] = groundings
 
         plt.close('all')
 
@@ -835,4 +839,4 @@ if __name__ == '__main__':
     init()
     reg_outputs = load_from_file(reg_output_path)
     for reg_output in reg_outputs:
-        spg(reg_output)
+        spg(reg_output, topk=5)
