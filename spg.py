@@ -758,68 +758,66 @@ def spg(spatial_preds, topk=5):
         # -- rank all sets of targets and anchors for evaluating spatial predicate grounding:
         grounding_set = sort_by_scores(reg_dict)
 
+        groundings = []
+
         if unmatched_rel == 'None':
             # TODO: what to do for non-spatial referring expressions?
-            output[sre] = [{'target': G['target'][0]} for G in grounding_set]
-            spg_output.append(output)
-            continue
-
-        # -- relation is the string that *should* be in the listed of evaluated predicates:
-        relation = unmatched_rel
-
-        # TODO: check if spatial relation is predefined:
-        if unmatched_rel not in KNOWN_RELATIONS:
-            # -- find the closest spatial relation:
-            relation = find_closest_relation(unmatched_rel)
-            print(f'    - UNSEEN RELATION:\t"{unmatched_rel}" is closest to "{relation}"!')
-
-        if len(reg_dict) == 1:
-            # NOTE: this means we only have an anchoring landmark and no target landmark:
-
-            # -- we will keep a list of target positions in order of confidence scores from REG:
-            output = {
-                'sre': sre,
-                'targets' : []
-            }
-
-            for G in grounding_set:
-                # NOTE: the target key will instead hold the name of the anchor in question:
-                anchor_name = G['target'].pop()
-                output['targets'].append(get_target_position(relation, anchor_name, sre=sre))
-
-            spg_output.append(output)
+            groundings = [{'target': G['target'][0]} for G in grounding_set][0:topk]
 
         else:
-            # NOTE: this means we only have a single target and either:
-            #   1. a single anchor (e.g., <tgt> left of <anc1>)
-            #   2. two anchors (e.g., <tgt> between <anc1> and <anc2>):
+            # -- relation is the string that *should* be in the listed of evaluated predicates:
+            relation = unmatched_rel
 
-            is_valid = False
-            groundings = []
+            # TODO: check if spatial relation is predefined:
+            if unmatched_rel not in KNOWN_RELATIONS:
+                # -- find the closest spatial relation:
+                relation = find_closest_relation(unmatched_rel)
+                print(f'    - UNSEEN RELATION:\t"{unmatched_rel}" is closest to "{relation}"!')
 
-            for G in grounding_set:
-                target_name = G['target'].pop()
-                anchor_names = []
-                for A in range(len(G['anchor'])):
-                    anchor_names.append(G['anchor'][A])
+            if len(reg_dict) == 1:
+                # NOTE: this means we only have an anchoring landmark and no target landmark:
 
-                is_valid = evaluate_spg(relation, target_name, anchor_names, sre=sre)
+                # -- we will keep a list of target positions in order of confidence scores from REG:
 
-                if is_valid:
-                    # print(grounding_set.index(G), ':', G['score'])
-                    groundings.append({
-                        'target': target_name,
-                        'anchor': anchor_names
-                    })
+                for G in grounding_set:
+                    # NOTE: the target key will instead hold the name of the anchor in question:
+                    anchor_name = G['target'].pop()
+                    groundings.append(get_target_position(relation, anchor_name, sre=sre))
 
-                if len(output['groundings']) == topk:
-                    # TODO: we are currently going by top groundings based on joint cosine similarity score;
-                    #   is there some other way that can weigh both distance of target and the joint score?
-                    # print(output['groundings'])
-                    break
+                    if len(groundings) == topk:
+                        break
 
-            output[sre] = groundings
-            spg_output.append(output)
+            else:
+                # NOTE: this means we only have a single target and either:
+                #   1. a single anchor (e.g., <tgt> left of <anc1>)
+                #   2. two anchors (e.g., <tgt> between <anc1> and <anc2>):
+
+                is_valid = False
+
+                for G in grounding_set:
+                    target_name = G['target'].pop()
+                    anchor_names = []
+                    for A in range(len(G['anchor'])):
+                        anchor_names.append(G['anchor'][A])
+
+                    is_valid = evaluate_spg(relation, target_name, anchor_names, sre=sre)
+
+                    if is_valid:
+                        # print(grounding_set.index(G), ':', G['score'])
+                        groundings.append({
+                            'target': target_name,
+                            'anchor': anchor_names
+                        })
+
+                    if len(groundings) == topk:
+                        # TODO: we are currently going by top groundings based on joint cosine similarity score;
+                        #   is there some other way that can weigh both distance of target and the joint score?
+                        # print(output['groundings'])
+                        break
+
+        spg_output.append({
+            sre: groundings
+        })
 
         plt.close('all')
 
