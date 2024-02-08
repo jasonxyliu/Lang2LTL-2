@@ -740,7 +740,7 @@ def spg(spatial_preds, topk=5):
     #     anchor_to_target[A] = closest_waypoint
     #     # print(A, anchor_to_target[A])
 
-    spg_output = []
+    spg_output = {}
 
     print(spatial_preds['utt'])
 
@@ -815,7 +815,7 @@ def spg(spatial_preds, topk=5):
                         # print(output['groundings'])
                         break
 
-        spg_output.append({sre: groundings})
+        spg_output[sre] = groundings
 
         plt.close('all')
 

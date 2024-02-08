@@ -44,33 +44,26 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
         new_command = ltl_blueprint
 
         list_true_sre = []
-        list_true_srer = []
-        list_true_reg_spg = []
+        list_true_srer = {}
+        list_true_reg_spg = {}
 
         existing_targets = []
         for P in range(len(ltl_props)):
 
             new_sre = None
             new_srer = {}
-            new_spg = {}
 
             while not bool(new_sre):
-                random_pred = choice(gtr[choice(landmarks)])
+                random_lmrk = choice(landmarks)
+                random_pred = choice(gtr[random_lmrk])
                 # -- this is an element without any spatial relation:
 
                 target = None
 
-                if "*" in random_pred:
-                    new_sre = random_pred["*"]
+                if "*" in random_pred or "@" in random_pred:
+                    new_sre = random_pred["*" if "*" in random_pred else "@"]
                     new_srer = {new_sre : {}}
-
-                    possible_targets = []
-                    for x in landmarks:
-                        for y in gtr[x]:
-                            if '*' in y and y["*"] == new_sre:
-                                possible_targets.append(x)
-
-                    new_spg = {new_sre: possible_targets}
+                    target = [random_lmrk]
                 else:
                     # -- this means we are using one of the groundtruth entries that have specific object instances:
 
@@ -81,44 +74,37 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
                         target = random_pred[rel][0]
 
                         # -- we will do some "lifting" of the specific landmarks assigned to this SRE:
-                        lifted_target = choice([x['@'] for x in gtr[random_pred[rel][0]] if '@' in x] +
-                                                [x['*'] for x in gtr[random_pred[rel][0]] if '*' in x])
+                        lifted_target = choice([x['@'] for x in gtr[target[0]] if '@' in x] +
+                                               [x['*'] for x in gtr[target[0]] if '*' in x])
 
                         if len(random_pred[rel]) == 2:
-                            try:
-                                lifted_anchor = choice([x['*'] for x in gtr[random_pred[rel][1]] if '*' in x])
-                            except IndexError:
-                                continue
+                            anchor = random_pred[rel][1]
+                            lifted_anchor = choice([x['*'] for x in gtr[anchor[0]] if '*' in x])
 
                             new_sre = f'{lifted_target} {rel} {lifted_anchor}'
                             new_srer[rel] = [lifted_target, lifted_anchor]
 
                         elif len(random_pred[rel]) == 3:
-                            try:
-                                lifted_anchor_1 = choice([x['*'] for x in gtr[random_pred[rel][1]] if '*' in x])
-                            except IndexError:
-                                continue
+                            anchor_1 = random_pred[rel][1]
+                            anchor_2 = random_pred[rel][2]
 
-                            try:
-                                lifted_anchor_2 = choice([x['*'] for x in gtr[random_pred[rel][2]] if '*' in x])
-                            except IndexError:
-                                continue
+                            lifted_anchor_1 = choice([x['*'] for x in gtr[anchor_1[0]] if '*' in x])
+                            lifted_anchor_2 = choice([x['*'] for x in gtr[anchor_2[0]] if '*' in x])
 
                             new_sre = f'{lifted_target} {rel} {lifted_anchor_1} and {lifted_anchor_2}'
                             new_srer[rel] = [lifted_target, lifted_anchor_1, lifted_anchor_2]
 
-
-                        new_spg = {new_sre: random_pred[rel][0]}
-
-                if target in existing_targets:
+                if set(existing_targets) & set(target):
                     new_sre = None
+                    continue
 
                 # NOTE: we will keep track of all targets we have already added to make sure we don't get repeats:
-                existing_targets.append(target)
+                existing_targets += target
+
+                list_true_reg_spg[new_sre] = target
+                list_true_srer[new_sre] = new_srer[list(new_srer)[0]]
 
             list_true_sre.append(new_sre)
-            list_true_srer.append(new_srer)
-            list_true_reg_spg.append(new_spg)
 
             # NOTE: to do replacement of the lifted proposition with the generated one, we need to account for
             # different ways it would be written preceded by a whitespace character, i.e., ' a ', ' a,', ' a.'

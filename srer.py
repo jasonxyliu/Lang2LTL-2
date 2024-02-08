@@ -17,7 +17,7 @@ def parse_llm_output(raw_out):
     parsed_out["sre_to_preds"] = {}
 
     for sre in parsed_out["sres"]:
-        found_re = True  # there may be referring expression (RE) without spatial relation
+        found_re = False  # there may be referring expression (RE) without spatial relation
 
         for pred in parsed_out["spatial_preds"]:
             relation, lmks = list(pred.items())[0]
@@ -30,11 +30,9 @@ def parse_llm_output(raw_out):
 
                 if len(lmks) == num_matches:
                     parsed_out["sre_to_preds"][sre] = pred
-                    found_re = False
-            else:
-                print("ERROR: mismatch between spatial prediction and spatial referring expression")
+                    found_re = True
 
-        if found_re:  # find a referring expression (RE) without spatial relation
+        if not found_re:  # find a referring expression (RE) without spatial relation
             parsed_out["sre_to_preds"][sre] = {}
 
     return parsed_out
