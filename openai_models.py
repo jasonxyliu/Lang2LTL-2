@@ -11,7 +11,7 @@ from openai import OpenAI
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
-def srer_query_llm(command):
+def extract(command):
     client = OpenAI()
     raw_responses = client.chat.completions.create(
         model="gpt-4",

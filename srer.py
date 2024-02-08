@@ -1,4 +1,4 @@
-from openai_models import srer_query_llm
+from openai_models import extract
 
 
 def parse_llm_output(raw_out):
@@ -41,7 +41,7 @@ def parse_llm_output(raw_out):
 
 
 def srer(command):
-    raw_out = srer_query_llm(command)
+    raw_out = extract(command)
     parsed_out = {"utt": command}
     parsed_out.update(parse_llm_output(raw_out))
     return raw_out, parsed_out
