@@ -22,6 +22,7 @@ def lt(spg_outs, model_fpath):
 if __name__ == "__main__":
     location = "indoor_env_0"
     ablation = "text"  # "text", "image", None
+    topk = 5  # top k most likely landmarks grounded by REG
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[location])
@@ -32,7 +33,6 @@ if __name__ == "__main__":
     srer_out_fname = f"srer_outs_{location}_ablate_{ablation}.json" if ablation else f"srer_outs_{location}.json"
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
-    topk = 5  # top k most likely landmarks grounded by REG
 
     # Spatial Referring Expression Recognition (SRER)
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
