@@ -21,7 +21,7 @@ reg_output_path = os.path.join(os.path.expanduser("~"), "ground", "data", "reg_o
 KNOWN_RELATIONS = [
     'left', 'left of', 'to the left of', 'right', 'right of', 'to the right of',
     'in front of', 'opposite', 'opposite to', 'behind', 'behind of', 'at the rear of',
-    'near', 'near to', 'next', 'next to', 'adjacent to', 'close', 'close to', 'at', 'by', 'between',
+    'near', 'next', 'next to', 'adjacent to', 'close', 'close to', 'at', 'by', 'between',
     'north of', 'south of', 'east of', 'west of', 'northeast of', 'northwest of', 'southeast of', 'southwest of'
 ]
 
@@ -52,12 +52,12 @@ except ImportError:
     print('     - Download using "pip install utm".')
     use_pyproj = False
 
+
 def rotation_matrix(angle):
     # Source: https://motion.cs.illinois.edu/RoboticSystems/CoordinateTransformations.html
     return np.array(
         [[np.cos(angle), -np.sin(angle)],
          [np.sin(angle), np.cos(angle)]])
-#enddef
 
 
 def gps_to_cartesian(landmark):
@@ -71,37 +71,30 @@ def gps_to_cartesian(landmark):
     y = radius_earth * np.cos(np.deg2rad(lat)) * np.sin(np.deg2rad(long))
     z = radius_earth * np.sin(np.deg2rad(lat))
     return [x, y, z]
-#enddef
 
 
-def find_closest_relation(rel):
-    # -- using text embedding model provided by OpenAI:
-    closest_rel = None
-    closest_rel_embedding = None
+def find_match_relation(unseen_rel):
+    """
+    Use cosine similatiry between text embeddings to find best matching known spatil relation to the unseen input
+    """
+    closest_rel, closest_rel_embed = None, None
+    unseen_rel_embed = get_embed(unseen_rel)
 
-    # -- precompute the embedding for the unseen relation:
-    unseen_rel_embedding = get_embed(rel)
-
-    for R in KNOWN_RELATIONS:
-
-        # -- get an embedding for each predefined relation:
-        candidate_embedding = get_embed(R)
+    for known_rel in KNOWN_RELATIONS:
+        candidate_embed = get_embed(known_rel)
 
         if not closest_rel:
-            closest_rel = R
-            closest_rel_embedding = candidate_embedding
-
+            closest_rel = known_rel
+            closest_rel_embed = candidate_embed
         else:
-            # -- compute cosine similarity between words and pick the higher (i.e., most similar) word:
-            current_score = np.dot(unseen_rel_embedding, closest_rel_embedding)
-            new_rel_score = np.dot(unseen_rel_embedding, candidate_embedding)
+            current_score = np.dot(unseen_rel_embed, closest_rel_embed)
+            new_rel_score = np.dot(unseen_rel_embed, candidate_embed)
 
             if current_score < new_rel_score:
-                closest_rel = R
-                closest_rel_embedding =candidate_embedding
+                closest_rel = known_rel
+                closest_rel_embed = candidate_embed
 
     return closest_rel
-#enddef
 
 
 def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
@@ -228,7 +221,6 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
         plt.show(block=False)
 
     return list_ranges
-# enddef
 
 
 def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
@@ -381,7 +373,6 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
         return False
 
     return False
-# enddef
 
 
 def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
@@ -447,7 +438,6 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
         plt.show(block=False)
 
     return new_robot_pos
-#enddef
 
 
 def plot_landmarks(landmarks=None):
@@ -470,7 +460,6 @@ def plot_landmarks(landmarks=None):
     # plt.axis('square')
     plt.show(block=True)
     # plt.savefig('temp.png')
-#enddef
 
 
 def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, coord_alignment=[], crs=None):
@@ -579,7 +568,6 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, coord_ali
         }
 
     return landmarks
-#enddef
 
 
 def fake_spot_waypoints(spot_graph_dpath, crs=None):
@@ -625,7 +613,6 @@ def fake_spot_waypoints(spot_graph_dpath, crs=None):
         }
 
     return waypoints, crs
-#enddef
 
 
 def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
@@ -682,8 +669,6 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
     # -- plot the points for visualization purposes:
     plot_landmarks(landmarks)
 
-#enddef
-
 
 def sort_by_scores(spatial_pred_dict):
     # -- find Cartesian product to find all combinations of target and anchoring landmarks:
@@ -710,12 +695,12 @@ def sort_by_scores(spatial_pred_dict):
     sorted_products.sort(key=lambda x: x['score'], reverse=True)
 
     return sorted_products
-#enddef
 
 
 def spg(spatial_preds, topk=5):
+    print(f"Command: {spatial_preds['utt']}")
 
-    global landmarks, KNOWN_RELATIONS
+    global landmarks
 
     # -- find the closest waypoint to each anchor from OSM:
     # anchor_to_target = {}
@@ -742,8 +727,6 @@ def spg(spatial_preds, topk=5):
 
     spg_output = []
 
-    print(spatial_preds['utt'])
-
     for R in spatial_preds['grounded_sre_to_preds']:
         # -- extract the name of the SRE, which is a key in spatial_preds['grounded_sre_to_preds']:
         sre = R
@@ -758,8 +741,7 @@ def spg(spatial_preds, topk=5):
         # -- rank all sets of targets and anchors for evaluating spatial predicate grounding:
         grounding_set = sort_by_scores(reg_dict)
 
-        if unmatched_rel == 'None':
-            # TODO: what to do for non-spatial referring expressions?
+        if unmatched_rel == 'None':  # referring expression without spatial relation
             output[sre] = [{'target': G['target'][0]} for G in grounding_set]
             spg_output.append(output)
             continue
@@ -767,14 +749,12 @@ def spg(spatial_preds, topk=5):
         # -- relation is the string that *should* be in the listed of evaluated predicates:
         relation = unmatched_rel
 
-        # TODO: check if spatial relation is predefined:
+        # Find best match for unseen spatial relation
         if unmatched_rel not in KNOWN_RELATIONS:
-            # -- find the closest spatial relation:
-            relation = find_closest_relation(unmatched_rel)
+            relation = find_match_relation(unmatched_rel)
             print(f'    - UNSEEN RELATION:\t"{unmatched_rel}" is closest to "{relation}"!')
 
-        if len(reg_dict) == 1:
-            # NOTE: this means we only have an anchoring landmark and no target landmark:
+        if len(reg_dict) == 1:  # spatial referring expression contains only target landmark
 
             # -- we will keep a list of target positions in order of confidence scores from REG:
             output = {
@@ -789,10 +769,9 @@ def spg(spatial_preds, topk=5):
 
             spg_output.append(output)
 
-        else:
-            # NOTE: this means we only have a single target and either:
-            #   1. a single anchor (e.g., <tgt> left of <anc1>)
-            #   2. two anchors (e.g., <tgt> between <anc1> and <anc2>):
+        else:  # spatial referring expression contains a target landmark and one or two anchoring landmarks
+            #   1. one anchor (e.g., <tar> left of <anc1>)
+            #   2. two anchors (e.g., <tar> between <anc1> and <anc2>):
 
             is_valid = False
             groundings = []
@@ -812,10 +791,10 @@ def spg(spatial_preds, topk=5):
                         'anchor': anchor_names
                     })
 
-                if len(output['groundings']) == topk:
+                if len(groundings) == topk:
                     # TODO: we are currently going by top groundings based on joint cosine similarity score;
                     #   is there some other way that can weigh both distance of target and the joint score?
-                    # print(output['groundings'])
+                    # print(groundings)
                     break
 
             output[sre] = groundings
@@ -826,10 +805,9 @@ def spg(spatial_preds, topk=5):
     print()
 
     return spg_output
-#enddef
+
 
 if __name__ == '__main__':
-
     # -- just run this part with the output from regular expression grounding (REG):
     init()
     reg_outputs = load_from_file(reg_output_path)
