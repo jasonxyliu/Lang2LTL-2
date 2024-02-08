@@ -37,10 +37,13 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt):
 
     # Substitute symbols by groundings of spatial referring expressions
     grounded_ltl = srer_out["lifted_ltl"]
+    sym2ground = {}
     for symbol, sre in srer_out["lifted_symbol_map"].items():
         grounding = srer_out["spg_results"][sre][0]["target"]
+        sym2ground[symbol] = grounding
         grounded_ltl.replace(symbol, grounding)
     srer_out["grounded_ltl"] = grounded_ltl
+    srer_out["sym2ground"] = sym2ground
 
     return srer_out
 
