@@ -1,8 +1,8 @@
 import os
-import math
 import numpy as np
 import matplotlib.pyplot as plt
-from itertools import product
+import itertools as it
+import math
 
 from load_map import load_map, extract_waypoints
 from openai_models import get_embed
@@ -648,7 +648,7 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
 
 def sort_by_scores(spatial_pred_dict):
     # -- find Cartesian product to find all combinations of target and anchoring landmarks:
-    all_products = [x for x in product(*spatial_pred_dict)]
+    all_products = [x for x in it.product(*spatial_pred_dict)]
 
     sorted_products = []
     for P in all_products:
@@ -702,29 +702,6 @@ def spg(spatial_preds, topk):
 
     global landmarks
 
-    # -- find the closest waypoint to each anchor from OSM:
-    # anchor_to_target = {}
-    # for A in anchor_landmarks:
-    #     this_anchor = np.array([anchor_landmarks[A]['x'], anchor_landmarks[A]['y']])
-
-    #     closest_waypoint = None
-    #     for target in target_landmarks:
-    #         if not closest_waypoint:
-    #             closest_waypoint = target
-    #             best_waypoint = np.array([target_landmarks[closest_waypoint]['x'], target_landmarks[closest_waypoint]['y']])
-    #         else:
-    #             # -- check if the current target (waypoint) is closer than the closest target stored as a variable:
-    #             this_waypoint = np.array([target_landmarks[target]['x'], target_landmarks[target]['y']])
-    #             best_waypoint = np.array([target_landmarks[closest_waypoint]['x'], target_landmarks[closest_waypoint]['y']])
-
-    #             # NOTE: closest in terms of Euclidean distance:
-    #             if np.linalg.norm(this_anchor-this_waypoint) <= np.linalg.norm(this_anchor-best_waypoint):
-    #                 closest_waypoint = target
-
-    #     # NOTE: the best target will be the waypoint closest to the anchor:
-    #     anchor_to_target[A] = closest_waypoint
-    #     # print(A, anchor_to_target[A])
-
     spg_output = {}
 
     for sre, spatial_pred in spatial_preds["grounded_sre_to_preds"].items():
@@ -734,8 +711,6 @@ def spg(spatial_preds, topk):
 
         # Rank all combinations of targets and anchors for computing spatial predicate grounding
         lmk_grounds_sorted = sort_by_scores(lmk_grounds)[:topk]
-
-        breakpoint()
 
         groundings = []
 
