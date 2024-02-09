@@ -1,8 +1,8 @@
 import os
+import math
 import numpy as np
 import matplotlib.pyplot as plt
-import itertools as it
-import math
+from itertools import product
 
 from load_map import load_map, extract_waypoints
 from openai_models import get_embed
@@ -648,7 +648,7 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
 
 def sort_by_scores(spatial_pred_dict):
     # -- find Cartesian product to find all combinations of target and anchoring landmarks:
-    all_products = [x for x in it.product(*spatial_pred_dict)]
+    all_products = [x for x in product(*spatial_pred_dict)]
 
     sorted_products = []
     for P in all_products:
@@ -697,7 +697,7 @@ def find_match_relation(unseen_rel):
     return closest_rel
 
 
-def spg(spatial_preds, topk=5):
+def spg(spatial_preds, topk):
     print(f"Command: {spatial_preds['utt']}\n")
 
     global landmarks
