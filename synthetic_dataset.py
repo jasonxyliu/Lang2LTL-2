@@ -60,10 +60,14 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
 
                 target = None
 
-                if "*" in random_pred or "@" in random_pred:
-                    new_sre = random_pred["*" if "*" in random_pred else "@"]
+                if "*" in random_pred:
+                    new_sre = random_pred["*"]
                     new_srer = {new_sre : {}}
                     target = [random_lmrk]
+                elif "@" in random_pred:
+                    # NOTE: expressions marked with an at ("@") symbol are too generic
+                    #       to be used as a referring expression without an anchor:
+                    continue
                 else:
                     # -- this means we are using one of the groundtruth entries that have specific object instances:
 
@@ -73,7 +77,8 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
                     if len(random_pred[rel]) == 2 or len(random_pred[rel]) == 3:
                         target = random_pred[rel][0]
 
-                        # -- we will do some "lifting" of the specific landmarks assigned to this SRE:
+                        # NOTE: target landmarks are free to be very specific/unique expressions ("*")
+                        #       or generic names ("*"), as REG and SPG would be used to resolve those ambiguities:
                         lifted_target = choice([x['@'] for x in gtr[target[0]] if '@' in x] +
                                                [x['*'] for x in gtr[target[0]] if '*' in x])
 
@@ -151,7 +156,7 @@ if __name__ == "__main__":
             params={
                 "location": args.location,
                 "gtr": os.path.join(data_dpath, "true_lmk_grounds.json"),
-                "ltl_samples": os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
+                "ltl_samples": os.path.join(data_dpath, "ltl_samples_sorted.csv")
             },
             utts_fpath=utt_fpath,
             gtr_fpath=os.path.join(data_dpath, f"true_results_{args.location}.json")

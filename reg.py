@@ -50,7 +50,7 @@ class REG():
     Use semantic description of landmarks and objects in text and images.
     """
     def __init__(self, img_embeds, txt_embeds):
-        self.sem_ids, sem_embeds = [], []
+        self.sem_ids,sem_embeds = [], []
 
         if img_embeds:
             self.sem_ids += list(img_embeds.keys())
@@ -97,10 +97,10 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
 
         for sre, spatial_pred in srer_out["sre_to_preds"].items():
             if spatial_pred:  # spatial referring expression
-                spatil_relation = list(spatial_pred.keys())[0]
+                spatial_relation = list(spatial_pred.keys())[0]
                 res =  list(spatial_pred.values())[0]
             else:
-                spatil_relation = "None"  # reference expression without spatial relation
+                spatial_relation = "None"  # reference expression without spatial relation
                 res = [sre]
 
             grounded_res = []
@@ -108,7 +108,7 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
                 lmk_candidates = reg.query(query, topk=topk)
                 grounded_res.append(lmk_candidates)
                 print(f"{idx}: {sre}\n{query}\n{lmk_candidates}\n")
-            grounded_sre_to_preds[sre] = {spatil_relation: grounded_res}
+            grounded_sre_to_preds[sre] = {spatial_relation: grounded_res}
 
         srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
 
