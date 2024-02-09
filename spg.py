@@ -1,8 +1,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import itertools as it
-import math
+from itertools import product
 
 from load_map import load_map, extract_waypoints
 from openai_models import get_embed
@@ -651,13 +650,12 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
 
     # -- plot the points for visualization purposes:
     plot_landmarks(landmarks)
-
 #enddef
 
 
 def sort_by_scores(spatial_pred_dict):
     # -- find Cartesian product to find all combinations of target and anchoring landmarks:
-    all_products = [x for x in it.product(*spatial_pred_dict)]
+    all_products = [x for x in product(*spatial_pred_dict)]
 
     sorted_products = []
     for P in all_products:
@@ -709,118 +707,68 @@ def find_match_relation(unseen_rel):
 
 
 def spg(spatial_preds, topk):
-    print(f"Command: spatial_preds['utt']\n")
+    print(f"Command: spatial_preds['utt']")
 
     global landmarks
 
-    # -- find the closest waypoint to each anchor from OSM:
-    # anchor_to_target = {}
-    # for A in anchor_landmarks:
-    #     this_anchor = np.array([anchor_landmarks[A]['x'], anchor_landmarks[A]['y']])
-
-    #     closest_waypoint = None
-    #     for target in target_landmarks:
-    #         if not closest_waypoint:
-    #             closest_waypoint = target
-    #             best_waypoint = np.array([target_landmarks[closest_waypoint]['x'], target_landmarks[closest_waypoint]['y']])
-    #         else:
-    #             # -- check if the current target (waypoint) is closer than the closest target stored as a variable:
-    #             this_waypoint = np.array([target_landmarks[target]['x'], target_landmarks[target]['y']])
-    #             best_waypoint = np.array([target_landmarks[closest_waypoint]['x'], target_landmarks[closest_waypoint]['y']])
-
-    #             # NOTE: closest in terms of Euclidean distance:
-    #             if np.linalg.norm(this_anchor-this_waypoint) <= np.linalg.norm(this_anchor-best_waypoint):
-    #                 closest_waypoint = target
-
-    #     # NOTE: the best target will be the waypoint closest to the anchor:
-    #     anchor_to_target[A] = closest_waypoint
-    #     # print(A, anchor_to_target[A])
-
     spg_output = {}
 
-    for R in spatial_preds['grounded_sre_to_preds']:
-        # -- extract the name of the SRE, which is a key in spatial_preds['grounded_sre_to_preds']:
-        sre = R
-        print(f' >> {sre}')
+    for sre, grounded_spatial_preds in spatial_preds["grounded_sre_to_preds"].items():
+        print(f"Grounding SRE: {sre}")
 
-        # NOTE: the spatial relation is always the first key:
-        unmatched_rel = list(spatial_preds['grounded_sre_to_preds'][R].keys()).pop()
+        query_rel, lmk_grounds = list(grounded_spatial_preds.items())[0]
 
-        # -- extract the name of the relation in the SRE dict:
-        reg_dict = spatial_preds['grounded_sre_to_preds'][R][unmatched_rel]
+        # Rank all combinations of targets and anchors for computing spatial predicate grounding
+        lmk_grounds_sorted = sort_by_scores(lmk_grounds)
 
-        # -- rank all sets of targets and anchors for evaluating spatial predicate grounding:
-        grounding_set = sort_by_scores(reg_dict)
-
-        groundings = []
-
-        if unmatched_rel == 'None':
-            # TODO: what to do for non-spatial referring expressions?
-            groundings = [{'target': G['target'][0]} for G in grounding_set[:topk]]
-
+        if query_rel == "None":
+            # Referring expression without spatial relation
+            groundings = [{"target": lmk_ground["target"][0]} for lmk_ground in lmk_grounds_sorted[:topk]]
         else:
-            # -- relation is the string that *should* be in the listed of evaluated predicates:
-            relation = unmatched_rel
+            groundings = []
+            matched_rel = query_rel
 
-            # TODO: check if spatial relation is predefined:
-            if unmatched_rel not in KNOWN_RELATIONS:
-                # -- find the closest spatial relation:
-                relation = find_match_relation(unmatched_rel)
-                print(f'    - UNSEEN RELATION:\t"{unmatched_rel}" is closest to "{relation}"!')
+            if query_rel not in KNOWN_RELATIONS:
+                # Find best match for unseen spatial relation in set of known spatial relations
+                matched_rel = find_match_relation(query_rel)
+                print(f"### UNSEEN SPATIAL RELATION:\t'{query_rel}' matched to '{matched_rel}'")
 
-            if len(reg_dict) == 1:
-                # NOTE: this means we only have an anchoring landmark and no target landmark:
-
-                # -- we will keep a list of target positions in order of confidence scores from REG:
-
-                for G in grounding_set:
-                    # NOTE: the target key will instead hold the name of the anchor in question:
-                    anchor_name = G['target'].pop()
-                    groundings.append(get_target_position(relation, anchor_name, sre=sre))
+            if len(lmk_grounds) == 1:
+                # Spatial referring expression contains only a target landmark
+                for lmk_ground in lmk_grounds_sorted:
+                    groundings.append(get_target_position(matched_rel, lmk_ground["target"][0], sre=sre))
 
                     if len(groundings) == topk:
                         break
-
             else:
-                # NOTE: this means we only have a single target and either:
-                #   1. a single anchor (e.g., <tgt> left of <anc1>)
-                #   2. two anchors (e.g., <tgt> between <anc1> and <anc2>):
-
+                # Spatial referring expression contains a target landmark and one or two anchoring landmarks
+                # one anchor, e.g., <tgt> left of <anc1>
+                # two anchors, e.g., <tgt> between <anc1> and <anc2>
                 is_valid = False
 
-                for G in grounding_set:
-                    target_name = G['target'].pop()
-                    anchor_names = []
-                    for A in range(len(G['anchor'])):
-                        anchor_names.append(G['anchor'][A])
+                for lmk_ground in lmk_grounds_sorted:
+                    target_name = lmk_ground["target"][0]
+                    anchor_names = lmk_ground["anchor"]
 
-                    is_valid = evaluate_spg(relation, target_name, anchor_names, sre=sre)
+                    is_valid = evaluate_spg(matched_rel, target_name, anchor_names, sre=sre)
 
                     if is_valid:
-                        # print(grounding_set.index(G), ':', G['score'])
-                        groundings.append({
-                            'target': target_name,
-                            'anchor': anchor_names
-                        })
+                        groundings.append({"target": target_name,  "anchor": anchor_names})
 
                     if len(groundings) == topk:
                         # TODO: we are currently going by top groundings based on joint cosine similarity score;
                         #   is there some other way that can weigh both distance of target and the joint score?
                         # print(output['groundings'])
                         break
-
         spg_output[sre] = groundings
 
-        plt.close('all')
-
-    print()
+        plt.close("all")
+        print("\n\n")
 
     return spg_output
-#enddef
 
-if __name__ == '__main__':
 
-    # -- just run this part with the output from regular expression grounding (REG):
+if __name__ == "__main__":
     init()
     reg_outputs = load_from_file(reg_output_path)
     for reg_output in reg_outputs:
