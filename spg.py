@@ -645,31 +645,30 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
     plot_landmarks(landmarks)
 
 
-def sort_by_scores(spatial_pred_dict):
-    # -- find Cartesian product to find all combinations of target and anchoring landmarks:
-    all_products = [x for x in product(*spatial_pred_dict)]
+def sort_combs(lmk_grounds):
+    """
+    Sort all combinations of target and anchoring landmarks by their joint probabilities.
+    """
+    all_combs = [comb for comb in product(*lmk_grounds)]  # Cartesian product
+    combs_sorted = []
 
-    sorted_products = []
-    for P in all_products:
-        # -- compute the score attributed to a given set:
-        joint_score = 1
+    for comb in all_combs:
+        joint_prob = 1
         target, anchor = [], []
-        for x in range(len(P)):
-            joint_score *= P[x][0]
 
-            # -- deriving the names of the landmarks from the dictionary:
-            if x == 0:
-                target.append(P[x][1])
-            else:
-                anchor.append(P[x][1])
+        for idx, prob_lmk in enumerate(comb):
+            joint_prob *= prob_lmk[0]
 
-        # -- save the score to a list:
-        sorted_products.append({'score': joint_score, 'target': target, 'anchor': anchor})
+            # Get target or anchoring landmark name of the combination
+            if idx == 0:  # target landmark is always the first in a combination
+                target.append(prob_lmk[1])
+            else:  # 0, 1 or 2 target landmarks
+                anchor.append(prob_lmk[1])
 
-    # -- sort everything in descending order:
-    sorted_products.sort(key=lambda x: x['score'], reverse=True)
+        combs_sorted.append({"score": joint_prob, "target": target, "anchor": anchor})
 
-    return sorted_products
+    combs_sorted.sort(key=lambda x: x["score"], reverse=True)
+    return combs_sorted
 
 
 def find_match_relation(unseen_rel):
@@ -709,7 +708,7 @@ def spg(spatial_preds, topk):
         query_rel, lmk_grounds = list(grounded_spatial_preds.items())[0]
 
         # Rank all combinations of targets and anchors for computing spatial predicate grounding
-        lmk_grounds_sorted = sort_by_scores(lmk_grounds)
+        lmk_grounds_sorted = sort_combs(lmk_grounds)
 
         if query_rel == "None":
             # Referring expression without spatial relation
