@@ -647,25 +647,25 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
 
 def sort_combs(lmk_grounds):
     """
-    Sort all combinations of target and anchoring landmarks by their joint probabilities.
+    Sort all combinations of target and anchoring landmarks by their joint cosine similarity scores.
     """
     all_combs = [comb for comb in product(*lmk_grounds)]  # Cartesian product
     combs_sorted = []
 
     for comb in all_combs:
-        joint_prob = 1
+        joint_score = 1
         target, anchor = [], []
 
-        for idx, prob_lmk in enumerate(comb):
-            joint_prob *= prob_lmk[0]
+        for idx, score_lmk in enumerate(comb):
+            joint_score *= score_lmk[0]
 
             # Get target or anchoring landmark name of the combination
             if idx == 0:  # target landmark is always the first in a combination
-                target.append(prob_lmk[1])
+                target.append(score_lmk[1])
             else:  # 0, 1 or 2 target landmarks
-                anchor.append(prob_lmk[1])
+                anchor.append(score_lmk[1])
 
-        combs_sorted.append({"score": joint_prob, "target": target, "anchor": anchor})
+        combs_sorted.append({"score": joint_score, "target": target, "anchor": anchor})
 
     combs_sorted.sort(key=lambda x: x["score"], reverse=True)
     return combs_sorted
@@ -708,6 +708,8 @@ def spg(spatial_preds, topk):
         query_rel, lmk_grounds = list(grounded_spatial_preds.items())[0]
 
         # Rank all combinations of targets and anchors for computing spatial predicate grounding
+        # TODO: currently pick topk groundings based on joint cosine similarity score
+        # is there a better way to weigh both distance of target and the joint score?
         lmk_grounds_sorted = sort_combs(lmk_grounds)
 
         if query_rel == "None":
@@ -724,11 +726,8 @@ def spg(spatial_preds, topk):
 
             if len(lmk_grounds) == 1:
                 # Spatial referring expression contains only a target landmark
-                for lmk_ground in lmk_grounds_sorted:
+                for lmk_ground in lmk_grounds_sorted[:topk]:
                     groundings.append(get_target_position(matched_rel, lmk_ground["target"][0], sre=sre))
-
-                    if len(groundings) == topk:
-                        break
             else:
                 # Spatial referring expression contains a target landmark and one or two anchoring landmarks
                 # one anchor, e.g., <tgt> left of <anc1>
@@ -740,14 +739,10 @@ def spg(spatial_preds, topk):
                     anchor_names = lmk_ground["anchor"]
 
                     is_valid = evaluate_spg(matched_rel, target_name, anchor_names, sre=sre)
-
                     if is_valid:
                         groundings.append({"target": target_name,  "anchor": anchor_names})
 
                     if len(groundings) == topk:
-                        # TODO: we are currently going by top groundings based on joint cosine similarity score;
-                        #   is there some other way that can weigh both distance of target and the joint score?
-                        # print(output['groundings'])
                         break
         spg_output[sre] = groundings
 
