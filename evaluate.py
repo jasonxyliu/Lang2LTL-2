@@ -5,10 +5,8 @@ def evaluate_spg(spg_outs_fpth, true_results_fpath, topk):
 	"""
 	Compute the top K accuracy of Spatial Predicate Grounding module.
 	"""
-	# -- we need to count the total number of SREs across all commands in the JSON file:
-	total_sres = 0
+	total_sres = 0  # count the total number of SREs across all commands in the JSON file
 	total_topk = {f'top-{x+1}': 0 for x in range(topk)}
-
 	total_utts_correct = 0
 
 	spg_outs = load_from_file(spg_outs_fpth)
@@ -59,6 +57,4 @@ def evaluate_spg(spg_outs_fpth, true_results_fpath, topk):
 	print("*** SUMMARY: ***")
 	for k in range(topk):
 		print(f" top-{k+1} accuracy: {total_topk[f'top-{k+1}'] / total_sres:.5f}")
-	print()
-	print(f"* Total commands completely correct: {total_utts_correct}/{len(spg_outs)} ({total_utts_correct/len(spg_outs):.5})")
-#enddef
+	print(f"\n* Total commands completely correct: {total_utts_correct}/{len(spg_outs)} ({total_utts_correct/len(spg_outs):.5})")
