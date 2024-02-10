@@ -14,7 +14,7 @@ from evaluate import evaluate_spg
 def lt(spg_outs, model_fpath):
     lt_module = Seq2Seq(model_fpath, "t5-base")
     for spg_out in spg_outs:
-        lifted_utt = srer_out["lifted_utt"]
+        lifted_utt = spg_out["lifted_utt"]
         query = lifted_utt.translate(str.maketrans('', '', ',.'))
         lifted_ltl = lt_module.type_constrained_decode([query])[0]
         spg_out["lifted_ltl"] = lifted_ltl

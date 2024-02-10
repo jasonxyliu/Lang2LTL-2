@@ -3,11 +3,11 @@ from utils import load_from_file
 
 def evaluate_spg(spg_outs_fpth, true_results_fpath, topk):
 	"""
-	Compute the top K accuracy of Spatial Predicate Groudning module.
+	Compute the top K accuracy of Spatial Predicate Grounding module.
 	"""
-	# -- we need to count the total number of SREs across all commands in the JSON file:
-	total_sres = 0
+	total_sres = 0  # count the total number of SREs across all commands in the JSON file
 	total_topk = {f'top-{x+1}': 0 for x in range(topk)}
+	total_utts_correct = 0
 
 	spg_outs = load_from_file(spg_outs_fpth)
 	true_results = load_from_file(true_results_fpath)
@@ -16,37 +16,45 @@ def evaluate_spg(spg_outs_fpth, true_results_fpath, topk):
 	for spg_out in spg_outs:
 		print(f"Command: {spg_out['utt']}")
 		gtr = gtr_utt_to_results[spg_out['utt']]
-		total_sres += len(gtr['true_reg_spg'])
 
 		spgs_gtr = gtr['true_reg_spg']
 		spgs_gen = spg_out['spg_results']
+		total_sres += len(spgs_gtr)
 
-		for spg_gtr in spgs_gtr:
-			spg_gen = None
-			for GR in spgs_gen:
-				# for each groundtruth SPG result, we check if there is a computed result for it as well:
-				if list(spg_gtr)[0] == list(GR)[0]:
-					spg_gen = GR
+		top1_matches = 0
 
-			if not spg_gen:
-				continue
+		for sre in spgs_gtr:
+			print(f" >> SRE:\t\t{sre}")
+			print(f" >> TRUE GROUNDING:\t{spgs_gtr[sre]}")
 
-			current_sre = list(spg_gtr)[0]
+			spg_gen = spgs_gen[sre] if sre in spgs_gen else None
+			print(f" >> COMPUTED GROUNDING:\t{[spg_gen[x]['target'] for x in range(len(spg_gen))]}")
 
-			print(current_sre)
+			topk_match = False
+			for k in range(min(topk, len(spg_gen))):
+				if spg_gen[k]['target'] in spgs_gtr[sre]:
+					print(f"   -> grounding found:\tk={k+1}!")
+					topk_match = True
 
-			for k in range(topk):
-				if spg_gen[current_sre][k]['target'] in spg_gtr[current_sre]:
-					print(spg_gen[current_sre][k]['target'])
-					print(spg_gtr[current_sre])
-					print(k)
+					# -- if we found a match in the top m results, then we found it in all top m to k:
 					for j in range(k, topk):
 						total_topk[f'top-{j+1}'] += 1
+
+					if k == 0:
+						top1_matches += 1
+
 					break
 
-		print(len(gtr['true_reg_spg']))
-		print(total_topk)
-		input()
+			if not topk_match:
+				print(f"   -> NO MATCH FOUND:\t{spg_gen[k]['target']}")
+			print()
 
-	print(total_sres)
-	print(total_topk)
+			if top1_matches == len(spgs_gtr):
+				total_utts_correct += 1
+
+		print('\n')
+
+	print("*** SUMMARY: ***")
+	for k in range(topk):
+		print(f" top-{k+1} accuracy: {total_topk[f'top-{k+1}'] / total_sres:.5f}")
+	print(f"\n* Total commands completely correct: {total_utts_correct}/{len(spg_outs)} ({total_utts_correct/len(spg_outs):.5})")
