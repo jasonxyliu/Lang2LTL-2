@@ -647,9 +647,9 @@ def init(spot_graph_dpath=None, osm_landmark_file=None, do_grounding=False):
 
 def sort_combs(lmk_grounds):
     """
-    Sort all combinations of target and anchoring landmarks by their joint cosine similarity scores.
+    Sort all combinations of target and anchor landmarks by their joint cosine similarity scores.
     """
-    all_combs = [comb for comb in product(*lmk_grounds)]  # Cartesian product
+    all_combs = [comb for comb in product(*lmk_grounds)]  # Cartesian product of lists of target and anchor landmarks
     combs_sorted = []
 
     for comb in all_combs:
@@ -659,7 +659,7 @@ def sort_combs(lmk_grounds):
         for idx, score_lmk in enumerate(comb):
             joint_score *= score_lmk[0]
 
-            # Get target or anchoring landmark name of the combination
+            # Get target or anchor landmark name of the combination
             if idx == 0:  # target landmark is always the first in a combination
                 target.append(score_lmk[1])
             else:  # 0, 1 or 2 target landmarks
