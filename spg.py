@@ -605,12 +605,12 @@ def sort_combs(lmk_grounds):
     return combs_sorted
 
 
-def find_match_relation(unseen_rel):
+def find_match_rel(rel_unseen):
     """
     Use cosine similatiry between text embeddings to find best matching known spatil relation to the unseen input
     """
     closest_rel, closest_rel_embed = None, None
-    unseen_rel_embed = get_embed(unseen_rel)
+    unseen_rel_embed = get_embed(rel_unseen)
 
     for known_rel in KNOWN_RELATIONS:
         candidate_embed = get_embed(known_rel)
@@ -629,7 +629,7 @@ def find_match_relation(unseen_rel):
     return closest_rel
 
 
-def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
+def get_target_pos(spatial_rel, anchor_candidate, sre=None, plot=False):
     # -- this means that we have no target landmark: we solely want to find a position relative to a given anchor
     try:
         anchor = landmarks[anchor_candidate]
@@ -704,40 +704,37 @@ def spg(reg_out, topk):
     for sre, grounded_spatial_preds in reg_out["grounded_sre_to_preds"].items():
         print(f"Grounding SRE: {sre}")
 
-        query_rel, lmk_grounds = list(grounded_spatial_preds.items())[0]
+        rel_query, lmk_grounds = list(grounded_spatial_preds.items())[0]
 
         # Rank all combinations of target and anchor landmarks
         # TODO: currently pick topk combinations based on joint cosine similarity score
         # is there a better way to weigh both distance of target and the joint score?
         lmk_grounds_sorted = sort_combs(lmk_grounds)
 
-        if query_rel == "None":
+        if rel_query == "None":
             # Referring expression without spatial relation
             groundings = [{"target": lmk_ground["target"][0]} for lmk_ground in lmk_grounds_sorted[:topk]]
         else:
             groundings = []
-            matched_rel = query_rel
 
-            if query_rel not in KNOWN_RELATIONS:
+            rel_match = rel_query
+            if rel_query not in KNOWN_RELATIONS:
                 # Find best match for unseen spatial relation in set of known spatial relations
-                matched_rel = find_match_relation(query_rel)
-                print(f"### UNSEEN SPATIAL RELATION:\t'{query_rel}' matched to '{matched_rel}'")
+                rel_match = find_match_rel(rel_query)
+                print(f"### UNSEEN SPATIAL RELATION:\t'{rel_query}' matched to '{rel_match}'")
 
             if len(lmk_grounds) == 1:
                 # Spatial referring expression contains only a target landmark
                 for lmk_ground in lmk_grounds_sorted[:topk]:
-                    groundings.append(get_target_position(matched_rel, lmk_ground["target"][0], sre=sre))
+                    groundings.append(get_target_pos(rel_match, lmk_ground["target"][0], sre))
             else:
                 # Spatial referring expression contains a target landmark and one or two anchoring landmarks
                 # one anchor, e.g., <tgt> left of <anc1>
                 # two anchors, e.g., <tgt> between <anc1> and <anc2>
-                is_valid = False
-
                 for lmk_ground in lmk_grounds_sorted:
                     target_name = lmk_ground["target"][0]
                     anchor_names = lmk_ground["anchor"]
-
-                    is_valid = evaluate_spg(matched_rel, target_name, anchor_names, sre=sre)
+                    is_valid = evaluate_spg(rel_match, target_name, anchor_names, sre=sre)
                     if is_valid:
                         groundings.append({"target": target_name,  "anchor": anchor_names})
 
