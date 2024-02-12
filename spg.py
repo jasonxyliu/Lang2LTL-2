@@ -60,9 +60,7 @@ def plot_landmarks(landmarks=None):
 
 def rotation_matrix(angle):
     # Source: https://motion.cs.illinois.edu/RoboticSystems/CoordinateTransformations.html
-    return np.array(
-        [[np.cos(angle), -np.sin(angle)],
-         [np.sin(angle), np.cos(angle)]])
+    return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
 
 
 def gps_to_cartesian(landmark):
@@ -79,13 +77,8 @@ def gps_to_cartesian(landmark):
 
 
 def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, coord_alignment=[], crs=None):
-    # NOTE: definitions of the following variables:
-    # -- angle_diff :- this dictates the amount of rotation needed to
-    #       align the Spot's frame to the world Cartesian frame (default: 0 -- not needed if no robot map)
-    # -- offset :- this dictates the amount of offset needed to be added to GPS coordinates from OSM
-    #       (default: 0 -- not needed if no robot map)
-    angle_diff = 0
-    offset = 0
+    angle_diff = 0  # the amount of rotation needed to align the Spot's frame to the world Cartesian frame (default: 0, not needed if no robot map)
+    offset = 0  # the amount of offset needed to be added to GPS coordinates from OSM (default: 0, not needed if no robot map)
 
     # NOTE: if not using a Spot map, then there's no need for
     if bool(coord_alignment):
