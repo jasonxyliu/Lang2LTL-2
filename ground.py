@@ -15,7 +15,7 @@ LOC2GID = {
 }  # location to Spot graph ID
 
 
-def ground(graph_dpath, osm_fpath, model_fpath, utt, topk):
+def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk):
     """
     Grounding API function
     """
@@ -23,7 +23,7 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt, topk):
     _, srer_out = srer(utt)  # subsequent module outputs also stored in this dict
 
     # Referring Expression Grounding (REG)
-    reg(graph_dpath, osm_fpath, [srer_out], topk, ablation)
+    reg(graph_dpath, osm_fpath, [srer_out], topk, ablate)
 
     # Spatial Predicate Grounding (SPG)
     init(graph_dpath, osm_fpath)
@@ -64,5 +64,5 @@ if __name__ == "__main__":
     spg_out_fname = srer_out_fname.replace("srer", "spg")
 
     utt = "go to the couch in front of the TV, the couch to the left of the kitchen counter, the kitchen counter between the couch and the refrigerator, the table next to the door, and the chair on the left of the bookshelf in any order"
-    ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt, topk)
+    ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk)
     print(ground_out["grounded_ltl"])
