@@ -350,71 +350,6 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
     return False
 
 
-def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
-    # -- this means that we have no target landmark: we solely want to find a position relative to a given anchor
-    try:
-        anchor = landmarks[anchor_candidate]
-    except KeyError:
-        return None
-
-    robot = landmarks['robot']
-
-    # -- get the list of valid ranges (potentially only one) for an anchoring landmark:
-    list_ranges = compute_area(spatial_rel, anchor)
-
-    # -- we want to find the closest point from the robot to the anchoring landmark that satisfies the given spatial relation:
-    closest_position = 0
-
-    for R in range(len(list_ranges)):
-
-        cur_min_pos = {'x': (list_ranges[R]['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
-                       'y': (list_ranges[R]['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
-        cur_min_dist = np.linalg.norm(np.array([cur_min_pos['x'], cur_min_pos['y']]) - np.array([robot['x'], robot['y']]))
-
-        new_min_pos = {'x': (list_ranges[closest_position]['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
-                       'y': (list_ranges[closest_position]['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
-        new_min_dist = np.linalg.norm(np.array([new_min_pos['x'], new_min_pos['y']]) - np.array([robot['x'], robot['y']]))
-
-        if cur_min_dist > new_min_dist:
-            new_min_pos = R
-    # endfor
-
-    # -- select the index that was found to be closest to the robot:
-    R = list_ranges[closest_position]
-
-    # -- use the mean vector to find a point that is within RANGE_TO_ANCHOR (2m) of the anchor:
-    new_robot_pos = {'x': (R['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
-                     'y': (R['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
-
-    if plot:
-        plt.figure()
-
-        plt.scatter(x=[robot['x']], y=[robot['y']], marker='o', label='robot')
-        plt.scatter(x=[new_robot_pos['x']], y=[new_robot_pos['y']], marker='x', c='g', s=15, label='new robot pose')
-
-        # -- plot all anchors and targets provided to the function:
-        for A in landmarks:
-            plt.scatter(x=landmarks[A]['x'],
-                        y=landmarks[A]['y'],
-                        marker='o', c='darkorange', label=f"anchor: {A}")
-            plt.text(landmarks[A]['x'], landmarks[A]['y'], A)
-
-        # -- plot the range as well for visualization:
-        plt.plot([anchor['x'], (R['min'][0] * RANGE_TO_ANCHOR) + anchor['x']],
-                 [anchor['y'], (R['min'][1] * RANGE_TO_ANCHOR) + anchor['y']],
-                 linestyle='dotted', c='r')
-        plt.plot([anchor['x'], (R['max'][0] * RANGE_TO_ANCHOR) + anchor['x']],
-                 [anchor['y'], (R['max'][1] * RANGE_TO_ANCHOR) + anchor['y']],
-                 linestyle='dotted', c='b')
-
-        plt.title(f'Computed Target Position: "{sre}"' if sre else f'Computed Target Position: "{spatial_rel}"')
-        plt.axis('square')
-        plt.legend()
-        plt.show(block=False)
-
-    return new_robot_pos
-
-
 def plot_landmarks(landmarks=None):
     # -- plotting the points in the shared world space local to the Spot's map:
     plt.figure()
@@ -693,6 +628,71 @@ def find_match_relation(unseen_rel):
                 closest_rel_embed = candidate_embed
 
     return closest_rel
+
+
+def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
+    # -- this means that we have no target landmark: we solely want to find a position relative to a given anchor
+    try:
+        anchor = landmarks[anchor_candidate]
+    except KeyError:
+        return None
+
+    robot = landmarks['robot']
+
+    # -- get the list of valid ranges (potentially only one) for an anchoring landmark:
+    list_ranges = compute_area(spatial_rel, anchor)
+
+    # -- we want to find the closest point from the robot to the anchoring landmark that satisfies the given spatial relation:
+    closest_position = 0
+
+    for R in range(len(list_ranges)):
+
+        cur_min_pos = {'x': (list_ranges[R]['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
+                       'y': (list_ranges[R]['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
+        cur_min_dist = np.linalg.norm(np.array([cur_min_pos['x'], cur_min_pos['y']]) - np.array([robot['x'], robot['y']]))
+
+        new_min_pos = {'x': (list_ranges[closest_position]['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
+                       'y': (list_ranges[closest_position]['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
+        new_min_dist = np.linalg.norm(np.array([new_min_pos['x'], new_min_pos['y']]) - np.array([robot['x'], robot['y']]))
+
+        if cur_min_dist > new_min_dist:
+            new_min_pos = R
+    # endfor
+
+    # -- select the index that was found to be closest to the robot:
+    R = list_ranges[closest_position]
+
+    # -- use the mean vector to find a point that is within RANGE_TO_ANCHOR (2m) of the anchor:
+    new_robot_pos = {'x': (R['mean'][0] * RANGE_TO_ANCHOR) + anchor['x'],
+                     'y': (R['mean'][1] * RANGE_TO_ANCHOR) + anchor['y']}
+
+    if plot:
+        plt.figure()
+
+        plt.scatter(x=[robot['x']], y=[robot['y']], marker='o', label='robot')
+        plt.scatter(x=[new_robot_pos['x']], y=[new_robot_pos['y']], marker='x', c='g', s=15, label='new robot pose')
+
+        # -- plot all anchors and targets provided to the function:
+        for A in landmarks:
+            plt.scatter(x=landmarks[A]['x'],
+                        y=landmarks[A]['y'],
+                        marker='o', c='darkorange', label=f"anchor: {A}")
+            plt.text(landmarks[A]['x'], landmarks[A]['y'], A)
+
+        # -- plot the range as well for visualization:
+        plt.plot([anchor['x'], (R['min'][0] * RANGE_TO_ANCHOR) + anchor['x']],
+                 [anchor['y'], (R['min'][1] * RANGE_TO_ANCHOR) + anchor['y']],
+                 linestyle='dotted', c='r')
+        plt.plot([anchor['x'], (R['max'][0] * RANGE_TO_ANCHOR) + anchor['x']],
+                 [anchor['y'], (R['max'][1] * RANGE_TO_ANCHOR) + anchor['y']],
+                 linestyle='dotted', c='b')
+
+        plt.title(f'Computed Target Position: "{sre}"' if sre else f'Computed Target Position: "{spatial_rel}"')
+        plt.axis('square')
+        plt.legend()
+        plt.show(block=False)
+
+    return new_robot_pos
 
 
 def spg(spatial_preds, topk):
