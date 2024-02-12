@@ -584,10 +584,9 @@ def sort_combs(lmk_grounds):
     """
     Sort all combinations of target and anchor landmarks by their joint cosine similarity scores.
     """
-    all_combs = [comb for comb in product(*lmk_grounds)]  # Cartesian product of lists of target and anchor landmarks
     combs_sorted = []
 
-    for comb in all_combs:
+    for comb in list(product(*lmk_grounds)):  # Cartesian product of lists of target and anchor landmarks
         joint_score = 1
         target, anchor = [], []
 
@@ -597,12 +596,12 @@ def sort_combs(lmk_grounds):
             # Get target or anchor landmark name of the combination
             if idx == 0:  # target landmark is always the first in a combination
                 target.append(score_lmk[1])
-            else:  # 0, 1 or 2 target landmarks
+            else:  # SRE with 0, 1 or 2 target landmarks
                 anchor.append(score_lmk[1])
 
         combs_sorted.append({"score": joint_score, "target": target, "anchor": anchor})
 
-    combs_sorted.sort(key=lambda x: x["score"], reverse=True)
+    combs_sorted.sort(key=lambda comb: comb["score"], reverse=True)
     return combs_sorted
 
 
@@ -695,20 +694,20 @@ def get_target_position(spatial_rel, anchor_candidate, sre=None, plot=False):
     return new_robot_pos
 
 
-def spg(spatial_preds, topk):
-    print(f"Command: {spatial_preds['utt']}\n")
+def spg(reg_out, topk):
+    print(f"Command: {reg_out['utt']}\n")
 
     global landmarks
 
     spg_output = {}
 
-    for sre, grounded_spatial_preds in spatial_preds["grounded_sre_to_preds"].items():
+    for sre, grounded_spatial_preds in reg_out["grounded_sre_to_preds"].items():
         print(f"Grounding SRE: {sre}")
 
         query_rel, lmk_grounds = list(grounded_spatial_preds.items())[0]
 
-        # Rank all combinations of targets and anchors for computing spatial predicate grounding
-        # TODO: currently pick topk groundings based on joint cosine similarity score
+        # Rank all combinations of target and anchor landmarks
+        # TODO: currently pick topk combinations based on joint cosine similarity score
         # is there a better way to weigh both distance of target and the joint score?
         lmk_grounds_sorted = sort_combs(lmk_grounds)
 
