@@ -55,11 +55,11 @@ if __name__ == "__main__":
         save_to_file(srer_outs, reg_out_fpath)
 
     # Spatial Predicate Grounding (SPG)
-    reg_outs = load_from_file(reg_out_fpath)
     if not os.path.isfile(spg_out_fpath):
-        init(graph_dpath, osm_fpath)
+        reg_outs = load_from_file(reg_out_fpath)
+        landmarks = init(graph_dpath, osm_fpath)
         for reg_out in reg_outs:
-            reg_out['spg_results'] = spg(reg_out, args.topk)
+            reg_out['spg_results'] = spg(landmarks, reg_out, args.topk)
         save_to_file(reg_outs, spg_out_fpath)
 
     true_results_fpath = os.path.join(data_dpath, f"true_results_{args.location}.json")

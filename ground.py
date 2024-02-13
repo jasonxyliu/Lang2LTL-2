@@ -26,8 +26,8 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk):
     reg(graph_dpath, osm_fpath, [srer_out], topk, ablate)
 
     # Spatial Predicate Grounding (SPG)
-    init(graph_dpath, osm_fpath)
-    srer_out['spg_results'] = spg(srer_out, topk)
+    landmarks = init(graph_dpath, osm_fpath)
+    srer_out['spg_results'] = spg(landmarks, srer_out, topk)
 
     # Lifted Translation (LT)
     lifted_utt = srer_out["lifted_utt"]

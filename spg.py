@@ -17,7 +17,6 @@ KNOWN_RELATIONS = [
 MAX_RANGE = 25.0  # assume target within this radius of the anchor
 RANGE_TO_ANCHOR = 2.0  # indicates the offset to compute a target location for SREs without a target
 
-landmarks = None
 zone = None
 
 use_pyproj = True  # controls whether to use a library for converting GPS to Cartesian coordinates
@@ -36,7 +35,7 @@ except ImportError:
 
 def plot_landmarks(landmarks=None):
     """
-    Plotting landmarks in the shared world space local to the Spot's map
+    Plot landmarks in the shared world space local to the Spot's map
     """
     plt.figure()
 
@@ -170,11 +169,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, coord_ali
                                            landmarks[osm_landmarks[L]['wid']]['y']])
             landmarks[osm_landmarks[L]['wid']]['osm_name'] = id_name
 
-        landmarks[id_name] = {
-            'x': landmark_cartesian[0],
-            'y': landmark_cartesian[1],
-        }
-
+        landmarks[id_name] = {"x": landmark_cartesian[0], "y": landmark_cartesian[1]}
     return landmarks
 
 
@@ -192,7 +187,7 @@ def fake_spot_waypoints(graph_dpath, crs=None):
         exit()
 
     if not crs:
-        (_, _, zone, _) = utm.from_latlon(robot['lat'], robot['long'])
+        _, _, zone, _ = utm.from_latlon(robot["lat"], robot["long"])
         crs = Transformer.from_crs(crs_from="+proj=latlong +ellps=WGS84 +datum=WGS84",
                                    crs_to=f"+proj=utm +ellps=WGS84 +datum=WGS84 +south +units=m +zone={zone}")
 
@@ -225,7 +220,7 @@ def fake_spot_waypoints(graph_dpath, crs=None):
 
 
 def init(graph_dpath=None, osm_fpath=None):
-    global landmarks, use_pyproj
+    global use_pyproj
 
     # Load waypoints from provided directory path to Spot's map if exists
     waypoints, transformer = None, None
@@ -267,6 +262,8 @@ def init(graph_dpath=None, osm_fpath=None):
 
     # Visualize landmarks
     plot_landmarks(landmarks)
+
+    return landmarks
 
 
 def sort_combs(lmk_grounds):
@@ -318,7 +315,7 @@ def find_match_rel(rel_unseen):
     return closest_rel
 
 
-def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
+def compute_area(landmarks, spatial_rel, anchor, do_360_search=False, plot=False):
     robot = landmarks['robot']
 
     # NOTE: we want to draw a vector from the anchor's perspective to the robot!
@@ -443,7 +440,7 @@ def compute_area(spatial_rel, anchor, do_360_search=False, plot=False):
     return list_ranges
 
 
-def get_target_pos(spatial_rel, anchor_candidate, sre=None, plot=False):
+def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=False):
     # -- this means that we have no target landmark: we solely want to find a position relative to a given anchor
     try:
         anchor = landmarks[anchor_candidate]
@@ -507,7 +504,7 @@ def get_target_pos(spatial_rel, anchor_candidate, sre=None, plot=False):
     return new_robot_pos
 
 
-def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
+def evaluate_spg(landmarks, spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
     # -- in this case, we will be given a list of target objects or entities:
     target = landmarks[target_candidate]
 
@@ -533,7 +530,7 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
 
         anchor['name'] = anchor_candidates[0]
 
-        list_ranges = compute_area(spatial_rel, anchor, plot)
+        list_ranges = compute_area(landmarks, spatial_rel, anchor, plot)
 
         is_valid = False
 
@@ -659,10 +656,8 @@ def evaluate_spg(spatial_rel, target_candidate, anchor_candidates, sre=None, plo
     return False
 
 
-def spg(reg_out, topk):
+def spg(landmarks, reg_out, topk):
     print(f"Command: {reg_out['utt']}\n")
-
-    global landmarks
 
     spg_output = {}
 
@@ -691,7 +686,7 @@ def spg(reg_out, topk):
             if len(lmk_grounds) == 1:
                 # Spatial referring expression contains only a target landmark
                 for lmk_ground in lmk_grounds_sorted[:topk]:
-                    groundings.append(get_target_pos(rel_match, lmk_ground["target"][0], sre))
+                    groundings.append(get_target_pos(landmarks, rel_match, lmk_ground["target"][0], sre))
             else:
                 # Spatial referring expression contains a target landmark and one or two anchoring landmarks
                 # one anchor, e.g., <tgt> left of <anc1>
@@ -699,7 +694,7 @@ def spg(reg_out, topk):
                 for lmk_ground in lmk_grounds_sorted:
                     target_name = lmk_ground["target"][0]
                     anchor_names = lmk_ground["anchor"]
-                    is_valid = evaluate_spg(rel_match, target_name, anchor_names, sre=sre)
+                    is_valid = evaluate_spg(landmarks, rel_match, target_name, anchor_names, sre=sre)
                     if is_valid:
                         groundings.append({"target": target_name,  "anchor": anchor_names})
 
@@ -720,7 +715,7 @@ if __name__ == "__main__":
     osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
     reg_outs_fpath = os.path.join(os.path.expanduser("~"), "ground", "results", f"reg_outs_{location}.json")
 
-    init(graph_dpath, osm_fpath)
     reg_outputs = load_from_file(reg_outs_fpath)
+    landmarks = init(graph_dpath, osm_fpath)
     for reg_output in reg_outputs:
-        spg(reg_output, topk=5)
+        spg(landmarks, reg_output, topk=5)
