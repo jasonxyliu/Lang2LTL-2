@@ -2,12 +2,12 @@ import os
 
 from srer import srer
 from reg import reg
-from spg import init, spg
+from spg import load_lmks, spg
 from lt_s2s_sup_tcd import Seq2Seq
 
 
 LOC2GID = {
-    "indoor_env_0": "downloaded_graph_2024-02-02_10-55-35",
+    "lab": "downloaded_graph_2024-02-02_10-55-35",
     "alley": "downloaded_graph_2024-02-02_14-26-54",
     "blackstone": "downloaded_graph_2024-01-27_07-48-53",
     "boston": "boston",
@@ -26,7 +26,7 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk):
     reg(graph_dpath, osm_fpath, [srer_out], topk, ablate)
 
     # Spatial Predicate Grounding (SPG)
-    landmarks = init(graph_dpath, osm_fpath)
+    landmarks = load_lmks(graph_dpath, osm_fpath)
     srer_out['spg_results'] = spg(landmarks, srer_out, topk)
 
     # Lifted Translation (LT)

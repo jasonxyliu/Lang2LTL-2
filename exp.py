@@ -5,7 +5,7 @@ from tqdm import tqdm
 from ground import LOC2GID
 from srer import srer
 from reg import reg
-from spg import init, spg
+from spg import load_lmks, spg
 from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
 from evaluate import evaluate_spg
@@ -23,7 +23,7 @@ def lt(spg_outs, model_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="blackstone", choices=["indoor_env_0", "alley", "blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--location", type=str, default="blackstone", choices=["lab", "alley", "blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
     args = parser.parse_args()
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # Spatial Predicate Grounding (SPG)
     if not os.path.isfile(spg_out_fpath):
         reg_outs = load_from_file(reg_out_fpath)
-        landmarks = init(graph_dpath, osm_fpath)
+        landmarks = load_lmks(graph_dpath, osm_fpath)
         for reg_out in reg_outs:
             reg_out['spg_results'] = spg(landmarks, reg_out, args.topk)
         save_to_file(reg_outs, spg_out_fpath)
