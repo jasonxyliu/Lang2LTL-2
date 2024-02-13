@@ -554,7 +554,7 @@ def align_coordinates(spot_graph_dpath, osm_landmarks, spot_waypoints, coord_ali
 def fake_spot_waypoints(spot_graph_dpath, crs=None):
     # NOTE: this function is used to create a "fake" robot map of objects similar to that created by GraphNav:
 
-    objects = load_from_file(os.path.join(spot_graph_dpath, "objects_map.json"))
+    objects = load_from_file(os.path.join(spot_graph_dpath, "obj_locs.json"))
 
     robot = None
     if 'waypoint_0' in objects:

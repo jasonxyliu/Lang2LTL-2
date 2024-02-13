@@ -7,7 +7,7 @@ from lt_s2s_sup_tcd import Seq2Seq
 
 
 LOC2GID = {
-    "indoor_env_0": "downloaded_graph_2024-02-02_10-55-35",
+    "lab": "downloaded_graph_2024-02-02_10-55-35",
     "alley": "downloaded_graph_2024-02-02_14-26-54",
     "blackstone": "downloaded_graph_2024-01-27_07-48-53",
     "boston": "boston",
