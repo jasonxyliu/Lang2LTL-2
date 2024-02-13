@@ -3,6 +3,7 @@ data/
 spot/graphs/
 *.code-workspace
 results/
+*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
