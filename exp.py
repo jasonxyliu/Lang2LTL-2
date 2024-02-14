@@ -23,9 +23,9 @@ def lt(spg_outs, model_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="blackstone", choices=["lab", "alley", "blackstone", "boston", "auckland"], help="domain name.")
-    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
-    parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
+    parser.add_argument("--location", type=str, default="blackstone", choices=["lab", "alley", "blackstone", "boston", "auckland"], help="env name.")
+    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
+    parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
@@ -55,12 +55,13 @@ if __name__ == "__main__":
         save_to_file(srer_outs, reg_out_fpath)
 
     # Spatial Predicate Grounding (SPG)
-    if not os.path.isfile(spg_out_fpath):
-        reg_outs = load_from_file(reg_out_fpath)
-        landmarks = load_lmks(graph_dpath, osm_fpath)
-        for reg_out in reg_outs:
-            reg_out['spg_results'] = spg(landmarks, reg_out, args.topk)
-        save_to_file(reg_outs, spg_out_fpath)
+    reg_outs = load_from_file(reg_out_fpath)
+    landmarks = load_lmks(graph_dpath, osm_fpath)
+    for reg_out in reg_outs:
+        reg_out['spg_results'] = spg(landmarks, reg_out, args.topk)
+    save_to_file(reg_outs, spg_out_fpath)
+
+    breakpoint()
 
     true_results_fpath = os.path.join(data_dpath, f"true_results_{args.location}.json")
     evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)
