@@ -622,13 +622,13 @@ def spg(landmarks, reg_out, topk):
                 for lmk_ground in lmk_grounds_sorted[:topk]:
                     groundings.append(get_target_pos(landmarks, rel_match, lmk_ground["target"][0], sre))
             else:
-                # Spatial referring expression contains a target landmark and one or two anchoring landmarks
+                # Spatial referring expression contains a target landmark and one or two anchor landmarks
                 # one anchor, e.g., <tgt> left of <anc1>
                 # two anchors, e.g., <tgt> between <anc1> and <anc2>
                 for lmk_ground in lmk_grounds_sorted:
                     target_name = lmk_ground["target"][0]
                     anchor_names = lmk_ground["anchor"]
-                    is_valid = eval_spatial_pred(landmarks, rel_match, target_name, anchor_names, sre=sre)
+                    is_valid = eval_spatial_pred(landmarks, rel_match, target_name, anchor_names, sre)
                     if is_valid:
                         groundings.append({"target": target_name,  "anchor": anchor_names})
 
