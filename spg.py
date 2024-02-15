@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
-import numpy as np
 from itertools import product
+import numpy as np
 import matplotlib.pyplot as plt
 from pyproj import Transformer  # convert geographic to Cartesian coordinates: https://stackoverflow.com/a/69604627
 import utm
@@ -45,9 +45,10 @@ def plot_landmarks(landmarks=None):
     # plt.savefig("temp.png")
 
 
-def rotation_matrix(angle):
-    # Source: https://motion.cs.illinois.edu/RoboticSystems/CoordinateTransformations.html
-    return np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+def rotate(vec, angle):
+    # https://motion.cs.illinois.edu/RoboticSystems/CoordinateTransformations.html
+    mat_rot = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+    return np.dot(mat_rot, vec)
 
 
 def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, crs):
@@ -69,9 +70,9 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
         vec_lmk_1_to_2 = known_landmark_2 - known_landmark_1
         vec_wp_1_to_2 = known_waypoint_2 - known_waypoint_1
 
-        # -- first, we will find the rotation between the known landmark and waypoint
-        dir_robot = np.arctan2(vec_wp_1_to_2[1], vec_wp_1_to_2[0])  # i.e., spot coordinate
+        # Compute the rotation between the known landmark and waypoint
         dir_world = np.arctan2(vec_lmk_1_to_2[1], vec_lmk_1_to_2[0])  # i.e., world coordinate
+        dir_robot = np.arctan2(vec_wp_1_to_2[1], vec_wp_1_to_2[0])  # i.e., spot coordinate
 
         angle_diff = dir_world - dir_robot
 
@@ -91,7 +92,7 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
                 cartesian_coords = np.array([wp_desc["position"]["x"], wp_desc["position"]["y"]])
 
                 # Align the Spot's cartesian coordinates to the world frame:
-                cartesian_coords = np.dot(rotation_matrix(angle=angle_diff), cartesian_coords)
+                cartesian_coords = rotate(cartesian_coords, angle_diff)
 
                 if coord_alignment:
                     # Use the newly rotated point to figure out the offset
@@ -301,8 +302,6 @@ def compute_area(landmarks, spatial_rel, anchor, do_360_search=False, plot=False
         # NOTE: since cardinal directions are absolute, we should not do any 360-sweep:
         do_360_search = False
 
-    # endif
-
     # -- this dictates how wide of a field-of-view we attribute to the robot:
     field_of_view = 180
 
@@ -315,20 +314,15 @@ def compute_area(landmarks, spatial_rel, anchor, do_360_search=False, plot=False
     # print(rot_a2r)
     for x in rot_a2r:
         # -- rotate the anchor"s frame of reference by some angle x:
-        a2r_vector = np.dot(rotation_matrix(angle=np.deg2rad(x)), unit_vec_a2r)
+        a2r_vector = rotate(unit_vec_a2r, np.deg2rad(x))
 
         # -- compute the mean vector as well as vectors representing min and max proximity range:
-        a2r_mean = np.dot(rotation_matrix(angle=np.deg2rad(mean_angle)), a2r_vector)
-        a2r_min_range = np.dot(rotation_matrix(angle=np.deg2rad(mean_angle-(field_of_view/2))), a2r_vector)
-        a2r_max_range = np.dot(rotation_matrix(angle=np.deg2rad(mean_angle+(field_of_view/2))), a2r_vector)
+        a2r_mean = rotate(a2r_vector, np.deg2rad(mean_angle))
+        a2r_min_range = rotate(a2r_vector, np.deg2rad(mean_angle-(field_of_view/2)))
+        a2r_max_range = rotate(a2r_vector, np.deg2rad(mean_angle+(field_of_view/2)))
 
         # -- append the vectors to the list of evaluated ranges:
-        list_ranges.append({
-            "mean": a2r_mean,
-            "min": a2r_min_range,
-            "max": a2r_max_range,
-        })
-    # endfor
+        list_ranges.append({"mean": a2r_mean, "min": a2r_min_range, "max": a2r_max_range})
 
     if plot:
         plt.figure()
@@ -368,7 +362,6 @@ def compute_area(landmarks, spatial_rel, anchor, do_360_search=False, plot=False
                      [anchor["y"], min_pose[1]], linestyle="dotted", c="r")
             plt.plot([anchor["x"], max_pose[0]],
                      [anchor["y"], max_pose[1]], linestyle="dotted", c="b")
-        # endfor
 
         plt.title(f"Evaluated range for spatial relation: {spatial_rel}")
         plt.legend()
@@ -559,8 +552,8 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         # -- computing vectors perpendicular to each anchoring point:
         vec_a1_to_a2 = anchor_2 - anchor_1; vec_a1_to_a2 /= np.linalg.norm(vec_a1_to_a2)
         vec_a2_to_a1 = anchor_1 - anchor_2; vec_a2_to_a1 /= np.linalg.norm(vec_a2_to_a1)
-        A, B = np.dot(rotation_matrix(np.deg2rad(-90)), vec_a1_to_a2 * MAX_RANGE) + anchor_1, np.dot(rotation_matrix(np.deg2rad(90)), vec_a1_to_a2 * MAX_RANGE) + anchor_1
-        C, D = np.dot(rotation_matrix(np.deg2rad(-90)), vec_a2_to_a1 * MAX_RANGE) + anchor_2, np.dot(rotation_matrix(np.deg2rad(90)), vec_a2_to_a1 * MAX_RANGE) + anchor_2
+        A, B = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_1, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_1
+        C, D = rotate(vec_a2_to_a1 * MAX_RANGE, np.deg2rad(-90)) + anchor_2, rotate(vec_a2_to_a1 * MAX_RANGE, np.deg2rad(90)) + anchor_2
 
         dot_ABAM = np.dot(B-A, target-A)
         dot_ABAB = np.dot(B-A, B-A)
