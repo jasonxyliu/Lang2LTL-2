@@ -52,8 +52,8 @@ def rotate(vec, angle):
 
 
 def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, crs):
-    angle_diff = 0  # rotation needed to align the Spot's frame to the world Cartesian frame (default: 0, not needed if no robot graph)
-    offset = 0  # translation needed to be added to geographic coordinates from OSM (default: 0, not needed if no robot graph)
+    # rotation and translation to align Spot's frame to world Cartesian frame (default: 0, not needed if no robot graph)
+    rotation, translation = 0, 0
 
     if coord_alignment:
         # If use Spot graph, alignment landmark value is not None, then compute rotation and translation for alignment
@@ -74,7 +74,7 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
         dir_world = np.arctan2(vec_lmk_1_to_2[1], vec_lmk_1_to_2[0])  # i.e., world coordinate
         dir_robot = np.arctan2(vec_wp_1_to_2[1], vec_wp_1_to_2[0])  # i.e., spot coordinate
 
-        angle_diff = dir_world - dir_robot
+        rotation = dir_world - dir_robot
 
     landmarks = {}
 
@@ -92,10 +92,10 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
                 cartesian_coords = np.array([wp_desc["position"]["x"], wp_desc["position"]["y"]])
 
                 # Align the Spot's cartesian coordinates to the world frame:
-                cartesian_coords = rotate(cartesian_coords, angle_diff)
+                cartesian_coords = rotate(cartesian_coords, rotation)
 
                 if coord_alignment:
-                    # Use the newly rotated point to figure out the offset
+                    # Use the newly rotated point to figure out the translation
                     if wid == coord_alignment[0]["waypoint"]:
                         known_waypoint_1 = cartesian_coords
                     elif wid == coord_alignment[1]["waypoint"]:
@@ -105,8 +105,8 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
                 landmarks[lmk_id] = {"x": cartesian_coords[0], "y": cartesian_coords[1]}
 
         if coord_alignment:
-            # Compute an offset that can be used to align the known landmark from world to Spot space AFTER rotation
-            offset = ((known_waypoint_1 - known_landmark_1) + (known_waypoint_2 - known_landmark_2)) / 2.0
+            # Compute translation to align the known landmark from world to Spot space AFTER rotation
+            translation = ((known_waypoint_1 - known_landmark_1) + (known_waypoint_2 - known_landmark_2)) / 2.0
     else:
         # This means we are only working with OSM landmarks
         print(" >> WARNING: not using Spot graph")
@@ -122,9 +122,9 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
                 lmk_cartesian = np.array([landmarks[wid]["x"], landmarks[wid]["y"]])
                 landmarks[wid]["osm_name"] = lmk_id
             else:
-                # Convert landmark location to Cartesian coordinate then add computed offset
+                # Convert landmark location to Cartesian coordinate then add computed translation
                 lmk_cartesian = np.array(crs.transform(lmk_desc["long"], lmk_desc["lat"], 0, radians=False)[:-1])
-                lmk_cartesian += offset
+                lmk_cartesian += translation
 
             landmarks[lmk_id] = {"x": lmk_cartesian[0], "y": lmk_cartesian[1]}
 
