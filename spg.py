@@ -18,6 +18,7 @@ KNOWN_RELATIONS = [
     "north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"
 ]
 MAX_RANGE = 25.0  # assume target within this radius of the anchor
+FOV = 180  # robot's field-of-view
 RANGE_TO_ANCHOR = 2.0  # indicates the offset to compute a target location for SREs without a target
 
 
@@ -254,123 +255,6 @@ def find_match_rel(rel_unseen):
     return closest_rel
 
 
-def compute_area(landmarks, spatial_rel, anchor, do_360_search=False, plot=False):
-    robot = landmarks["robot"]
-
-    # NOTE: we want to draw a vector from the anchor"s perspective to the robot!
-    # -- this gives us a normal vector pointing outside of the anchor object
-    list_ranges = []
-
-    # -- compute vector between robot"s position and anchor position and get its direction:
-    vector_a2r = [robot["x"] - anchor["x"],
-                  robot["y"] - anchor["y"]]
-
-    # -- draw a unit vector and multiply it by 10 to get the max distance to consider:
-    unit_vec_a2r = np.array(vector_a2r) / np.linalg.norm(vector_a2r)
-
-    # NOTE: mean angle of 0 if we get the spatial relation "in front of" or "opposite"
-    mean_angle = 0
-    if spatial_rel in ["left", "left of", "to the left of"]:
-        # -- if we want something to the left, we need to go in positive 90 degrees:
-        mean_angle = -90
-    elif spatial_rel in ["right", "right of", "to the right of"]:
-        # -- if we want something to the right, we need to go in negative 90 degrees:
-        mean_angle = 90
-    elif spatial_rel in ["behind", "at the rear of", "behind of"]:
-        # -- if we want something to the right, we need to tn 180 degees:
-        mean_angle = 180
-    elif spatial_rel in ["north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"]:
-        # -- we need to find the difference between each cardinal direction and the current anchor-to-robot vector
-        #       to figure out how much we need to rotate it by:
-        if spatial_rel in ["north", "north of"]:
-            mean_angle = np.rad2deg(np.arctan2(1, 0) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
-        elif spatial_rel in ["south", "south of"]:
-            mean_angle = np.rad2deg(np.arctan2(-1, 0) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
-        elif spatial_rel in ["east", "east of"]:
-            mean_angle = np.rad2deg(np.arctan2(0, 1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
-        elif spatial_rel in ["west", "west of"]:
-            mean_angle = np.rad2deg(np.arctan2(0, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
-        elif spatial_rel in ["northeast", "northeast of"]:
-            mean_angle = np.rad2deg(np.arctan2(1, 1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
-        elif spatial_rel in ["northwest", "northwest of"]:
-            mean_angle = np.rad2deg(np.arctan2(1, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
-        elif spatial_rel in ["southeast", "southeast of"]:
-            mean_angle = np.rad2deg(np.arctan2(-1, 1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
-        elif spatial_rel in ["southwest", "southwest of"]:
-            mean_angle = np.rad2deg(np.arctan2(-1, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
-
-        # NOTE: since cardinal directions are absolute, we should not do any 360-sweep:
-        do_360_search = False
-
-    # -- this dictates how wide of a field-of-view we attribute to the robot:
-    field_of_view = 180
-
-    # -- checking for sweep condition: this means we will consider different normal vectors
-    #       representing the "front" of the object:
-    rot_a2r = [0]
-    if spatial_rel in ["near", "near to", "next", "next to", "adjacent to", "close to", "at", "close", "by"] or do_360_search:
-        rot_a2r += [x * field_of_view for x in range(1, int(360 / field_of_view))]
-
-    # print(rot_a2r)
-    for x in rot_a2r:
-        # -- rotate the anchor"s frame of reference by some angle x:
-        a2r_vector = rotate(unit_vec_a2r, np.deg2rad(x))
-
-        # -- compute the mean vector as well as vectors representing min and max proximity range:
-        a2r_mean = rotate(a2r_vector, np.deg2rad(mean_angle))
-        a2r_min_range = rotate(a2r_vector, np.deg2rad(mean_angle-(field_of_view/2)))
-        a2r_max_range = rotate(a2r_vector, np.deg2rad(mean_angle+(field_of_view/2)))
-
-        # -- append the vectors to the list of evaluated ranges:
-        list_ranges.append({"mean": a2r_mean, "min": a2r_min_range, "max": a2r_max_range})
-
-    if plot:
-        plt.figure()
-
-        # -- plotting the robot"s position as well as the anchor point:
-        plt.scatter(x=[robot["x"]],
-                    y=[robot["y"]], marker="o", color="yellow", label="robot")
-        plt.scatter(x=[anchor["x"]],
-                    y=[anchor["y"]], marker="o", color="orange", label="anchor")
-        plt.text(anchor["x"], anchor["y"], s=anchor["name"])
-
-        # -- plotting the normal vector from the robot to the anchor:
-        plt.plot([robot["x"], anchor["x"]],
-                 [robot["y"], anchor["y"]], color="black")
-        plt.arrow(x=robot["x"], y=robot["y"], dx=-vector_a2r[0]/2.0, dy=-vector_a2r[1]/2.0, shape="full",
-                    width=0.01, head_width=0.1, color="black", label="normal")
-
-        for r in range(len(list_ranges)):
-            mean_pose = [(list_ranges[r]["mean"][0] * MAX_RANGE) + anchor["x"],
-                            (list_ranges[r]["mean"][1] * MAX_RANGE) + anchor["y"]]
-            plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]],
-                        c="g", marker="o", label=f"mean_{r}")
-
-            min_pose = [(list_ranges[r]["min"][0] * MAX_RANGE) + anchor["x"],
-                        (list_ranges[r]["min"][1] * MAX_RANGE) + anchor["y"]]
-            plt.scatter(x=[min_pose[0]], y=[min_pose[1]],
-                        c="r", marker="x", label=f"min_{r}")
-
-            max_pose = [(list_ranges[r]["max"][0] * MAX_RANGE) + anchor["x"],
-                        (list_ranges[r]["max"][1] * MAX_RANGE) + anchor["y"]]
-            plt.scatter(x=[max_pose[0]], y=[max_pose[1]],
-                        c="b", marker="x", label=f"max_{r}")
-
-            plt.plot([anchor["x"], mean_pose[0]],
-                     [anchor["y"], mean_pose[1]], linestyle="dashed", c="g")
-            plt.plot([anchor["x"], min_pose[0]],
-                     [anchor["y"], min_pose[1]], linestyle="dotted", c="r")
-            plt.plot([anchor["x"], max_pose[0]],
-                     [anchor["y"], max_pose[1]], linestyle="dotted", c="b")
-
-        plt.title(f"Evaluated range for spatial relation: {spatial_rel}")
-        plt.legend()
-        plt.axis("square")
-        plt.show(block=False)
-
-    return list_ranges
-
-
 def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=False):
     """
     Spatial referring expression: cardinal directions; maybe left, right?
@@ -384,26 +268,26 @@ def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
     robot = landmarks["robot"]
 
     # -- get the list of valid ranges (potentially only one) for an anchoring landmark:
-    list_ranges = compute_area(spatial_rel, anchor)
+    range_vecs = compute_area(spatial_rel, robot, anchor)
 
     # -- we want to find the closest point from the robot to the anchoring landmark that satisfies the given spatial relation:
     closest_position = 0
 
-    for R in range(len(list_ranges)):
+    for R in range(len(range_vecs)):
 
-        cur_min_pos = {"x": (list_ranges[R]["mean"][0] * RANGE_TO_ANCHOR) + anchor["x"],
-                       "y": (list_ranges[R]["mean"][1] * RANGE_TO_ANCHOR) + anchor["y"]}
+        cur_min_pos = {"x": (range_vecs[R]["mean"][0] * RANGE_TO_ANCHOR) + anchor["x"],
+                       "y": (range_vecs[R]["mean"][1] * RANGE_TO_ANCHOR) + anchor["y"]}
         cur_min_dist = np.linalg.norm(np.array([cur_min_pos["x"], cur_min_pos["y"]]) - np.array([robot["x"], robot["y"]]))
 
-        new_min_pos = {"x": (list_ranges[closest_position]["mean"][0] * RANGE_TO_ANCHOR) + anchor["x"],
-                       "y": (list_ranges[closest_position]["mean"][1] * RANGE_TO_ANCHOR) + anchor["y"]}
+        new_min_pos = {"x": (range_vecs[closest_position]["mean"][0] * RANGE_TO_ANCHOR) + anchor["x"],
+                       "y": (range_vecs[closest_position]["mean"][1] * RANGE_TO_ANCHOR) + anchor["y"]}
         new_min_dist = np.linalg.norm(np.array([new_min_pos["x"], new_min_pos["y"]]) - np.array([robot["x"], robot["y"]]))
 
         if cur_min_dist > new_min_dist:
             new_min_pos = R
 
     # -- select the index that was found to be closest to the robot:
-    R = list_ranges[closest_position]
+    R = range_vecs[closest_position]
 
     # -- use the mean vector to find a point that is within RANGE_TO_ANCHOR (2m) of the anchor:
     new_robot_pos = {"x": (R["mean"][0] * RANGE_TO_ANCHOR) + anchor["x"],
@@ -438,105 +322,123 @@ def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
     return new_robot_pos
 
 
-def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
-    # -- in this case, we will be given a list of target objects or entities:
-    target = landmarks[target_candidate]
+def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
+    # NOTE: we want to draw a vector from the anchor to robot
+    # -- this gives us a normal vector pointing outside of the anchor object
+    range_vecs = []
 
-    # -- we cannot evaluate a landmark against itself, so we need to check if any
-    #       anchor candidates are equal to the target candidate:
+    # Compute unit vector from robot to anchor and get its direction:
+    vec_a2r = [robot["x"] - anchor["x"], robot["y"] - anchor["y"]]
+    unit_vec_a2r = np.array(vec_a2r) / np.linalg.norm(vec_a2r)
+
+    if spatial_rel in ["in front of", "opposite"]:
+        mean_angle = 0
+    elif spatial_rel in ["behind", "at the rear of", "behind of"]:
+        mean_angle = 180
+    elif spatial_rel in ["left", "left of", "to the left of"]:
+        mean_angle = -90  # positive 90 degrees
+    elif spatial_rel in ["right", "right of", "to the right of"]:
+        mean_angle = 90  # negative 90 degrees
+    elif spatial_rel in ["north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"]:
+        # Find the difference between each cardinal direction and the current anchor-to-robot vector to figure out how much to rotate it
+        if spatial_rel in ["north", "north of"]:
+            mean_angle = np.rad2deg(np.arctan2(1, 0) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+        elif spatial_rel in ["south", "south of"]:
+            mean_angle = np.rad2deg(np.arctan2(-1, 0) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+        elif spatial_rel in ["east", "east of"]:
+            mean_angle = np.rad2deg(np.arctan2(0, 1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+        elif spatial_rel in ["west", "west of"]:
+            mean_angle = np.rad2deg(np.arctan2(0, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+        elif spatial_rel in ["northeast", "northeast of"]:
+            mean_angle = np.rad2deg(np.arctan2(1, 1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+        elif spatial_rel in ["northwest", "northwest of"]:
+            mean_angle = np.rad2deg(np.arctan2(1, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+        elif spatial_rel in ["southeast", "southeast of"]:
+            mean_angle = np.rad2deg(np.arctan2(-1, 1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+        elif spatial_rel in ["southwest", "southwest of"]:
+            mean_angle = np.rad2deg(np.arctan2(-1, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+
+        do_360_search = False  # NOTE: since cardinal directions are absolute, we should not do any 360-sweep:
+    # else:
+    #     raise KeyError(f"ERROR unknow spatial relation: {spatial_rel}")
+
+    # Check for sweep condition: this means we will consider different normal vectors representing the "front" of the object
+    rot_a2r = [0]
+    if spatial_rel in ["near", "near to", "next", "next to", "adjacent to", "close to", "at", "close", "by"] or do_360_search:
+        mean_angle = 0
+        rot_a2r = [rot for rot in range(0, 360, FOV)]
+
+    for rot in rot_a2r:
+        # Rotate the anchor's frame of reference
+        vec_a2r_rotated = rotate(unit_vec_a2r, np.deg2rad(rot))
+
+        # Compute the mean vector and vectors representing min and max range
+        vec_a2t_mean = rotate(vec_a2r_rotated, np.deg2rad(mean_angle))
+        vec_a2t_min = rotate(vec_a2r_rotated, np.deg2rad(mean_angle - FOV / 2))
+        vec_a2t_max = rotate(vec_a2r_rotated, np.deg2rad(mean_angle + FOV / 2))
+        range_vecs.append({"mean": vec_a2t_mean, "min": vec_a2t_min, "max": vec_a2t_max})
+
+    if plot:
+        plt.figure()
+
+        # Plot robot and anchor location
+        plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
+        plt.scatter(x=[anchor["x"]], y=[anchor["y"]], marker="o", color="orange", label="anchor")
+        plt.text(anchor["x"], anchor["y"], s=anchor["name"])
+
+        # Plot the normal vector from the robot to the anchor:
+        plt.plot([robot["x"], anchor["x"]], [robot["y"], anchor["y"]], color="black")
+        plt.arrow(x=robot["x"], y=robot["y"], dx=-vec_a2r[0]/2.0, dy=-vec_a2r[1]/2.0, shape="full",
+                  width=0.01, head_width=0.1, color="black", label="normal")
+
+        for range_vec in range_vecs:
+            mean_pose = [(range_vec["mean"][0] * MAX_RANGE) + anchor["x"],
+                         (range_vec["mean"][1] * MAX_RANGE) + anchor["y"]]
+            plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c="g", marker="o", label=f"mean_{r}")
+
+            min_pose = [(range_vec["min"][0] * MAX_RANGE) + anchor["x"],
+                        (range_vec["min"][1] * MAX_RANGE) + anchor["y"]]
+            plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c="r", marker="x", label=f"min_{r}")
+
+            max_pose = [(range_vec["max"][0] * MAX_RANGE) + anchor["x"],
+                        (range_vec["max"][1] * MAX_RANGE) + anchor["y"]]
+            plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c="b", marker="x", label=f"max_{r}")
+
+            plt.plot([anchor["x"], mean_pose[0]], [anchor["y"], mean_pose[1]], linestyle="dashed", c="g")
+            plt.plot([anchor["x"], min_pose[0]], [anchor["y"], min_pose[1]], linestyle="dotted", c="r")
+            plt.plot([anchor["x"], max_pose[0]], [anchor["y"], max_pose[1]], linestyle="dotted", c="b")
+
+        plt.title(f"Evaluated range for spatial relation: {spatial_rel}")
+        plt.legend()
+        plt.axis("square")
+        plt.show(block=False)
+
+    return range_vecs
+
+
+def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
+    """
+    Evaluate if a spatial relation is valid given candidate target landmark and anchor landmark(s).
+    """
+    robot, target = landmarks["robot"], landmarks[target_candidate]
+
+    # We cannot evaluate a landmark against itself, so we check if target equals to any anchor
     if target_candidate in anchor_candidates:
         return False
 
-    for A in anchor_candidates:
-        # -- we will check if any anchor has the same (x,y) coordinates as the target:
-        if target["x"] == landmarks[A]["x"] and target["y"] == landmarks[A]["y"]:
+    # Check if any anchor has same xy coordinate as target
+    for lmk_id in anchor_candidates:
+        if target["x"] == landmarks[lmk_id]["x"] and target["y"] == landmarks[lmk_id]["y"]:
             return False
 
-    # -- robot is listed as a landmark:
-    robot = landmarks["robot"]
-
-    if spatial_rel not in ["between"]:
-
-        try:
-            anchor = landmarks[anchor_candidates[0]]
-        except KeyError:
-            return False
-
-        anchor["name"] = anchor_candidates[0]
-
-        list_ranges = compute_area(landmarks, spatial_rel, anchor, plot)
-
-        is_valid = False
-
-        for R in list_ranges:
-            v_tgt = np.array([target["x"] - anchor["x"], target["y"] - anchor["y"]])
-            v_min = np.array([R["min"][0], R["min"][1]])
-            v_max = np.array([R["max"][0], R["max"][1]])
-
-            # -- checking if the target vector lies between the min and max vectors
-            #       Source: https://stackoverflow.com/a/17497339
-            is_within_vectors = bool(np.cross(v_max,v_tgt) * np.cross(v_max,v_min) >= 0) and bool(np.cross(v_min,v_tgt) * np.cross(v_min,v_max) >= 0)
-
-            a2t_distance = np.linalg.norm(np.array([target["x"], target["y"]]) - np.array([anchor["x"], anchor["y"]]))
-
-            if is_within_vectors and a2t_distance <= MAX_RANGE:
-                print(f"    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates[0]}")
-                is_valid = True
-                break
-
-        if is_valid:
-
-            if plot:
-                # -- plot the computed range:
-                plt.figure()
-                plt.title(f"Final Grounding: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
-                plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
-                plt.scatter(x=[anchor["x"]], y=[anchor["y"]], marker="o", color="orange", label="anchor")
-                plt.scatter(x=[target["x"]], y=[target["y"]], marker="o", color="green", label="target")
-                plt.plot([robot["x"], anchor["x"]], [robot["y"], anchor["y"]], linestyle="dotted", c="k", label="normal")
-
-                plt.text(anchor["x"], anchor["y"], s=anchor_candidates[0])
-                plt.text(target["x"], target["y"], s=target_candidate)
-
-                for R in range(len(list_ranges)):
-                    mean_pose = np.array([(list_ranges[R]["mean"][0] * MAX_RANGE) + anchor["x"],
-                                    (list_ranges[R]["mean"][1] * MAX_RANGE) + anchor["y"]])
-                    # plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c="g", marker="o", label="mean")
-
-                    min_pose = np.array([(list_ranges[R]["min"][0] * MAX_RANGE) + anchor["x"],
-                                (list_ranges[R]["min"][1] * MAX_RANGE) + anchor["y"]])
-                    # plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c="r", marker="x", label="min")
-
-                    max_pose = np.array([(list_ranges[R]["max"][0] * MAX_RANGE) + anchor["x"],
-                                (list_ranges[R]["max"][1] * MAX_RANGE) + anchor["y"]])
-                    # plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c="b", marker="x", label="max")
-
-                    if R == (len(list_ranges) - 1):
-                        # plt.plot([anchor["x"], mean_pose[0]], [anchor["y"], mean_pose[1]], linestyle="dotted", c="g", label="mean_range" )
-                        plt.plot([anchor["x"], min_pose[0]], [anchor["y"], min_pose[1]], linestyle="dotted", c="r", label="min_range")
-                        plt.plot([anchor["x"], max_pose[0]], [anchor["y"], max_pose[1]], linestyle="dotted", c="b", label="MAX_RANGE")
-                    else:
-                        # plt.plot([anchor["x"], mean_pose[0]], [anchor["y"], mean_pose[1]], linestyle="dotted", c="g", )
-                        plt.plot([anchor["x"], min_pose[0]], [anchor["y"], min_pose[1]], linestyle="dotted", c="r")
-                        plt.plot([anchor["x"], max_pose[0]], [anchor["y"], max_pose[1]], linestyle="dotted", c="b")
-
-                plt.legend()
-                plt.axis("square")
-                plt.show(block=False)
-
-            return True
-
-    else:
-
+    if spatial_rel in ["between"]:
         try:
             anchor_1 = landmarks[anchor_candidates[0]]
             anchor_2 = landmarks[anchor_candidates[1]]
         except KeyError:
-            # -- this anchor may instead be a waypoint in the Spot"s space:
-            return False
+            return False  # this anchor may instead be a waypoint in the Spot's space
 
-        # NOTE: sometimes we may be evaluating the same anchor twice,
-        #   so we need to check this before computing the relation:
+        # Avoid evaluating a target ''between'' the same anchor
         if anchor_candidates[0] == anchor_candidates[1]:
             return False
 
@@ -547,13 +449,15 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         anchor_1 = np.array([anchor_1["x"], anchor_1["y"]])
         anchor_2 = np.array([anchor_2["x"], anchor_2["y"]])
 
-        # -- checking if something lies between two anchors is fairly simple: https://math.stackexchange.com/a/190373
+        # Check if target lies between two anchors: https://math.stackexchange.com/a/190373
+        # Compute vectors perpendicular to each anchor
+        vec_a1_to_a2 = (anchor_2 - anchor_1) / np.linalg.norm(anchor_2 - anchor_1)
+        vec_a2_to_a1 = (anchor_1 - anchor_2) / np.linalg.norm(anchor_1 - anchor_2)
 
-        # -- computing vectors perpendicular to each anchoring point:
-        vec_a1_to_a2 = anchor_2 - anchor_1; vec_a1_to_a2 /= np.linalg.norm(vec_a1_to_a2)
-        vec_a2_to_a1 = anchor_1 - anchor_2; vec_a2_to_a1 /= np.linalg.norm(vec_a2_to_a1)
-        A, B = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_1, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_1
-        C, D = rotate(vec_a2_to_a1 * MAX_RANGE, np.deg2rad(-90)) + anchor_2, rotate(vec_a2_to_a1 * MAX_RANGE, np.deg2rad(90)) + anchor_2
+        A = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_1
+        B = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_1
+        C = rotate(vec_a2_to_a1 * MAX_RANGE, np.deg2rad(-90)) + anchor_2
+        D = rotate(vec_a2_to_a1 * MAX_RANGE, np.deg2rad(90)) + anchor_2
 
         dot_ABAM = np.dot(B-A, target-A)
         dot_ABAB = np.dot(B-A, B-A)
@@ -563,6 +467,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         if 0 <= dot_ABAM and dot_ABAM <= dot_ABAB and 0 <= dot_BCBM and dot_BCBM <= dot_BCBC:
             if plot:
                 plt.figure()
+                plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
 
                 plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
                 plt.scatter(x=[target[0]], y=[target[1]], marker="o", color="green", label="target")
@@ -578,7 +483,6 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
                 plt.text(x=anchor_1[0], y=anchor_1[1], s=anchor_candidates[0])
                 plt.text(x=anchor_2[0], y=anchor_2[1], s=anchor_candidates[1])
 
-                plt.title(f"Final Grounding: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
                 plt.axis("square")
                 plt.show(block=False)
 
@@ -586,6 +490,74 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             return True
 
         return False
+
+    else:
+        try:
+            anchor = landmarks[anchor_candidates[0]]
+        except KeyError:
+            return False
+
+        is_valid = False
+        anchor["name"] = anchor_candidates[0]
+        range_vecs = compute_area(spatial_rel, robot, anchor, plot)
+
+        for range_vec in range_vecs:
+            v_tgt = np.array([target["x"] - anchor["x"], target["y"] - anchor["y"]])
+            v_min = np.array([range_vec["min"][0], range_vec["min"][1]])
+            v_max = np.array([range_vec["max"][0], range_vec["max"][1]])
+
+            # Check if the target vector lies between the min and max vectors: https://stackoverflow.com/a/17497339
+            is_within_vectors = bool(np.cross(v_max, v_tgt) * np.cross(v_max, v_min) >= 0) and bool(np.cross(v_min, v_tgt) * np.cross(v_min, v_max) >= 0)
+
+            dist_a2t = np.linalg.norm(np.array([target["x"], target["y"]]) - np.array([anchor["x"], anchor["y"]]))
+
+            if is_within_vectors and dist_a2t <= MAX_RANGE:
+                print(f"    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates[0]}")
+                is_valid = True
+                break
+
+        if is_valid:
+            if plot:
+                # Plot the computed vector range
+                plt.figure()
+                plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
+
+                plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
+                plt.scatter(x=[anchor["x"]], y=[anchor["y"]], marker="o", color="orange", label="anchor")
+                plt.scatter(x=[target["x"]], y=[target["y"]], marker="o", color="green", label="target")
+
+                plt.plot([robot["x"], anchor["x"]], [robot["y"], anchor["y"]], linestyle="dotted", c="k", label="normal")
+
+                plt.text(anchor["x"], anchor["y"], s=anchor_candidates[0])
+                plt.text(target["x"], target["y"], s=target_candidate)
+
+                for vec_idx, range_vec in enumerate(range_vecs):
+                    mean_pose = np.array([(range_vec["mean"][0] * MAX_RANGE) + anchor["x"],
+                                          (range_vec["mean"][1] * MAX_RANGE) + anchor["y"]])
+                    # plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c="g", marker="o", label="mean")
+
+                    min_pose = np.array([(range_vec["min"][0] * MAX_RANGE) + anchor["x"],
+                                         (range_vec["min"][1] * MAX_RANGE) + anchor["y"]])
+                    # plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c="r", marker="x", label="min")
+
+                    max_pose = np.array([(range_vec["max"][0] * MAX_RANGE) + anchor["x"],
+                                         (range_vec["max"][1] * MAX_RANGE) + anchor["y"]])
+                    # plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c="b", marker="x", label="max")
+
+                    if vec_idx == (len(range_vecs) - 1):
+                        # plt.plot([anchor["x"], mean_pose[0]], [anchor["y"], mean_pose[1]], linestyle="dotted", c="g", label="mean_range" )
+                        plt.plot([anchor["x"], min_pose[0]], [anchor["y"], min_pose[1]], linestyle="dotted", c="r", label="min_range")
+                        plt.plot([anchor["x"], max_pose[0]], [anchor["y"], max_pose[1]], linestyle="dotted", c="b", label="MAX_RANGE")
+                    else:
+                        # plt.plot([anchor["x"], mean_pose[0]], [anchor["y"], mean_pose[1]], linestyle="dotted", c="g", )
+                        plt.plot([anchor["x"], min_pose[0]], [anchor["y"], min_pose[1]], linestyle="dotted", c="r")
+                        plt.plot([anchor["x"], max_pose[0]], [anchor["y"], max_pose[1]], linestyle="dotted", c="b")
+
+                plt.legend()
+                plt.axis("square")
+                plt.show(block=False)
+
+            return True
 
     return False
 
