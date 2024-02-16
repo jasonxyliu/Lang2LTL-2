@@ -17,7 +17,7 @@ KNOWN_RELATIONS = [
     "near", "next", "next to", "adjacent to", "close", "close to", "at", "by", "between",
     "north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"
 ]
-MAX_RANGE = 25.0  # assume target within this radius of the anchor
+MAX_RANGE = 2.0  # assume target within this radius of the anchor
 FOV = 180  # robot's field-of-view
 RANGE_TO_ANCHOR = 2.0  # indicates the offset to compute a target location for SREs without a target
 
@@ -449,48 +449,21 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         anchor_1 = np.array([anchor_1["x"], anchor_1["y"]])
         anchor_2 = np.array([anchor_2["x"], anchor_2["y"]])
 
-        # Check if target lies between two anchors: https://math.stackexchange.com/a/190373
-        # Compute vectors perpendicular to each anchor
-        vec_a1_to_a2 = (anchor_2 - anchor_1) / np.linalg.norm(anchor_2 - anchor_1)
-        vec_a2_to_a1 = (anchor_1 - anchor_2) / np.linalg.norm(anchor_1 - anchor_2)
+        # Find two lines perpendicular to the vector defined by two anchors and passing through them
+        vec_a1_to_a2 = anchor_2 - anchor_1
+        slope = - vec_a1_to_a2[0] / vec_a1_to_a2[1]  # line slope is negative recipical of vector slop
+        offset_1 = slope * anchor_1[0] + anchor_1[1]  # a.x + b.y = c
+        offset_2 = slope * anchor_2[0] + anchor_2[1]  # a.x + b.y = d
 
-        A = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_1
-        B = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_1
-        C = rotate(vec_a2_to_a1 * MAX_RANGE, np.deg2rad(-90)) + anchor_2
-        D = rotate(vec_a2_to_a1 * MAX_RANGE, np.deg2rad(90)) + anchor_2
+        # Check target between two lines: a.x_tar + b.y_tar between c and d
+        offset_tar = slope * target[0] + target[1]
+        is_tar_between = (offset_tar >= offset_1 and offset_tar <= offset_2) or (offset_tar >= offset_2 and offset_tar <= offset_1)
 
-        dot_ABAM = np.dot(B-A, target-A)
-        dot_ABAB = np.dot(B-A, B-A)
-        dot_BCBM = np.dot(C-B, target-B)
-        dot_BCBC = np.dot(C-B, C-B)
+        # Check target within max distance of two achors
+        dist_anchor1_to_tar = np.linalg.norm(np.array([target[0], target[1]]) - np.array([anchor_1[0], anchor_1[1]]))
+        dist_anchor2_to_tar = np.linalg.norm(np.array([target[0], target[1]]) - np.array([anchor_2[0], anchor_2[1]]))
 
-        if 0 <= dot_ABAM and dot_ABAM <= dot_ABAB and 0 <= dot_BCBM and dot_BCBM <= dot_BCBC:
-            if plot:
-                plt.figure()
-                plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
-
-                plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
-                plt.scatter(x=[target[0]], y=[target[1]], marker="o", color="green", label="target")
-                plt.scatter(x=[anchor_1[0]], y=[anchor_1[1]], marker="o", color="orange", label="anchor")
-                plt.scatter(x=[anchor_2[0]], y=[anchor_2[1]], marker="o", color="orange", label="anchor")
-
-                plt.plot([A[0], anchor_1[0]], [A[1], anchor_1[1]], linestyle="dotted", c="r")
-                plt.plot([C[0], anchor_2[0]], [C[1], anchor_2[1]], linestyle="dotted", c="b")
-                plt.plot([B[0], anchor_1[0]], [B[1], anchor_1[1]], linestyle="dotted", c="r")
-                plt.plot([D[0], anchor_2[0]], [D[1], anchor_2[1]], linestyle="dotted", c="b")
-
-                plt.text(x=target[0], y=target[1], s=target_candidate)
-                plt.text(x=anchor_1[0], y=anchor_1[1], s=anchor_candidates[0])
-                plt.text(x=anchor_2[0], y=anchor_2[1], s=anchor_candidates[1])
-
-                plt.axis("square")
-                plt.show(block=False)
-
-            print(f"    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates}")
-            return True
-
-        return False
-
+        return is_tar_between and dist_anchor1_to_tar <= MAX_RANGE and dist_anchor2_to_tar <= MAX_RANGE
     else:
         try:
             anchor = landmarks[anchor_candidates[0]]
