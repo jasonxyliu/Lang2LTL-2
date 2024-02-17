@@ -49,7 +49,7 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk):
 
 
 if __name__ == "__main__":
-    location = "indoor_env_0"
+    location = "lab"
     ablate = "text"  # "text", "image", None
     topk = 5  # top k most likely landmarks grounded by REG
 
