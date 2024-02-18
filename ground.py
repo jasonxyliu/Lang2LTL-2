@@ -15,7 +15,7 @@ LOC2GID = {
 }  # location to Spot graph ID
 
 
-def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk):
+def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath):
     """
     Grounding API function
     """
@@ -27,7 +27,7 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk):
 
     # Spatial Predicate Grounding (SPG)
     landmarks = load_lmks(graph_dpath, osm_fpath)
-    srer_out['spg_results'] = spg(landmarks, srer_out, topk)
+    srer_out['spg_results'] = spg(landmarks, srer_out, topk, rel_embeds_fpath)
 
     # Lifted Translation (LT)
     lifted_utt = srer_out["lifted_utt"]
@@ -59,10 +59,11 @@ if __name__ == "__main__":
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
+    rel_embeds_fpath = os.path.join(os.path.expanduser("~"), "ground", "results", f"known_rel_embeds.json")
     srer_out_fname = f"srer_outs_{location}_ablate_{ablate}.json" if ablate else f"srer_outs_{location}.json"
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
 
     utt = "go to the couch in front of the TV, the couch to the left of the kitchen counter, the kitchen counter between the couch and the refrigerator, the table next to the door, and the chair on the left of the bookshelf in any order"
-    ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk)
+    ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath)
     print(ground_out["grounded_ltl"])

@@ -34,6 +34,7 @@ if __name__ == "__main__":
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     utt_fpath = os.path.join(data_dpath, f"utts_{args.location}.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
+    rel_embeds_fpath = os.path.join(os.path.expanduser("~"), "ground", "results", f"known_rel_embeds.json")
     srer_out_fname = f"srer_outs_{args.location}_ablate_{args.ablate}.json" if args.ablate else f"srer_outs_{args.location}.json"
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
@@ -58,10 +59,8 @@ if __name__ == "__main__":
     reg_outs = load_from_file(reg_out_fpath)
     landmarks = load_lmks(graph_dpath, osm_fpath)
     for reg_out in reg_outs:
-        reg_out['spg_results'] = spg(landmarks, reg_out, args.topk)
+        reg_out['spg_results'] = spg(landmarks, reg_out, args.topk, rel_embeds_fpath)
     save_to_file(reg_outs, spg_out_fpath)
-
-    breakpoint()
 
     true_results_fpath = os.path.join(data_dpath, f"true_results_{args.location}.json")
     evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)

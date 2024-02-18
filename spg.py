@@ -2,19 +2,21 @@ import os
 from pathlib import Path
 from itertools import product
 import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 import matplotlib.pyplot as plt
 from pyproj import Transformer  # convert geographic to Cartesian coordinates: https://stackoverflow.com/a/69604627
 import utm
 
 from load_map import load_map, extract_waypoints
 from openai_models import get_embed
-from utils import load_from_file
+from utils import load_from_file, save_to_file
 
 
 KNOWN_RELATIONS = [
-    "left", "left of", "to the left of", "right", "right of", "to the right of",
-    "in front of", "opposite", "opposite to", "behind", "behind of", "at the rear of",
-    "near", "next", "next to", "adjacent to", "close", "close to", "at", "by", "between",
+    "left", "right",
+    "in front of", "opposite to", "behind",
+    "near", "next to", "adjacent to", "close to", "by",
+    "between",
     "north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"
 ]
 MAX_RANGE = 25.0  # assume target within this radius of the anchor
@@ -85,8 +87,8 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
 
         for wid, wp_desc in waypoints.items():
             # NOTE: all landmarks are either one of the following:
-            #   1. landmarks whose waypoints created by GraphNav; they have images
-            #   2. waypoint_0: robot start location when using GraphNav
+            #  1. waypoint_0: robot start location when using GraphNav
+            #  2. landmarks whose waypoints created by GraphNav; they have images
             is_landmark = True if wid in waypoint_ids or wp_desc["name"] == "waypoint_0" else False
 
             if is_landmark:
@@ -118,7 +120,7 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
             lmk_id = lmk.lower().replace(' ', '_')
 
             if "wid" in lmk_desc:
-                # OSM landmarks visited by Spot GraphNav have waypoint ID associated with it, then just Spot graph coorindate
+                # OSM landmarks visited by Spot GraphNav have waypoint IDs, just use Spot graph coorindates
                 wid = lmk_desc["wid"]
                 lmk_cartesian = np.array([landmarks[wid]["x"], landmarks[wid]["y"]])
                 landmarks[wid]["osm_name"] = lmk_id
@@ -168,7 +170,7 @@ def load_lmks(graph_dpath=None, osm_fpath=None):
     """
     Load landmarks from OSM or Spot graph or both then convert their locations to Cartesian coordinates.
     """
-    # Load waypoints from provided directory path to Spot graph if exists
+    # Load waypoints from Spot graph if exists
     waypoints, transformer = None, None
     try:
         graph, _, _, _, _, _ = load_map(graph_dpath)
@@ -179,7 +181,7 @@ def load_lmks(graph_dpath=None, osm_fpath=None):
         # Get important details from Spot graph and create a dict instead of using their data structure
         waypoints = extract_waypoints(graph)
 
-    # Load text description of OSM landmarks
+    # Load text description of OSM landmarks if exists
     osm_landmarks = []
     if os.path.isfile(osm_fpath):
         osm_landmarks = load_from_file(osm_fpath)
@@ -192,8 +194,9 @@ def load_lmks(graph_dpath=None, osm_fpath=None):
     else:
         print(" >> WARNING: no OSM landmarks loaded")
 
+    # Load Spot waypoints in both geographic and Cartesian coordinates for transformation
     alignment_lmks = []
-    alignment_fpath = os.path.join(graph_dpath, "alignment.json")  # contain Spot graph waypoints in both geographic and Cartesian coordinates
+    alignment_fpath = os.path.join(graph_dpath, "alignment.json")
     if os.path.isfile(alignment_fpath):
         alignment_lmks = load_from_file(alignment_fpath)
 
@@ -231,28 +234,20 @@ def sort_combs(lmk_grounds):
     return combs_sorted
 
 
-def find_match_rel(rel_unseen):
+def find_match_rel(rel_unseen, rel_embeds_fpath):
     """
-    Use cosine similatiry between text embeddings to find best matching known spatil relation to the unseen input
+    Use cosine similatiry between text embeddings to find best matching known spatil relation to the unseen input.
     """
-    closest_rel, closest_rel_embed = None, None
+    if os.path.isfile(rel_embeds_fpath):
+        known_rel_embeds = load_from_file(rel_embeds_fpath)
+    else:
+        known_rel_embeds = {known_rel: get_embed(known_rel) for known_rel in KNOWN_RELATIONS}
+        save_to_file(known_rel_embeds, rel_embeds_fpath)
+
     unseen_rel_embed = get_embed(rel_unseen)
-
-    for known_rel in KNOWN_RELATIONS:
-        candidate_embed = get_embed(known_rel)
-
-        if not closest_rel:
-            closest_rel = known_rel
-            closest_rel_embed = candidate_embed
-        else:
-            current_score = np.dot(unseen_rel_embed, closest_rel_embed)
-            new_rel_score = np.dot(unseen_rel_embed, candidate_embed)
-
-            if current_score < new_rel_score:
-                closest_rel = known_rel
-                closest_rel_embed = candidate_embed
-
-    return closest_rel
+    scores = cosine_similarity(np.array(unseen_rel_embed).reshape(1, -1), np.array(list(known_rel_embeds.values())))[0]
+    rel_match = sorted(zip(scores, KNOWN_RELATIONS), reverse=True)[0][1]
+    return rel_match
 
 
 def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=False):
@@ -331,13 +326,13 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
     vec_a2r = [robot["x"] - anchor["x"], robot["y"] - anchor["y"]]
     unit_vec_a2r = np.array(vec_a2r) / np.linalg.norm(vec_a2r)
 
-    if spatial_rel in ["in front of", "opposite"]:
+    if spatial_rel in ["in front of", "opposite to"]:
         mean_angle = 0
-    elif spatial_rel in ["behind", "at the rear of", "behind of"]:
+    elif spatial_rel in ["behind"]:
         mean_angle = 180
-    elif spatial_rel in ["left", "left of", "to the left of"]:
+    elif spatial_rel in ["left"]:
         mean_angle = -90  # positive 90 degrees
-    elif spatial_rel in ["right", "right of", "to the right of"]:
+    elif spatial_rel in ["right"]:
         mean_angle = 90  # negative 90 degrees
     elif spatial_rel in ["north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"]:
         # Find the difference between each cardinal direction and the current anchor-to-robot vector to figure out how much to rotate it
@@ -364,7 +359,7 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
 
     # Check for sweep condition: this means we will consider different normal vectors representing the "front" of the object
     rot_a2r = [0]
-    if spatial_rel in ["near", "near to", "next", "next to", "adjacent to", "close to", "at", "close", "by"] or do_360_search:
+    if spatial_rel in ["near", "next to", "adjacent to", "close to", "by"] or do_360_search:
         mean_angle = 0
         rot_a2r = [rot for rot in range(0, 360, FOV)]
 
@@ -427,6 +422,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         return False
 
     # Check if any anchor has same xy coordinate as target
+    # OSM landmark name and Spot waypoint ID refer to same location
     for lmk_id in anchor_candidates:
         if target["x"] == landmarks[lmk_id]["x"] and target["y"] == landmarks[lmk_id]["y"]:
             return False
@@ -535,7 +531,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
     return False
 
 
-def spg(landmarks, reg_out, topk):
+def spg(landmarks, reg_out, topk, rel_embeds_fpath):
     print(f"Command: {reg_out['utt']}\n")
 
     spg_output = {}
@@ -559,7 +555,7 @@ def spg(landmarks, reg_out, topk):
             rel_match = rel_query
             if rel_query not in KNOWN_RELATIONS:
                 # Find best match for unseen spatial relation in set of known spatial relations
-                rel_match = find_match_rel(rel_query)
+                rel_match = find_match_rel(rel_query, rel_embeds_fpath)
                 print(f"### UNSEEN SPATIAL RELATION:\t'{rel_query}' matched to '{rel_match}'")
 
             if len(lmk_grounds) == 1:
