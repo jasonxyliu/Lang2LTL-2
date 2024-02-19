@@ -418,15 +418,15 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
     """
     robot, target = landmarks["robot"], landmarks[target_candidate]
 
-    # We cannot evaluate a landmark against itself, so we check if target equals to any anchor
+    # If target equals to any anchor, spatial predicate is True
     if target_candidate in anchor_candidates:
-        return False
+        return True
 
     # Check if any anchor has same xy coordinate as target
     # OSM landmark name and Spot waypoint ID refer to same location
     for lmk_id in anchor_candidates:
         if target["x"] == landmarks[lmk_id]["x"] and target["y"] == landmarks[lmk_id]["y"]:
-            return False
+            return True
 
     if spatial_rel in ["between"]:
         try:
