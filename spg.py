@@ -252,7 +252,8 @@ def find_match_rel(rel_unseen, rel_embeds_fpath):
 
 def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=False):
     """
-    Spatial referring expression: cardinal directions; maybe left, right?
+    Spatial referring expression: cardinal directions, left and right side.
+    e.g., go to the north of bakery, go to the right side of bakery
     """
     # -- this means that we have no target landmark: we solely want to find a position relative to a given anchor
     try:
@@ -559,7 +560,7 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath):
                 print(f"### UNSEEN SPATIAL RELATION:\t'{rel_query}' matched to '{rel_match}'")
 
             if len(lmk_grounds) == 1:
-                # Spatial referring expression contains only a target landmark
+                # Spatial referring expression contains only a anchor landmark
                 for lmk_ground in lmk_grounds_sorted[:topk]:
                     groundings.append(get_target_pos(landmarks, rel_match, lmk_ground["target"][0], sre))
             else:
