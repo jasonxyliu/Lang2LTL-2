@@ -21,7 +21,7 @@ KNOWN_RELATIONS = [
 ]
 MAX_RANGE = 25.0  # assume target within this radius of the anchor
 FOV = 180  # robot's field-of-view
-RANGE_TO_ANCHOR = 2.0  # indicates the offset to compute a target location for SREs without a target
+DIST_TO_ANCHOR = 2.0  # distance to robot when compute a target location for SRE with only an anchor
 
 
 def plot_landmarks(landmarks=None):
@@ -236,7 +236,7 @@ def sort_combs(lmk_grounds):
 
 def find_match_rel(rel_unseen, rel_embeds_fpath):
     """
-    Use cosine similatiry between text embeddings to find best matching known spatil relation to the unseen input.
+    Use cosine similatiry between text embeddings to find best matching known spatial relation to unseen input.
     """
     if os.path.isfile(rel_embeds_fpath):
         known_rel_embeds = load_from_file(rel_embeds_fpath)
@@ -250,12 +250,12 @@ def find_match_rel(rel_unseen, rel_embeds_fpath):
     return rel_match
 
 
-def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=False):
+def get_target_loc(landmarks, spatial_rel, anchor_candidate, sre=None, plot=False):
     """
-    Spatial referring expression: cardinal directions, left and right side.
-    e.g., go to the north of bakery, go to the right side of bakery
+    Ground spatial referring expression with only an anchor landmark: left and right side, cardinal directions
+    by finding a location relative to the given anchor landmark.
+    e.g., go to the north of the bakery, go to the right side of the bakery
     """
-    # -- this means that we have no target landmark: we solely want to find a position relative to a given anchor
     try:
         anchor = landmarks[anchor_candidate]
     except KeyError:
@@ -263,51 +263,42 @@ def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
 
     robot = landmarks["robot"]
 
-    # -- get the list of valid ranges (potentially only one) for an anchoring landmark:
+    # Get the list of valid ranges (potentially only one) for an anchoring landmark
     range_vecs = compute_area(spatial_rel, robot, anchor)
 
-    # -- we want to find the closest point from the robot to the anchoring landmark that satisfies the given spatial relation:
-    closest_position = 0
+    # Compute robot location that is at given distance to the anchor
+    loc_min = {"x": (range_vecs[0]["mean"][0] * DIST_TO_ANCHOR) + anchor["x"],
+               "y": (range_vecs[0]["mean"][1] * DIST_TO_ANCHOR) + anchor["y"]}
+    dist_min = np.linalg.norm(np.array([loc_min["x"], loc_min["y"]]) - np.array([robot["x"], robot["y"]]))
+    range_vec_closest = range_vec[0]
 
-    for R in range(len(range_vecs)):
+    for range_vec in enumerate(range_vecs):
+        loc_new = {"x": (range_vec["mean"][0] * DIST_TO_ANCHOR) + anchor["x"],
+                   "y": (range_vec["mean"][1] * DIST_TO_ANCHOR) + anchor["y"]}
+        dist_new = np.linalg.norm(np.array([loc_new["x"], loc_new["y"]]) - np.array([robot["x"], robot["y"]]))
 
-        cur_min_pos = {"x": (range_vecs[R]["mean"][0] * RANGE_TO_ANCHOR) + anchor["x"],
-                       "y": (range_vecs[R]["mean"][1] * RANGE_TO_ANCHOR) + anchor["y"]}
-        cur_min_dist = np.linalg.norm(np.array([cur_min_pos["x"], cur_min_pos["y"]]) - np.array([robot["x"], robot["y"]]))
-
-        new_min_pos = {"x": (range_vecs[closest_position]["mean"][0] * RANGE_TO_ANCHOR) + anchor["x"],
-                       "y": (range_vecs[closest_position]["mean"][1] * RANGE_TO_ANCHOR) + anchor["y"]}
-        new_min_dist = np.linalg.norm(np.array([new_min_pos["x"], new_min_pos["y"]]) - np.array([robot["x"], robot["y"]]))
-
-        if cur_min_dist > new_min_dist:
-            new_min_pos = R
-
-    # -- select the index that was found to be closest to the robot:
-    R = range_vecs[closest_position]
-
-    # -- use the mean vector to find a point that is within RANGE_TO_ANCHOR (2m) of the anchor:
-    new_robot_pos = {"x": (R["mean"][0] * RANGE_TO_ANCHOR) + anchor["x"],
-                     "y": (R["mean"][1] * RANGE_TO_ANCHOR) + anchor["y"]}
+        if dist_new < dist_min:
+            loc_min = loc_new
+            dist_min = dist_new
+            range_vec_closest = range_vec
 
     if plot:
         plt.figure()
 
         plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", label="robot")
-        plt.scatter(x=[new_robot_pos["x"]], y=[new_robot_pos["y"]], marker="x", c="g", s=15, label="new robot pose")
+        plt.scatter(x=[loc_min["x"]], y=[loc_min["y"]], marker="x", c="g", s=15, label="new robot loc")
 
-        # -- plot all anchors and targets provided to the function:
+        # Plot all target and anchor landmarks
         for A in landmarks:
-            plt.scatter(x=landmarks[A]["x"],
-                        y=landmarks[A]["y"],
-                        marker="o", c="darkorange", label=f"anchor: {A}")
+            plt.scatter(x=landmarks[A]["x"], y=landmarks[A]["y"], marker="o", c="darkorange", label=f"anchor: {A}")
             plt.text(landmarks[A]["x"], landmarks[A]["y"], A)
 
-        # -- plot the range as well for visualization:
-        plt.plot([anchor["x"], (R["min"][0] * RANGE_TO_ANCHOR) + anchor["x"]],
-                 [anchor["y"], (R["min"][1] * RANGE_TO_ANCHOR) + anchor["y"]],
+        # Plot the range
+        plt.plot([anchor["x"], (range_vec_closest["min"][0] * DIST_TO_ANCHOR) + anchor["x"]],
+                 [anchor["y"], (range_vec_closest["min"][1] * DIST_TO_ANCHOR) + anchor["y"]],
                  linestyle="dotted", c="r")
-        plt.plot([anchor["x"], (R["max"][0] * RANGE_TO_ANCHOR) + anchor["x"]],
-                 [anchor["y"], (R["max"][1] * RANGE_TO_ANCHOR) + anchor["y"]],
+        plt.plot([anchor["x"], (range_vec_closest["max"][0] * DIST_TO_ANCHOR) + anchor["x"]],
+                 [anchor["y"], (range_vec_closest["max"][1] * DIST_TO_ANCHOR) + anchor["y"]],
                  linestyle="dotted", c="b")
 
         plt.title(f"Computed Target Position: {sre}" if sre else f"Computed Target Position: {spatial_rel}")
@@ -315,15 +306,17 @@ def get_target_pos(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
         plt.legend()
         plt.show(block=False)
 
-    return new_robot_pos
+    return loc_min
 
 
 def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
-    # NOTE: we want to draw a vector from the anchor to robot
-    # -- this gives us a normal vector pointing outside of the anchor object
+    """
+    Compute a vector from anchor to robot as a normal vector pointing outside of anchor
+    and a range within which the vector from anchor to target can lie.
+    """
     range_vecs = []
 
-    # Compute unit vector from robot to anchor and get its direction:
+    # Compute unit vector from anchor to robot
     vec_a2r = [robot["x"] - anchor["x"], robot["y"] - anchor["y"]]
     unit_vec_a2r = np.array(vec_a2r) / np.linalg.norm(vec_a2r)
 
@@ -355,16 +348,14 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
             mean_angle = np.rad2deg(np.arctan2(-1, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
 
         do_360_search = False  # NOTE: since cardinal directions are absolute, we should not do any 360-sweep:
-    # else:
-    #     raise KeyError(f"ERROR unknow spatial relation: {spatial_rel}")
 
     # Check for sweep condition: this means we will consider different normal vectors representing the "front" of the object
-    rot_a2r = [0]
+    rots_a2r = [0]
     if spatial_rel in ["near", "next to", "adjacent to", "close to", "by"] or do_360_search:
         mean_angle = 0
-        rot_a2r = [rot for rot in range(0, 360, FOV)]
+        rots_a2r = [rot for rot in range(0, 360, FOV)]
 
-    for rot in rot_a2r:
+    for rot in rots_a2r:
         # Rotate the anchor's frame of reference
         vec_a2r_rotated = rotate(unit_vec_a2r, np.deg2rad(rot))
 
@@ -533,7 +524,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
 
 def spg(landmarks, reg_out, topk, rel_embeds_fpath):
-    print(f"Command: {reg_out['utt']}\n")
+    print(f"***** SPG Command: {reg_out['utt']}\n")
 
     spg_output = {}
 
@@ -557,12 +548,12 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath):
             if rel_query not in KNOWN_RELATIONS:
                 # Find best match for unseen spatial relation in set of known spatial relations
                 rel_match = find_match_rel(rel_query, rel_embeds_fpath)
-                print(f"### UNSEEN SPATIAL RELATION:\t'{rel_query}' matched to '{rel_match}'")
+                print(f"UNSEEN SPATIAL RELATION:\t'{rel_query}' matched to '{rel_match}'")
 
             if len(lmk_grounds) == 1:
                 # Spatial referring expression contains only a anchor landmark
                 for lmk_ground in lmk_grounds_sorted[:topk]:
-                    groundings.append(get_target_pos(landmarks, rel_match, lmk_ground["target"][0], sre))
+                    groundings.append(get_target_loc(landmarks, rel_match, lmk_ground["target"][0], sre))
             else:
                 # Spatial referring expression contains a target landmark and one or two anchor landmarks
                 # one anchor, e.g., <tar> left of <anc1>
