@@ -92,7 +92,7 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
     reg = REG(img_embeds, txt_embeds)
 
     for srer_out in srer_outs:
-        print(f"command: {srer_out['utt']}\n")
+        print(f"***** REG Command: {srer_out['utt']}\n")
         grounded_sre_to_preds = {}
 
         for sre, spatial_pred in srer_out["sre_to_preds"].items():
