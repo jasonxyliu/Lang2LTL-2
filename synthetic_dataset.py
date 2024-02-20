@@ -145,7 +145,7 @@ def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="boston", choices=["indoor_env_0", "alley", "blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--location", type=str, default="boston", choices=["lab", "alley", "blackstone", "boston", "auckland"], help="domain name.")
     args = parser.parse_args()
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
