@@ -272,7 +272,7 @@ def get_target_loc(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
     dist_min = np.linalg.norm(np.array([loc_min["x"], loc_min["y"]]) - np.array([robot["x"], robot["y"]]))
     range_vec_closest = range_vec[0]
 
-    for range_vec in enumerate(range_vecs):
+    for range_vec in range_vecs:
         loc_new = {"x": (range_vec["mean"][0] * DIST_TO_ANCHOR) + anchor["x"],
                    "y": (range_vec["mean"][1] * DIST_TO_ANCHOR) + anchor["y"]}
         dist_new = np.linalg.norm(np.array([loc_new["x"], loc_new["y"]]) - np.array([robot["x"], robot["y"]]))
@@ -411,13 +411,13 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
     # If target equals to any anchor, spatial predicate is True
     if target_candidate in anchor_candidates:
-        return True
+        return False
 
     # Check if any anchor has same xy coordinate as target
     # OSM landmark name and Spot waypoint ID refer to same location
     for lmk_id in anchor_candidates:
         if target["x"] == landmarks[lmk_id]["x"] and target["y"] == landmarks[lmk_id]["y"]:
-            return True
+            return False
 
     if spatial_rel in ["between"]:
         try:
