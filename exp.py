@@ -68,4 +68,4 @@ if __name__ == "__main__":
     # Lifted Translation (LT)
     spg_outs = load_from_file(spg_out_fpath)
     lt(spg_outs, model_fpath)
-    save_to_file(spg_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "lt")))
+    save_to_file(spg_outs, os.path.join(results_dpath, spg_out_fpath.replace("spg", "lt")))
