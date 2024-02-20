@@ -62,10 +62,10 @@ if __name__ == "__main__":
         reg_out['spg_results'] = spg(landmarks, reg_out, args.topk, rel_embeds_fpath)
     save_to_file(reg_outs, spg_out_fpath)
 
-    true_results_fpath = os.path.join(data_dpath, f"true_results_{args.location}.json")
-    evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)
+    # true_results_fpath = os.path.join(data_dpath, f"true_results_{args.location}.json")
+    # evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)
 
-    # Lifted Translation (LT)
-    spg_outs = load_from_file(spg_out_fpath)
-    lt(spg_outs, model_fpath)
-    save_to_file(spg_outs, os.path.join(results_dpath, spg_out_fpath.replace("spg", "lt")))
+    # # Lifted Translation (LT)
+    # spg_outs = load_from_file(spg_out_fpath)
+    # lt(spg_outs, model_fpath)
+    # save_to_file(spg_outs, os.path.join(results_dpath, spg_out_fpath.replace("spg", "lt")))

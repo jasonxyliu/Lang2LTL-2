@@ -356,13 +356,24 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
         rots_a2r = [rot for rot in range(0, 360, FOV)]
 
     for rot in rots_a2r:
-        # Rotate the anchor's frame of reference
-        vec_a2r_rotated = rotate(unit_vec_a2r, np.deg2rad(rot))
+        # # Rotate the anchor's frame of reference
+        # vec_a2r_rotated = rotate(unit_vec_a2r, np.deg2rad(rot))
+
+        # # Compute the mean vector and vectors representing min and max range
+        # vec_a2t_mean = rotate(vec_a2r_rotated, np.deg2rad(mean_angle))
+        # vec_a2t_min = rotate(vec_a2r_rotated, np.deg2rad(mean_angle - FOV / 2))
+        # vec_a2t_max = rotate(vec_a2r_rotated, np.deg2rad(mean_angle + FOV / 2))
+        # range_vecs.append({"mean": vec_a2t_mean, "min": vec_a2t_min, "max": vec_a2t_max})
+
+
+
 
         # Compute the mean vector and vectors representing min and max range
-        vec_a2t_mean = rotate(vec_a2r_rotated, np.deg2rad(mean_angle))
-        vec_a2t_min = rotate(vec_a2r_rotated, np.deg2rad(mean_angle - FOV / 2))
-        vec_a2t_max = rotate(vec_a2r_rotated, np.deg2rad(mean_angle + FOV / 2))
+        vec_a2t_mean = rotate(unit_vec_a2r, np.deg2rad(mean_angle + rot))
+        # vec_a2t_mean = rotate(unit_vec_a2r, np.deg2rad(rot))
+        # vec_a2t_mean = rotate(vec_a2t_mean, np.deg2rad(mean_angle))
+        vec_a2t_min = rotate(vec_a2t_mean, np.deg2rad(- FOV / 2))
+        vec_a2t_max = rotate(vec_a2t_mean, np.deg2rad(FOV / 2))
         range_vecs.append({"mean": vec_a2t_mean, "min": vec_a2t_min, "max": vec_a2t_max})
 
     if plot:
@@ -378,18 +389,18 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
         plt.arrow(x=robot["x"], y=robot["y"], dx=-vec_a2r[0]/2.0, dy=-vec_a2r[1]/2.0, shape="full",
                   width=0.01, head_width=0.1, color="black", label="normal")
 
-        for range_vec in range_vecs:
+        for idx, range_vec in enumerate(range_vecs):
             mean_pose = [(range_vec["mean"][0] * MAX_RANGE) + anchor["x"],
                          (range_vec["mean"][1] * MAX_RANGE) + anchor["y"]]
-            plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c="g", marker="o", label=f"mean_{r}")
+            plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c="g", marker="o", label=f"mean_{idx}")
 
             min_pose = [(range_vec["min"][0] * MAX_RANGE) + anchor["x"],
                         (range_vec["min"][1] * MAX_RANGE) + anchor["y"]]
-            plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c="r", marker="x", label=f"min_{r}")
+            plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c="r", marker="x", label=f"min_{idx}")
 
             max_pose = [(range_vec["max"][0] * MAX_RANGE) + anchor["x"],
                         (range_vec["max"][1] * MAX_RANGE) + anchor["y"]]
-            plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c="b", marker="x", label=f"max_{r}")
+            plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c="b", marker="x", label=f"max_{idx}")
 
             plt.plot([anchor["x"], mean_pose[0]], [anchor["y"], mean_pose[1]], linestyle="dashed", c="g")
             plt.plot([anchor["x"], min_pose[0]], [anchor["y"], min_pose[1]], linestyle="dotted", c="r")
@@ -399,6 +410,10 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
         plt.legend()
         plt.axis("square")
         plt.show(block=False)
+        plt.savefig(f"compute_area_{'_'.join(spatial_rel.split(' '))}.png")
+
+        if spatial_rel == "east of":
+            breakpoint()
 
     return range_vecs
 
@@ -460,7 +475,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
         is_valid = False
         anchor["name"] = anchor_candidates[0]
-        range_vecs = compute_area(spatial_rel, robot, anchor, plot)
+        range_vecs = compute_area(spatial_rel, robot, anchor, plot=plot)
 
         for range_vec in range_vecs:
             v_tgt = np.array([target["x"] - anchor["x"], target["y"] - anchor["y"]])
