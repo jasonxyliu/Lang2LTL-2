@@ -32,7 +32,7 @@ if __name__ == "__main__":
     graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.location])
     osm_fpath = os.path.join(data_dpath, "osm", f"{args.location}.json")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
-    utt_fpath = os.path.join(data_dpath, f"utts_{args.location}.txt")
+    utt_fpath = os.path.join(data_dpath, f"{args.location}_utts.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     rel_embeds_fpath = os.path.join(os.path.expanduser("~"), "ground", "results", f"known_rel_embeds.json")
     srer_out_fname = f"srer_outs_{args.location}_ablate_{args.ablate}.json" if args.ablate else f"srer_outs_{args.location}.json"
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         reg_out['spg_results'] = spg(landmarks, reg_out, args.topk, rel_embeds_fpath)
     save_to_file(reg_outs, spg_out_fpath)
 
-    # true_results_fpath = os.path.join(data_dpath, f"true_results_{args.location}.json")
+    # true_results_fpath = os.path.join(data_dpath, f"{args.location}_true_results.json")
     # evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)
 
     # # Lifted Translation (LT)
