@@ -109,8 +109,6 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                 "utt_lifted": utt_lifted,
                 "pattern_type": pattern_type,
                 "props": props_full,
-                "spatial_rel": rel,
-                "sp_ground": sp_grounds_sampled,
                 "utt": utt_ground,
                 "srer_outs": srer_outs,
                 "reg_spg_outs": reg_spg_outs,
@@ -119,6 +117,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 
     save_to_file(utts, utts_fpath)
     save_to_file(true_outs, outs_fpath)
+    logging.info(f"# data points: {len(true_outs)}")
 
 
 if __name__ == "__main__":
