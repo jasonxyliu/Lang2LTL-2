@@ -1,163 +1,151 @@
 import os
 import argparse
+import logging
+from collections import defaultdict
+import itertools
+import random
 import re
-from time import sleep
-from random import randint, choice
-from tqdm import tqdm
-
 
 from utils import load_from_file, save_to_file
 
 
-def generate_dataset(params, utts_fpath, gtr_fpath, num_utterances=10, min_props=1, max_props=5):
-    # NOTE: we will pass params to this function:
-    location = params['location']
-    ltl_samples = load_from_file(params['ltl_samples'], use_pandas=True)
-    gtr = load_from_file(params['gtr'])[location]
+def split_true_lmk_grounds(lmks_fpath, loc, sp_fpath, res_fpath):
+    """
+    Split ``true_lmk_grounds.json`` into two files contains referring expressions per landmark
+    and grounded spatial predications per spatial relation for each location.
+    """
+    lmk_grounds = load_from_file(lmks_fpath)[loc]
+    sp_grounds = defaultdict(list)
+    res = defaultdict(lambda: defaultdict(list))
+    for lmk, grounds in lmk_grounds.items():
+        for ground in grounds:
+            if "*" in ground:  # unique referring expression can identify landmark without anchor
+                res[lmk]["proper_names"].append(ground["*"])
+                sp_grounds["None"].append(ground["*"])
+            elif "@" in ground:  # ambiguous referring expression if used without anchor
+                res[lmk]["generic_names"].append(ground["@"])
+            else:  # spatial predicate grounding
+                rel = list(ground.keys())[0]
+                sp_grounds[rel].append(ground[rel])
+    save_to_file(sp_grounds, sp_fpath)
+    save_to_file(res, res_fpath)
 
-    # -- getting all landmarks or points of interest:
-    landmarks = list(gtr.keys())
-    list_utterances = []
-    list_true_results = []
-    count = 0
 
-    progress_bar = tqdm(total=num_utterances, desc="Generating synthetic dataset and groundtruth file...")
+def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsamples):
+    """
+    Generate input utterances and ground truth results for each grounding module.
+    """
+    random.seed(0)
 
-    while count < num_utterances:
-        # -- use the eval function to get the list of props for a randomly selected row from the set of LTL blueprints:
-        ltl_sample = ltl_samples.iloc[randint(0, len(ltl_samples)-1)]
-        ltl_props = list(set(eval(ltl_sample['props'])))
+    lifted_data = load_from_file(ltl_fpath)
+    sp_grounds_all = load_from_file(sp_fpath)
+    res_all = load_from_file(res_fpath)
 
-        if len(ltl_props) < min_props or len(ltl_props) > max_props:
-            continue
+    ltl2data = defaultdict(set)
+    for pattern_type, props, utt_lifted, ltl_lifted in lifted_data:
+        ltl2data[ltl_lifted].add((pattern_type, props, utt_lifted))
 
-        ltl_blueprint = ltl_sample['utterance']
-        ltl_formula = ltl_sample['ltl_formula']
+    logging.info(f"# unique lifted LTL formulas: {len(ltl2data)}")
+    for ltl, data in sorted(ltl2data.items(), key=lambda kv: len(kv[0])):
+        logging.info(f"{ltl}: {len(data)}")
+    logging.info(f"# unique spatial relations: {len(sp_grounds_all)}")
+    logging.info(f"# unique landmarks: {len(res_all)}")
 
-        if not ltl_blueprint.endswith('.'):
-            ltl_blueprint += '.'
+    utts = ""
+    true_outs = []
 
-        # -- add a full-stop at the beginning and end of the sentence for easier tokenization:
-        if not ltl_blueprint.startswith('.'):
-            ltl_blueprint = '.' + ltl_blueprint
+    for ltl_lifted, ltl_data in ltl2data.items():  # every lifted LTL formula
+        data_sampled = random.sample(sorted(ltl_data), nsamples)
+        for data in data_sampled:  # every sampled lifted utterances
+            pattern_type, props, utt_lifted = data
+            props_full = eval(props)
+            props = props_full[0] if len(set(props)) == 1 else props_full  # e.g., visit a at most twice, ['a', 'a']
+            rels = random.sample(sorted(sp_grounds_all), len(props))
 
-        new_command = ltl_blueprint
+            res_true = []
+            srer_outs = {}
+            reg_spg_outs = {}
 
-        list_true_sre = []
-        list_true_srer = {}
-        list_true_reg_spg = {}
+            for rel in rels:  # every sampled spatial relations
+                sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
 
-        existing_targets = []
-        for P in range(len(ltl_props)):
+                if rel == "None":  # referring expression without spatial relation
+                    res_true.append(sp_grounds_sampled)
+                elif len(sp_grounds_sampled) == 1:  # sre with only an anchor
+                    while "proper_names" not in res_all[sp_grounds_sampled[0]]:
+                        sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
+                    re_tar = random.sample(res_all[sp_grounds_sampled[0]]["proper_names"], 1)[0]
+                    res_true.append(re_tar)
+                    sre = f"{rel} {re_tar}"
+                else:  # for sre with target and one or two anchors, both proper and generic names are valid
+                    res_tar = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[0][0]].values()))
+                    re_tar = random.sample(res_tar, 1)[0]  # target referring expression
+                    res_true.append(re_tar)
+                    res_anch1 = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[1][0]].values()))
+                    re_anc1 = random.sample(res_anch1, 1)[0]  # anchor 1 referring expression
+                    res_true.append(re_anc1)
+                    re_outs = [re_tar, re_anc1]
+                    if len(sp_grounds_sampled) == 2:
+                        sre = f"{re_outs[0]} {rel} {re_outs[1]}"
+                    else:
+                        res_anc2 = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[2][0]].values()))
+                        res_true.append(res_anc2)
+                        re_outs.append(random.sample(res_anc2, 1)[0] ) # anchor 2 referring expression
+                        sre = f"{re_outs[0]} {rel} {re_outs[1]} and {re_outs[2]}"
 
-            new_sre = None
-            new_srer = {}
+                srer_outs[sre] = {rel: res_true}
+                reg_spg_outs[sre] = sp_grounds_sampled
 
-            while not bool(new_sre):
-                random_lmrk = choice(landmarks)
-                random_pred = choice(gtr[random_lmrk])
-                # -- this is an element without any spatial relation:
+            if not utt_lifted.startswith('.'):
+                utt_ground = '.' + utt_lifted
+            if not utt_ground.endswith('.'):
+                utt_ground += '.'
+            for prop, sre in zip(props, srer_outs.keys()):
+                utt_ground = re.sub(rf"(\b)([{prop}])(\W)", rf'\1{sre}\3', utt_ground)
+            utt_ground = utt_ground[1:-1]
+            utts += f"{utt_ground}\n"
 
-                target = None
+            true_outs.append({
+                "utt_lifted": utt_lifted,
+                "pattern_type": pattern_type,
+                "props": props_full,
+                "spatial_rel": rel,
+                "sp_ground": sp_grounds_sampled,
+                "utt": utt_ground,
+                "srer_outs": srer_outs,
+                "reg_spg_outs": reg_spg_outs,
+                "lt_out": ltl_lifted
+            })
 
-                if "*" in random_pred:
-                    new_sre = random_pred["*"]
-                    new_srer = {new_sre : {}}
-                    target = [random_lmrk]
-                elif "@" in random_pred:
-                    # NOTE: expressions marked with an at ("@") symbol are too generic
-                    #       to be used as a referring expression without an anchor:
-                    continue
-                else:
-                    # -- this means we are using one of the groundtruth entries that have specific object instances:
-
-                    # -- get the relation in this predicate:
-                    rel = list(random_pred.keys())[0]
-
-                    if len(random_pred[rel]) == 2 or len(random_pred[rel]) == 3:
-                        target = random_pred[rel][0]
-
-                        # NOTE: target landmarks are free to be very specific/unique expressions ("*")
-                        #       or generic names ("*"), as REG and SPG would be used to resolve those ambiguities:
-                        lifted_target = choice([x['@'] for x in gtr[target[0]] if '@' in x] +
-                                               [x['*'] for x in gtr[target[0]] if '*' in x])
-
-                        if len(random_pred[rel]) == 2:
-                            anchor = random_pred[rel][1]
-                            lifted_anchor = choice([x['*'] for x in gtr[anchor[0]] if '*' in x])
-
-                            new_sre = f'{lifted_target} {rel} {lifted_anchor}'
-                            new_srer[rel] = [lifted_target, lifted_anchor]
-
-                        elif len(random_pred[rel]) == 3:
-                            anchor_1 = random_pred[rel][1]
-                            anchor_2 = random_pred[rel][2]
-
-                            lifted_anchor_1 = choice([x['*'] for x in gtr[anchor_1[0]] if '*' in x])
-                            lifted_anchor_2 = choice([x['*'] for x in gtr[anchor_2[0]] if '*' in x])
-
-                            new_sre = f'{lifted_target} {rel} {lifted_anchor_1} and {lifted_anchor_2}'
-                            new_srer[rel] = [lifted_target, lifted_anchor_1, lifted_anchor_2]
-
-                if set(existing_targets) & set(target):
-                    new_sre = None
-                    continue
-
-                # NOTE: we will keep track of all targets we have already added to make sure we don't get repeats:
-                existing_targets += target
-
-                list_true_reg_spg[new_sre] = target
-                list_true_srer[new_sre] = new_srer[list(new_srer)[0]]
-
-            list_true_sre.append(new_sre)
-
-            # NOTE: to do replacement of the lifted proposition with the generated one, we need to account for
-            # different ways it would be written preceded by a whitespace character, i.e., ' a ', ' a,', ' a.'
-            new_command = re.sub(rf"(\b)([{ltl_props[P]}])(\W)", rf'\1{new_sre}\3', new_command)
-
-            # NOTE: some utterances will be missing some propositions
-
-        list_utterances.append(new_command[1:-1])
-
-        list_true_results.append({
-            "utt": list_utterances[-1],
-            "true_ltl": ltl_formula,
-            "true_sre": list_true_sre,
-            "true_srer": list_true_srer,
-            "true_reg_spg": list_true_reg_spg
-        })
-
-        count += 1
-
-        sleep(0.001)
-        progress_bar.update(1)
-
-    progress_bar.close()
-    print()
-
-    utts_for_file = ""
-    for command in list_utterances:
-        utts_for_file = f'{command}\n{utts_for_file}'
-
-    save_to_file(utts_for_file, utts_fpath)
-    save_to_file(list_true_results, gtr_fpath)
+    save_to_file(utts, utts_fpath)
+    save_to_file(true_outs, outs_fpath)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="boston", choices=["lab", "alley", "blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--nsamples", type=int, default=10, help="numbe of samples per LTL formula.")
     args = parser.parse_args()
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    utt_fpath = os.path.join(data_dpath, f"utts_{args.location}.txt")
+    ltl_fpath = os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
+    sp_fpath = os.path.join(data_dpath, f"{args.location}_sp_grounds.json")
+    res_fpath = os.path.join(data_dpath,f"{args.location}_res.json")
+    utts_fpath = os.path.join(data_dpath, f"{args.location}_utts_n{args.nsamples}.txt")
+    outs_fpath = os.path.join(data_dpath, f"{args.location}_true_results_n{args.nsamples}.json")
 
-    if not os.path.isfile(utt_fpath):
-        generate_dataset(
-            params={
-                "location": args.location,
-                "gtr": os.path.join(data_dpath, "true_lmk_grounds.json"),
-                "ltl_samples": os.path.join(data_dpath, "ltl_samples_sorted.csv")
-            },
-            utts_fpath=utt_fpath,
-            gtr_fpath=os.path.join(data_dpath, f"true_results_{args.location}.json")
-        )
+    logging.basicConfig(level=logging.INFO,
+                        format='%(message)s',
+                        handlers=[
+                            logging.FileHandler(os.path.join(data_dpath, f"{args.location}_synthetic_dataset.log"), mode='w'),
+                            logging.StreamHandler()
+                        ]
+    )
+    logging.info(f"Generating dataset location: {args.location}\n***** Dataset Statisitcs\n")
+
+    if not os.path.isfile(sp_fpath) or not os.path.isfile(res_fpath):
+        lmks_fpath = os.path.join(data_dpath, "true_lmk_grounds.json")
+        split_true_lmk_grounds(lmks_fpath, args.location, sp_fpath, res_fpath)
+
+    if not os.path.isfile(utts_fpath):
+        generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, args.nsamples)
