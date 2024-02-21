@@ -62,14 +62,15 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
             props = props_full[0] if len(set(props)) == 1 else props_full  # e.g., visit a at most twice, ['a', 'a']
             rels = random.sample(sorted(sp_grounds_all), len(props))
 
-            res_true = []
             srer_outs = {}
             reg_spg_outs = {}
 
             for rel in rels:  # every sampled spatial relations
                 sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
+                res_true = []
 
                 if rel == "None":  # referring expression without spatial relation
+                    sre = sp_grounds_sampled
                     res_true.append(sp_grounds_sampled)
                 elif len(sp_grounds_sampled) == 1:  # sre with only an anchor
                     while "proper_names" not in res_all[sp_grounds_sampled[0]]:
@@ -84,14 +85,13 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                     res_anch1 = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[1][0]].values()))
                     re_anc1 = random.sample(res_anch1, 1)[0]  # anchor 1 referring expression
                     res_true.append(re_anc1)
-                    re_outs = [re_tar, re_anc1]
                     if len(sp_grounds_sampled) == 2:
-                        sre = f"{re_outs[0]} {rel} {re_outs[1]}"
+                        sre = f"{re_tar} {rel} {re_anc1}"
                     else:
                         res_anc2 = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[2][0]].values()))
-                        res_true.append(res_anc2)
-                        re_outs.append(random.sample(res_anc2, 1)[0] ) # anchor 2 referring expression
-                        sre = f"{re_outs[0]} {rel} {re_outs[1]} and {re_outs[2]}"
+                        re_anc2 = random.sample(res_anc2, 1)[0] # anchor 2 referring expression
+                        res_true.append(re_anc2)
+                        sre = f"{re_tar} {rel} {re_anc1} and {re_anc2}"
 
                 srer_outs[sre] = {rel: res_true}
                 reg_spg_outs[sre] = sp_grounds_sampled
