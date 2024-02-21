@@ -131,8 +131,8 @@ if __name__ == "__main__":
     ltl_fpath = os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
     sp_fpath = os.path.join(data_dpath, f"{args.location}_sp_grounds.json")
     res_fpath = os.path.join(data_dpath,f"{args.location}_res.json")
-    utts_fpath = os.path.join(data_dpath, f"{args.location}_utts.txt")
-    outs_fpath = os.path.join(data_dpath, f"{args.location}_true_results.json")
+    utts_fpath = os.path.join(data_dpath, f"{args.location}_utts_n{args.nsamples}.txt")
+    outs_fpath = os.path.join(data_dpath, f"{args.location}_true_results_n{args.nsamples}.json")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
