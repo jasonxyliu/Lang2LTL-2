@@ -1,6 +1,7 @@
 import os
 import argparse
 import logging
+from collections import defaultdict
 import spot
 
 from utils import load_from_file
@@ -45,6 +46,39 @@ def evaluate_srer(srer_out_fpath, true_results_fpath):
 			nincorrects += 1
 
 	logging.info(f"SRER Accuracy: {len(true_outs) - nincorrects}/{len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}")
+
+
+def evaluate_reg(reg_out_fpath, true_results_fpath, topk):
+	"""
+	Compute the top K accuracy of Referring Expression Grounding module.
+	"""
+	logging.info("***** Evaluating REG")
+
+	reg_outs = load_from_file(reg_out_fpath)
+	true_outs = load_from_file(true_results_fpath)
+	topk2acc = defaultdict(int)
+	total_res = 0
+
+	assert len(reg_outs) == len(true_outs), f"ERROR different numbers of samples: {len(true_outs)}, {len(reg_outs)}"
+
+	for reg_out, true_out in zip(reg_outs, true_outs):
+		assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\n{true_out['utt']}\n{reg_out['utt']}"
+		logging.info(f"* Command: {reg_out['utt']}")
+
+		for (sre_out, preds_out), (sre_true, preds_true) in zip(reg_out["grounded_sre_to_preds"].items(), true_out["reg_spg_outs"].items()):
+			assert sre_out == sre_true, f"ERROR different spatial referring expression:\n{sre_true}\n{sre_out}"
+
+			preds_out = list(preds_out.values())
+			total_res += len(preds_out)
+
+			for preds_topk, pred_true in zip(preds_out, preds_true):
+				for end_idx in range(1, topk+1):
+					for pred in pred_true:
+						if pred in preds_topk[:end_idx]:
+							topk2acc[end_idx] += 1
+
+	for idx in range(1, topk+1):
+		logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {len(total_res)} = {topk2acc[idx] / len(total_res)}")
 
 
 
@@ -108,7 +142,7 @@ def evaluate_spg(spg_out_fpth, true_results_fpath, topk):
 
 
 def evaluate_lt(lt_out_fpath, true_results_fpath):
-	logging.info("***** Evaluating SRER")
+	logging.info("***** Evaluating LT")
 
 	lt_outs = load_from_file(lt_out_fpath)
 	true_outs = load_from_file(true_results_fpath)
@@ -136,7 +170,7 @@ def evaluate_lt(lt_out_fpath, true_results_fpath):
 		if is_incorrect:
 			nincorrects += 1
 
-	logging.info(f"SRER Accuracy: {len(true_outs) - nincorrects}/{len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}")
+	logging.info(f"LT Accuracy: {len(true_outs) - nincorrects} / {len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}")
 
 
 if __name__ == "__main__":
