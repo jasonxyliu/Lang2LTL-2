@@ -106,7 +106,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
             utts += f"{utt_ground}\n"
 
             true_outs.append({
-                "utt_lifted": utt_lifted,
+                "lifted_utt": utt_lifted,
                 "pattern_type": pattern_type,
                 "props": props_full,
                 "utt": utt_ground,
