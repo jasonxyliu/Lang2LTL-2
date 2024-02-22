@@ -34,7 +34,7 @@ if __name__ == "__main__":
     utt_fpath = os.path.join(data_dpath, f"{args.location}_utts.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     rel_embeds_fpath = os.path.join(os.path.expanduser("~"), "ground", "results", f"known_rel_embeds.json")
-    srer_out_fname = f"srer_outs_{args.location}_ablate_{args.ablate}.json" if args.ablate else f"srer_outs_{args.location}.json"
+    srer_out_fname = f"{args.location}_srer_outs_ablate_{args.ablate}.json" if args.ablate else f"{args.location}_srer_outs.json"
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
