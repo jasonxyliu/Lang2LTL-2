@@ -144,7 +144,7 @@ if __name__ == "__main__":
     logging.info(f"Generating dataset location: {args.location}\n***** Dataset Statisitcs\n")
 
     if not os.path.isfile(sp_fpath) or not os.path.isfile(res_fpath):
-        lmks_fpath = os.path.join(data_dpath, "true_lmk_grounds.json")
+        lmks_fpath = os.path.join(data_dpath, "ltl_samples_sorted.json")
         split_true_lmk_grounds(lmks_fpath, args.location, sp_fpath, res_fpath)
 
     if not os.path.isfile(utts_fpath):
