@@ -173,7 +173,7 @@ def create_waypoints(obj_fpath, crs):
     return waypoints, crs
 
 
-def load_lmks(graph_dpath=None, osm_fpath=None):
+def load_lmks(graph_dpath=None, osm_fpath=None, ignore_graph=False):
     """
     Load landmarks from OSM or Spot graph or both then convert their locations to Cartesian coordinates.
     """
@@ -560,8 +560,14 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
     return False
 
 
-def spg(landmarks, reg_out, topk, rel_embeds_fpath):
-    print(f"***** SPG Command: {reg_out['utt']}\n")
+def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
+    print(f"***** SPG Command: {reg_out['utt']}")
+
+    if max_range:
+        global MAX_RANGE
+        MAX_RANGE = max_range
+
+    print(f" -> MAX_RANGE = {MAX_RANGE}\n")
 
     spg_output = {}
 
