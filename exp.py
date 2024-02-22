@@ -26,8 +26,10 @@ if __name__ == "__main__":
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
     parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula used to create dataset.")
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG.")
+    parser.add_argument("--maxrange", type=float, default=25.0, help="max range for SPG evaluation.")
     args = parser.parse_args()
     loc_id = f"{args.location}_n{args.nsamples}"
+    max_range = float(args.maxrange)
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.location])
@@ -61,7 +63,7 @@ if __name__ == "__main__":
     reg_outs = load_from_file(reg_out_fpath)
     landmarks = load_lmks(graph_dpath, osm_fpath)
     for reg_out in reg_outs:
-        reg_out['spg_results'] = spg(landmarks, reg_out, args.topk, rel_embeds_fpath)
+        reg_out['spg_results'] = spg(landmarks, reg_out, args.topk, rel_embeds_fpath, max_range)
     save_to_file(reg_outs, spg_out_fpath)
 
     # Lifted Translation (LT)
