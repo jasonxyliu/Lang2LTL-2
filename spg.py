@@ -270,7 +270,7 @@ def get_target_loc(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
     loc_min = {"x": (range_vecs[0]["mean"][0] * DIST_TO_ANCHOR) + anchor["x"],
                "y": (range_vecs[0]["mean"][1] * DIST_TO_ANCHOR) + anchor["y"]}
     dist_min = np.linalg.norm(np.array([loc_min["x"], loc_min["y"]]) - np.array([robot["x"], robot["y"]]))
-    range_vec_closest = range_vec[0]
+    range_vec_closest = range_vecs[0]
 
     for range_vec in range_vecs:
         loc_new = {"x": (range_vec["mean"][0] * DIST_TO_ANCHOR) + anchor["x"],
