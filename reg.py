@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from tqdm import tqdm
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -91,8 +92,8 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
 
     reg = REG(img_embeds, txt_embeds)
 
-    for srer_out in srer_outs:
-        print(f"***** REG Command: {srer_out['utt']}\n")
+    for srer_out in tqdm(srer_outs, desc='Performing referring expression grounding (REG)...'):
+        # print(f"***** REG Command: {srer_out['utt']}\n")
         grounded_sre_to_preds = {}
 
         for sre, spatial_pred in srer_out["sre_to_preds"].items():
@@ -107,7 +108,7 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
             for idx, query in enumerate(res):
                 lmk_candidates = reg.query(query, topk=topk)
                 grounded_res.append(lmk_candidates)
-                print(f"{idx}: {sre}\n{query}\n{lmk_candidates}\n")
+                # print(f"{idx}: {sre}\n{query}\n{lmk_candidates}\n")
             grounded_sre_to_preds[sre] = {spatial_relation: grounded_res}
 
         srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
