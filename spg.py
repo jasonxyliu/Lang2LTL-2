@@ -506,6 +506,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             elif computed_y_mean <= mean_pose[1] and computed_y_target <= target["y"]:
                 # print("above line")
                 is_within_range = True
+
             dist_a2t = np.linalg.norm(np.array([target["x"], target["y"]]) - np.array([anchor["x"], anchor["y"]]))
 
             if is_within_range and dist_a2t <= MAX_RANGE:
