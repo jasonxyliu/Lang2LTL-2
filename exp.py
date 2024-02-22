@@ -33,6 +33,7 @@ if __name__ == "__main__":
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     utt_fpath = os.path.join(data_dpath, f"{args.location}_utts.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
+    os.makedirs(results_dpath, exist_ok=True)
     rel_embeds_fpath = os.path.join(os.path.expanduser("~"), "ground", "results", f"known_rel_embeds.json")
     srer_out_fname = f"{args.location}_srer_outs_ablate_{args.ablate}.json" if args.ablate else f"{args.location}_srer_outs.json"
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
