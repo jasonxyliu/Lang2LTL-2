@@ -125,13 +125,14 @@ if __name__ == "__main__":
     parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--nsamples", type=int, default=10, help="numbe of samples per LTL formula.")
     args = parser.parse_args()
+    loc_id = f"{args.location}_n{args.nsamples}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     ltl_fpath = os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
     sp_fpath = os.path.join(data_dpath, f"{args.location}_sp_grounds.json")
     res_fpath = os.path.join(data_dpath,f"{args.location}_res.json")
-    utts_fpath = os.path.join(data_dpath, f"{args.location}_utts_n{args.nsamples}.txt")
-    outs_fpath = os.path.join(data_dpath, f"{args.location}_true_results_n{args.nsamples}.json")
+    utts_fpath = os.path.join(data_dpath, f"{loc_id}_utts.txt")
+    outs_fpath = os.path.join(data_dpath, f"{loc_id}_true_results.json")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
