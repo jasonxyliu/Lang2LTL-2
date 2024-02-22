@@ -123,12 +123,12 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
-    parser.add_argument("--nsamples", type=int, default=10, help="numbe of samples per LTL formula.")
+    parser.add_argument("--nsamples", type=int, default=2, help="numbe of samples per LTL formula.")
     args = parser.parse_args()
     loc_id = f"{args.location}_n{args.nsamples}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    ltl_fpath = os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
+    ltl_fpath = os.path.join(data_dpath, "ltl_samples_sorted.csv")
     sp_fpath = os.path.join(data_dpath, f"{args.location}_sp_grounds.json")
     res_fpath = os.path.join(data_dpath,f"{args.location}_res.json")
     utts_fpath = os.path.join(data_dpath, f"{loc_id}_utts.txt")
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     logging.info(f"Generating dataset location: {args.location}\n***** Dataset Statisitcs\n")
 
     if not os.path.isfile(sp_fpath) or not os.path.isfile(res_fpath):
-        lmks_fpath = os.path.join(data_dpath, "ltl_samples_sorted.json")
+        lmks_fpath = os.path.join(data_dpath, "true_lmk_grounds.json")
         split_true_lmk_grounds(lmks_fpath, args.location, sp_fpath, res_fpath)
 
     if not os.path.isfile(utts_fpath):
