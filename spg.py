@@ -1,11 +1,12 @@
 import os
+import utm
+import numpy as np
+import matplotlib.pyplot as plt
+
 from pathlib import Path
 from itertools import product
-import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-import matplotlib.pyplot as plt
 from pyproj import Transformer  # convert geographic to Cartesian coordinates: https://stackoverflow.com/a/69604627
-import utm
 
 from load_map import load_map, extract_waypoints
 from openai_models import get_embed
@@ -456,7 +457,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
         # Find two lines perpendicular to the vector defined by two anchors and passing through them
         vec_a1_to_a2 = anchor_2 - anchor_1
-        slope = - vec_a1_to_a2[0] / vec_a1_to_a2[1]  # line slope is negative recipical of vector slop
+        slope = - vec_a1_to_a2[0] / vec_a1_to_a2[1]  # line slope is negative recipical of vector slope
         offset_1 = slope * anchor_1[0] + anchor_1[1]  # a.x + b.y = c
         offset_2 = slope * anchor_2[0] + anchor_2[1]  # a.x + b.y = d
 
@@ -493,7 +494,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             is_within_range = False
 
             # -- given the slope, we can determine which side of the line lies the target point:
-            slope = (max_pose[1] - min_pose[1]) / (max_pose[0] - min_pose[0]) if (max_pose[0] - min_pose[0]) != 0 else np.Inf
+            slope = (max_pose[1] - min_pose[1]) / (max_pose[0] - min_pose[0]) if (max_pose[0] - min_pose[0]) != 0 else float('inf')
 
             intercept = max_pose[1] - (slope * max_pose[0])
             computed_y_mean = (slope * mean_pose[0]) + intercept
