@@ -8,7 +8,6 @@ from reg import reg
 from spg import load_lmks, spg
 from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
-from evaluate import evaluate_spg
 
 
 def lt(spg_outs, model_fpath):
@@ -62,10 +61,7 @@ if __name__ == "__main__":
         reg_out['spg_results'] = spg(landmarks, reg_out, args.topk, rel_embeds_fpath)
     save_to_file(reg_outs, spg_out_fpath)
 
-    # true_results_fpath = os.path.join(data_dpath, f"{args.location}_true_results.json")
-    # evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)
-
-    # # Lifted Translation (LT)
-    # spg_outs = load_from_file(spg_out_fpath)
-    # lt(spg_outs, model_fpath)
-    # save_to_file(spg_outs, os.path.join(results_dpath, spg_out_fpath.replace("spg", "lt")))
+    # Lifted Translation (LT)
+    spg_outs = load_from_file(spg_out_fpath)
+    lt(spg_outs, model_fpath)
+    save_to_file(spg_outs, os.path.join(results_dpath, srer_out_fname.replace("srer", "lt")))

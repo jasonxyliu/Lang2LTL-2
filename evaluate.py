@@ -1,3 +1,7 @@
+import os
+import argparse
+
+from ground import LOC2GID
 from utils import load_from_file
 
 
@@ -58,3 +62,26 @@ def evaluate_spg(spg_outs_fpth, true_results_fpath, topk):
 	for k in range(topk):
 		print(f" top-{k+1} accuracy: {total_topk[f'top-{k+1}'] / total_sres:.5f}")
 	print(f"\n* Total commands completely correct: {total_utts_correct}/{len(spg_outs)} ({total_utts_correct/len(spg_outs):.5})")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
+    parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
+    args = parser.parse_args()
+
+    data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
+    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.location])
+    osm_fpath = os.path.join(data_dpath, "osm", f"{args.location}.json")
+    model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
+    utt_fpath = os.path.join(data_dpath, f"utts_{args.location}.txt")
+    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
+    srer_out_fname = f"srer_outs_{args.location}_ablate_{args.ablate}.json" if args.ablate else f"srer_outs_{args.location}.json"
+    srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
+    reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
+    spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
+
+
+    true_results_fpath = os.path.join(data_dpath, f"{args.location}_true_results.json")
+    evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)
