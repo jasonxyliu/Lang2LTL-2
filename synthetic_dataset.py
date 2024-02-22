@@ -44,9 +44,10 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
     ltl2data = defaultdict(set)
     for pattern_type, props, utt_lifted, ltl_lifted in lifted_data:
         ltl2data[ltl_lifted].add((pattern_type, props, utt_lifted))
+    ltl2data = sorted(ltl2data.items(), key=lambda kv: len(kv[0]))
 
     logging.info(f"# unique lifted LTL formulas: {len(ltl2data)}")
-    for ltl, data in sorted(ltl2data.items(), key=lambda kv: len(kv[0])):
+    for ltl, data in ltl2data:
         logging.info(f"{ltl}: {len(data)}")
     logging.info(f"# unique spatial relations: {len(sp_grounds_all)}")
     logging.info(f"# unique landmarks: {len(res_all)}")
@@ -54,7 +55,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
     utts = ""
     true_outs = []
 
-    for ltl_lifted, ltl_data in ltl2data.items():  # every lifted LTL formula
+    for ltl_lifted, ltl_data in ltl2data:  # every lifted LTL formula
         data_sampled = random.sample(sorted(ltl_data), nsamples)
         for data in data_sampled:  # every sampled lifted utterances
             pattern_type, props, utt_lifted = data
