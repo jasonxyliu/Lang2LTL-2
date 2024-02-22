@@ -22,20 +22,22 @@ def lt(spg_outs, model_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="blackstone", choices=["lab", "alley", "blackstone", "boston", "auckland"], help="env name.")
+    parser.add_argument("--location", type=str, default="boston", choices=["lab", "alley", "blackstone", "boston", "auckland"], help="env name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
+    parser.add_argument("--nsamples", type=int, default=2, help="numbe of samples per LTL formula used to create dataset.")
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
+    loc_id = f"{args.location}_n{args.nsamples}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.location])
     osm_fpath = os.path.join(data_dpath, "osm", f"{args.location}.json")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
-    utt_fpath = os.path.join(data_dpath, f"{args.location}_utts.txt")
+    utt_fpath = os.path.join(data_dpath, f"{loc_id}_utts.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
     os.makedirs(results_dpath, exist_ok=True)
     rel_embeds_fpath = os.path.join(os.path.expanduser("~"), "ground", "results", f"known_rel_embeds.json")
-    srer_out_fname = f"{args.location}_srer_outs_ablate_{args.ablate}.json" if args.ablate else f"{args.location}_srer_outs.json"
+    srer_out_fname = f"{loc_id}_srer_outs_ablate_{args.ablate}.json" if args.ablate else f"{loc_id}_srer_outs.json"
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
