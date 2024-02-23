@@ -117,19 +117,19 @@ def align_coordinates(graph_dpath, waypoints, osm_landmarks, coord_alignment, cr
     # Process then add OSM landmarks if provided
     if osm_landmarks:
         for lmk, lmk_desc in osm_landmarks.items():
-            lmk_id = lmk.lower().replace(' ', '_')
+            # lmk_id = lmk.lower().replace(' ', '_')
 
             if "wid" in lmk_desc:
                 # OSM landmarks visited by Spot GraphNav have waypoint IDs, just use Spot graph coorindates
                 wid = lmk_desc["wid"]
                 lmk_cartesian = np.array([landmarks[wid]["x"], landmarks[wid]["y"]])
-                landmarks[wid]["osm_name"] = lmk_id
+                landmarks[wid]["osm_name"] = lmk
             else:
                 # Convert landmark location to Cartesian coordinate then add computed translation
                 lmk_cartesian = np.array(crs.transform(lmk_desc["long"], lmk_desc["lat"], 0, radians=False)[:-1])
                 lmk_cartesian += translation
 
-            landmarks[lmk_id] = {"x": lmk_cartesian[0], "y": lmk_cartesian[1]}
+            landmarks[lmk] = {"x": lmk_cartesian[0], "y": lmk_cartesian[1]}
 
     return landmarks
 

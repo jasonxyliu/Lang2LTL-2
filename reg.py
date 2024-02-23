@@ -41,7 +41,7 @@ def embed_texts(txts, embed_dpath):
             txt_emebed = get_embed(txt)
             save_to_file(txt_emebed, embed_fpath)
 
-        txt_embeds[txt_id] = txt_emebed
+        txt_embeds[lmk_name] = txt_emebed
     return txt_embeds
 
 
