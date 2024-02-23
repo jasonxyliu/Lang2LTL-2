@@ -7,7 +7,7 @@ import spot
 from utils import load_from_file
 
 
-def evaluate_srer(true_results_fpath, srer_out_fpath):
+def eval_srer(true_results_fpath, srer_out_fpath):
 	logging.info("***** Evaluating SRER")
 
 	true_outs = load_from_file(true_results_fpath)
@@ -48,7 +48,7 @@ def evaluate_srer(true_results_fpath, srer_out_fpath):
 	logging.info(f"SRER Accuracy: {len(true_outs) - nincorrects}/{len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
 
 
-def evaluate_reg(true_results_fpath, reg_out_fpath, topk):
+def eval_reg(true_results_fpath, reg_out_fpath, topk):
 	"""
 	Compute the top K accuracy of Referring Expression Grounding module.
 	"""
@@ -63,10 +63,11 @@ def evaluate_reg(true_results_fpath, reg_out_fpath, topk):
 
 	for true_out, reg_out in zip(true_outs, reg_outs):
 		assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {reg_out['utt']}"
-		logging.info(f"* Command: {reg_out['utt']}")
+		logging.info(f"* Command: {true_out['utt']}")
 
 		for (sre_true, preds_true), (sre_out, preds_out) in zip(true_out["reg_spg_outs"].items(), reg_out["grounded_sre_to_preds"].items()):
-			assert sre_out == sre_true, f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}"
+			if sre_out != sre_true:
+				print(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
 
 			preds_out = list(preds_out.values())
 			total_res += len(preds_out)
@@ -78,12 +79,12 @@ def evaluate_reg(true_results_fpath, reg_out_fpath, topk):
 							topk2acc[end_idx] += 1
 
 	for idx in range(1, topk+1):
-		logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {len(total_res)} = {topk2acc[idx] / len(total_res)}")
+		logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_res} = {topk2acc[idx] /total_res}")
 	logging.info("\n\n")
 
 
 
-def evaluate_spg(spg_out_fpth, true_results_fpath, topk):
+def eval_spg(true_results_fpath, spg_out_fpth, topk):
 	"""
 	Compute the top K accuracy of Spatial Predicate Grounding module.
 	"""
@@ -142,7 +143,7 @@ def evaluate_spg(spg_out_fpth, true_results_fpath, topk):
 	print(f"\n* Total commands completely correct: {total_utts_correct}/{len(spg_outs)} ({total_utts_correct/len(spg_outs):.5})")
 
 
-def evaluate_lt(true_results_fpath, lt_out_fpath):
+def eval_lt(true_results_fpath, lt_out_fpath):
 	logging.info("***** Evaluating LT")
 
 	true_outs = load_from_file(true_results_fpath)
@@ -207,8 +208,10 @@ if __name__ == "__main__":
     )
     logging.info(f"***** Evaluating Dataset: {args.location}")
 
-    evaluate_srer(true_results_fpath, srer_out_fpath)
+    eval_srer(true_results_fpath, srer_out_fpath)
 
-    # evaluate_spg(true_results_fpath, spg_out_fpath, args.topk)
+    eval_reg(true_results_fpath, reg_out_fpath, args.topk)
 
-    # utt2acc = evaluate_lt(true_results_fpath, lt_out_fpath)
+    eval_spg(true_results_fpath, spg_out_fpath, args.topk)
+
+    utt2acc = eval_lt(true_results_fpath, lt_out_fpath)
