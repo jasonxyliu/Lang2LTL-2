@@ -7,71 +7,71 @@ import spot
 from utils import load_from_file
 
 
-def evaluate_srer(srer_out_fpath, true_results_fpath):
+def evaluate_srer(true_results_fpath, srer_out_fpath):
 	logging.info("***** Evaluating SRER")
 
-	srer_outs = load_from_file(srer_out_fpath)
 	true_outs = load_from_file(true_results_fpath)
+	srer_outs = load_from_file(srer_out_fpath)
 	nincorrects = 0
 
 	assert len(srer_outs) == len(true_outs), f"ERROR different numbers of samples: {len(true_outs)}, {len(srer_outs)}"
 
-	for srer_out, true_out in zip(srer_outs, true_outs):
+	for true_out, srer_out in zip(true_outs, srer_outs):
 		assert srer_out["utt"] == true_out["utt"], f"ERROR different utterances:\n{true_out['utt']}\n{srer_out['utt']}"
 		logging.info(f"* Command: {srer_out['utt']}")
 		is_incorrect = False
 
-		for (sre_out, preds_out), (sre_true, preds_true) in zip(srer_out["sre_to_preds"].items(), true_out["srer_outs"].items()):
+		for (sre_true, preds_true), (sre_out, preds_out) in zip(true_out["srer_outs"].items(), srer_out["sre_to_preds"].items()):
 			if sre_out != sre_true:
 				is_incorrect = True
 				logging.info(f"Incorrect SREs\ntrue: {sre_true}\npred: {sre_out}")
-				breakpoint()
+				# breakpoint()
 
-			for (rel_out, res_out), (rel_true, res_true) in zip(preds_out.items(), preds_true.items()):
+			for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
 				if rel_out != rel_true:
 					is_incorrect = True
 					logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
+					# breakpoint()
 				if res_out != res_true:
 					is_incorrect = True
 					logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
-					breakpoint()
+					# breakpoint()
 
 		if srer_out["lifted_utt"] != true_out["lifted_utt"]:
 			is_incorrect = True
 			logging.info(f"Incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
-
-			breakpoint()
+			# breakpoint()
 
 		if is_incorrect:
 			nincorrects += 1
 
-	logging.info(f"SRER Accuracy: {len(true_outs) - nincorrects}/{len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}")
+	logging.info(f"SRER Accuracy: {len(true_outs) - nincorrects}/{len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
 
 
-def evaluate_reg(reg_out_fpath, true_results_fpath, topk):
+def evaluate_reg(true_results_fpath, reg_out_fpath, topk):
 	"""
 	Compute the top K accuracy of Referring Expression Grounding module.
 	"""
 	logging.info("***** Evaluating REG")
 
-	reg_outs = load_from_file(reg_out_fpath)
 	true_outs = load_from_file(true_results_fpath)
+	reg_outs = load_from_file(reg_out_fpath)
 	topk2acc = defaultdict(int)
 	total_res = 0
 
 	assert len(reg_outs) == len(true_outs), f"ERROR different numbers of samples: {len(true_outs)}, {len(reg_outs)}"
 
-	for reg_out, true_out in zip(reg_outs, true_outs):
-		assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\n{true_out['utt']}\n{reg_out['utt']}"
+	for true_out, reg_out in zip(true_outs, reg_outs):
+		assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {reg_out['utt']}"
 		logging.info(f"* Command: {reg_out['utt']}")
 
-		for (sre_out, preds_out), (sre_true, preds_true) in zip(reg_out["grounded_sre_to_preds"].items(), true_out["reg_spg_outs"].items()):
-			assert sre_out == sre_true, f"ERROR different spatial referring expression:\n{sre_true}\n{sre_out}"
+		for (sre_true, preds_true), (sre_out, preds_out) in zip(true_out["reg_spg_outs"].items(), reg_out["grounded_sre_to_preds"].items()):
+			assert sre_out == sre_true, f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}"
 
 			preds_out = list(preds_out.values())
 			total_res += len(preds_out)
 
-			for preds_topk, pred_true in zip(preds_out, preds_true):
+			for pred_true, preds_topk in zip(preds_true, preds_out):
 				for end_idx in range(1, topk+1):
 					for pred in pred_true:
 						if pred in preds_topk[:end_idx]:
@@ -79,6 +79,7 @@ def evaluate_reg(reg_out_fpath, true_results_fpath, topk):
 
 	for idx in range(1, topk+1):
 		logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {len(total_res)} = {topk2acc[idx] / len(total_res)}")
+	logging.info("\n\n")
 
 
 
@@ -141,36 +142,41 @@ def evaluate_spg(spg_out_fpth, true_results_fpath, topk):
 	print(f"\n* Total commands completely correct: {total_utts_correct}/{len(spg_outs)} ({total_utts_correct/len(spg_outs):.5})")
 
 
-def evaluate_lt(lt_out_fpath, true_results_fpath):
+def evaluate_lt(true_results_fpath, lt_out_fpath):
 	logging.info("***** Evaluating LT")
 
-	lt_outs = load_from_file(lt_out_fpath)
 	true_outs = load_from_file(true_results_fpath)
+	lt_outs = load_from_file(lt_out_fpath)
+	utt2acc = {}
 	nincorrects = 0
 
 	assert len(lt_outs) == len(true_outs), f"ERROR different numbers of samples: {len(true_outs)}, {len(lt_outs)}"
 
-	for lt_out, true_out in zip(lt_outs, true_outs):
-		assert lt_out["utt"] == lt_out["utt"], f"ERROR different utterances:\n{true_out['utt']}\n{lt_out['utt']}"
+	for true_out, lt_out in zip(true_outs, lt_outs):
+		assert lt_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {lt_out['utt']}"
 		logging.info(f"* Command: {lt_out['utt']}")
 		is_incorrect = False
 
-		ltl_out, ltl_true = lt_out["lifted_ltl"], true_out["lt_out"]
+		ltl_true, ltl_out = true_out["lt_out"], lt_out["lifted_ltl"]
 
 		try:
 			spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
 		except SyntaxError:
-			logging.info(f"Incorrect lifted translation Syntax Error (true vs. pred):\n{ltl_true}\n{ltl_out}")
+			logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
 			is_incorrect = True
 
 		if not spot_correct:
 			is_incorrect = True
-			logging.info(f"Incorrect lifted translation (true vs. pred):\n{spot.formula(ltl_true)}\n{spot.formula(ltl_out)}")
+			logging.info(f"Incorrect lifted translation:\ntrue: {spot.formula(ltl_true)}\npred: {spot.formula(ltl_out)}")
 
 		if is_incorrect:
 			nincorrects += 1
+			utt2acc[lt_out["utt"]] = 0
+		else:
+			utt2acc[lt_out["utt"]] = 1
 
-	logging.info(f"LT Accuracy: {len(true_outs) - nincorrects} / {len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}")
+	logging.info(f"LT Accuracy: {len(true_outs) - nincorrects} / {len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
+	return utt2acc
 
 
 if __name__ == "__main__":
@@ -201,8 +207,8 @@ if __name__ == "__main__":
     )
     logging.info(f"***** Evaluating Dataset: {args.location}")
 
-    evaluate_srer(srer_out_fpath, true_results_fpath)
+    evaluate_srer(true_results_fpath, srer_out_fpath)
 
-    # evaluate_spg(spg_out_fpath, true_results_fpath, args.topk)
+    # evaluate_spg(true_results_fpath, spg_out_fpath, args.topk)
 
-    # evaluate_lt(lt_out_fpath, true_results_fpath)
+    # utt2acc = evaluate_lt(true_results_fpath, lt_out_fpath)
