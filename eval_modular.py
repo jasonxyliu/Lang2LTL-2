@@ -1,13 +1,24 @@
 import os
 import argparse
 import logging
+import tqdm
 from collections import defaultdict
 import spot
 
-from utils import load_from_file
+from srer import srer
+from utils import load_from_file, save_to_file
 
 
 def eval_srer(true_results_fpath, srer_out_fpath):
+    # Spatial Referring Expression Recognition (SRER)
+	if not os.path.isfile(srer_out_fpath):
+		srer_outs = []
+		utts = load_from_file(utt_fpath)
+		for utt in tqdm(utts, desc='Performing spatial referring expression recognition (SRER)...'):
+			_, srer_out = srer(utt)
+			srer_outs.append(srer_out)
+		save_to_file(srer_outs, srer_out_fpath)
+
 	logging.info("***** Evaluating SRER")
 
 	true_outs = load_from_file(true_results_fpath)
@@ -65,17 +76,22 @@ def eval_reg(true_results_fpath, reg_out_fpath, topk):
 		assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {reg_out['utt']}"
 		logging.info(f"* Command: {true_out['utt']}")
 
-		for (sre_true, preds_true), (sre_out, preds_out) in zip(true_out["reg_spg_outs"].items(), reg_out["grounded_sre_to_preds"].items()):
+		for (sre_true, res_true), (sre_out, preds_out) in zip(true_out["reg_spg_outs"].items(), reg_out["grounded_sre_to_preds"].items()):
 			if sre_out != sre_true:
-				print(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
+				logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
 
-			preds_out = list(preds_out.values())
-			total_res += len(preds_out)
+			res_out = list(preds_out.values())
 
-			for pred_true, preds_topk in zip(preds_true, preds_out):
+			if len(res_out) != len(res_true):
+				logging.info(f"ERROR different numbers of REs\ntrue: {len(res_true)}\npred: {len(res_out)}")
+				continue
+
+			total_res += len(res_true)
+
+			for re_true, res_topk in zip(res_true, res_out):
 				for end_idx in range(1, topk+1):
-					for pred in pred_true:
-						if pred in preds_topk[:end_idx]:
+					for pred in re_true:
+						if pred in res_topk[:end_idx]:
 							topk2acc[end_idx] += 1
 
 	for idx in range(1, topk+1):
@@ -192,7 +208,7 @@ if __name__ == "__main__":
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     utt_fpath = os.path.join(data_dpath, f"{loc_id}_utts.txt")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
-    srer_out_fname = f"{loc_id}_srer_outs_ablate_{args.ablate}.json" if args.ablate else f"{loc_id}_srer_outs.json"
+    srer_out_fname = f"{loc_id}_srer_modular_outs_ablate_{args.ablate}.json" if args.ablate else f"{loc_id}_srer_modular_outs.json"
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
@@ -208,10 +224,10 @@ if __name__ == "__main__":
     )
     logging.info(f"***** Evaluating Dataset: {args.location}")
 
-    eval_srer(true_results_fpath, srer_out_fpath)
+    eval_srer(true_results_fpath, utt_fpath, srer_out_fpath)
 
     eval_reg(true_results_fpath, reg_out_fpath, args.topk)
 
-    eval_spg(true_results_fpath, spg_out_fpath, args.topk)
+    # eval_spg(true_results_fpath, spg_out_fpath, args.topk)
 
-    utt2acc = eval_lt(true_results_fpath, lt_out_fpath)
+    # utt2acc = eval_lt(true_results_fpath, lt_out_fpath)
