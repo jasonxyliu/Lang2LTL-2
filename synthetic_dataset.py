@@ -101,7 +101,11 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                         sp_true = {"target": sp_grounds_sampled[0][0], "anchor": [sp_grounds_sampled[1][0], sp_grounds_sampled[2][0]]}
 
                 sre_to_preds[sre] = {rel: res_true}
-                grounded_sre_to_preds[sre][rel] = [sp_grounds_sampled] if rel == "None" else [sp_ground[0] for sp_ground in sp_grounds_sampled]
+
+                if rel == "None":
+                    grounded_sre_to_preds[sre][rel] = [[[1.0, sp_grounds_sampled]]]
+                else:
+                    grounded_sre_to_preds[sre][rel] = [[score_ground] for score_ground in [[1.0, sp_ground[0]] for sp_ground in sp_grounds_sampled]]
                 grounded_sps[sre].append(sp_true)
 
             if not utt_lifted.startswith('.'):
