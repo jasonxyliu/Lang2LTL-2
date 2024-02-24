@@ -3,7 +3,7 @@ import os
 from srer import srer
 from reg import reg
 from spg import load_lmks, spg
-from lt_s2s_sup_tcd import Seq2Seq
+from lt import lt
 
 
 LOC2GID = {
@@ -13,16 +13,6 @@ LOC2GID = {
     "boston": "boston",
     "auckland": "auckland",
 }  # location to Spot graph ID
-
-
-def lt(spg_outs, model_fpath):
-    lt_module = Seq2Seq(model_fpath, "t5-base")
-    for spg_out in spg_outs:
-        lifted_utt = spg_out["lifted_utt"]
-        query = lifted_utt.translate(str.maketrans('', '', ',.'))
-        lifted_ltl = lt_module.type_constrained_decode([query])[0]
-        spg_out["lifted_ltl"] = lifted_ltl
-        print(f"{lifted_utt}\n{lifted_ltl}\n")
 
 
 def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath):
