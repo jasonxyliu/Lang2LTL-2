@@ -59,44 +59,44 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
 
 
 def eval_reg(true_results_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_fpath):
-	"""
-	Compute the top K accuracy of Referring Expression Grounding module.
-	"""
-	logging.info("***** Evaluating REG Module")
-	run_exp_reg(true_results_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_fpath)
+    """
+    Compute the top K accuracy of Referring Expression Grounding module.
+    """
+    logging.info("***** Evaluating REG Module")
+    run_exp_reg(true_results_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_fpath)
 
-	true_outs = load_from_file(true_results_fpath)
-	reg_outs = load_from_file(reg_out_fpath)
-	topk2acc = defaultdict(int)
-	total_res = 0
+    true_outs = load_from_file(true_results_fpath)
+    reg_outs = load_from_file(reg_out_fpath)
+    topk2acc = defaultdict(int)
+    total_res = 0
 
-	assert len(reg_outs) == len(true_outs), f"ERROR different numbers of samples: {len(true_outs)}, {len(reg_outs)}"
+    assert len(reg_outs) == len(true_outs), f"ERROR different numbers of samples\ntrue: {len(true_outs)}\npred: {len(reg_outs)}"
 
-	for true_out, reg_out in zip(true_outs, reg_outs):
-		assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {reg_out['utt']}"
-		logging.info(f"* Command: {true_out['utt']}")
+    for true_out, reg_out in zip(true_outs, reg_outs):
+        assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {reg_out['utt']}"
+        logging.info(f"* Command: {true_out['utt']}")
 
-		for (sre_true, res_true), (sre_out, preds_out) in zip(true_out["reg_spg_outs"].items(), reg_out["grounded_sre_to_preds"].items()):
-			if sre_out != sre_true:
-				logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
+        for (sre_true, res_true), (sre_out, preds_out) in zip(true_out["reg_spg_outs"].items(), reg_out["grounded_sre_to_preds"].items()):
+            if sre_out != sre_true:
+                logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
 
-			res_out = list(preds_out.values())
+            res_out = list(preds_out.values())
 
-			if len(res_out) != len(res_true):
-				logging.info(f"ERROR different numbers of REs\ntrue: {len(res_true)}\npred: {len(res_out)}")
-				continue
+            if len(res_out) != len(res_true):
+                logging.info(f"ERROR different numbers of REs\ntrue: {len(res_true)}\npred: {len(res_out)}")
+                continue
 
-			total_res += len(res_true)
+            total_res += len(res_true)
 
-			for re_true, res_topk in zip(res_true, res_out):
-				for end_idx in range(1, topk+1):
-					for pred in re_true:
-						if pred in res_topk[:end_idx]:
-							topk2acc[end_idx] += 1
+            for re_true, res_topk in zip(res_true, res_out):
+                for end_idx in range(1, topk+1):
+                    for pred in re_true:
+                        if pred in res_topk[:end_idx]:
+                            topk2acc[end_idx] += 1
 
-	for idx in range(1, topk+1):
-		logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_res} = {topk2acc[idx] /total_res}")
-	logging.info("\n\n")
+    for idx in range(1, topk+1):
+        logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_res} = {topk2acc[idx] /total_res}")
+    logging.info("\n\n")
 
 
 def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath, spg_out_fpath):
@@ -170,7 +170,7 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
     lt_outs = load_from_file(lt_out_fpath)
     nincorrects = 0
 
-    assert len(lt_outs) == len(true_outs), f"ERROR different numbers of samples: {len(true_outs)}, {len(lt_outs)}"
+    assert len(lt_outs) == len(true_outs), f"ERROR different numbers of samples\ntrue: {len(true_outs)}\npred: {len(lt_outs)}"
 
     for true_out, lt_out in zip(true_outs, lt_outs):
         assert lt_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {lt_out['utt']}"
