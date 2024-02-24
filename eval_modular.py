@@ -1,3 +1,6 @@
+"""
+Modular-wise Evaluation: the input to each module is correct, check modular output.
+"""
 import os
 import argparse
 import logging

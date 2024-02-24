@@ -1,5 +1,5 @@
 """
-Full system evaluation.
+Full system evaluation: check lifted LTL formula and grounded propositions.
 """
 import os
 import argparse
