@@ -171,7 +171,6 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
         if is_incorrect:
             nincorrects += 1
 
-
     logging.info(f"LT Accuracy: {len(true_outs) - nincorrects} / {len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
 
 
