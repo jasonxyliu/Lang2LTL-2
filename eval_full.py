@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if not os.path.isfile(srer_out_fpath):
         srer_outs = []
         utts = load_from_file(utt_fpath)
-        for utt in tqdm(utts, desc='Performing spatial referring expression recognition (SRER)...'):
+        for utt in tqdm(utts, desc="Performing spatial referring expression recognition (SRER)..."):
             _, srer_out = srer(utt)
             srer_outs.append(srer_out)
         save_to_file(srer_outs, srer_out_fpath)

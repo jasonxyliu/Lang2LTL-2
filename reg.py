@@ -92,7 +92,7 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
 
     reg = REG(img_embeds, txt_embeds)
 
-    for srer_out in tqdm(srer_outs, desc='Performing referring expression grounding (REG)...'):
+    for srer_out in tqdm(srer_outs, desc="Performing referring expression grounding (REG)..."):
         # print(f"***** REG Command: {srer_out['utt']}\n")
         grounded_sre_to_preds = {}
 
