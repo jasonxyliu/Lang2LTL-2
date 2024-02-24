@@ -49,10 +49,10 @@ def srer(utt):
     return raw_out, parsed_out
 
 
-def run_exp_srer(utt_fpath, srer_out_fpath):
+def run_exp_srer(utts_fpath, srer_out_fpath):
 	if not os.path.isfile(srer_out_fpath):
 		srer_outs = []
-		utts = load_from_file(utt_fpath)
+		utts = load_from_file(utts_fpath)
 		for utt in tqdm(utts, desc="Running spatial referring expression recognition (SRER) module"):
 			_, srer_out = srer(utt)
 			srer_outs.append(srer_out)
