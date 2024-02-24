@@ -121,6 +121,7 @@ def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath,
         for (sre_true, sp_true), (sre_out, sp_topk_out) in zip(true_out["grounded_sps"].items(), spg_out["grounded_sps"].items()):
             if sre_out != sre_true:
                 logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
+                breakpoint()
 
             for end_idx in range(1, topk+1):
                 for sp_out in sp_topk_out[:end_idx]:
@@ -154,6 +155,7 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
     for true_out, lt_out in zip(true_outs, lt_outs):
         assert lt_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {lt_out['utt']}"
         logging.info(f"* Command: {lt_out['utt']}")
+
         is_correct = True
 
         ltl_true, ltl_out = true_out["lifted_ltl"], lt_out["lifted_ltl"]
