@@ -1,3 +1,4 @@
+import os
 from tqdm import tqdm
 
 from lt_s2s_sup_tcd import Seq2Seq
@@ -12,8 +13,9 @@ def lt(spg_out, lt_model):
     # print(f"{lifted_utt}\n{lifted_ltl}\n")
 
 def run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath):
-    spg_outs = load_from_file(spg_out_fpath)
-    lt_model = Seq2Seq(model_fpath, "t5-base")
-    for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module"):
-        lt(spg_out, lt_model)
-    save_to_file(spg_outs, lt_out_fpath)
+    if not os.path.isfile(lt_out_fpath):
+        spg_outs = load_from_file(spg_out_fpath)
+        lt_model = Seq2Seq(model_fpath, "t5-base")
+        for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module"):
+            lt(spg_out, lt_model)
+        save_to_file(spg_outs, lt_out_fpath)
