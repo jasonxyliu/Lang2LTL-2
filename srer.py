@@ -1,4 +1,8 @@
+import os
+import tqdm
+
 from openai_models import extract
+from utils import load_from_file, save_to_file
 
 
 def parse_llm_output(raw_out):
@@ -38,21 +42,30 @@ def parse_llm_output(raw_out):
     return parsed_out
 
 
-def srer(command):
-    raw_out = extract(command)
-    parsed_out = {"utt": command}
+def srer(utt):
+    raw_out = extract(utt)
+    parsed_out = {"utt": utt}
     parsed_out.update(parse_llm_output(raw_out))
     return raw_out, parsed_out
 
 
-if __name__ == "__main__":
-    commands = [
-        "go to the couch in front of the TV, the couch on the left of the kitchen counter, the table next to the door, the table in front of the whiteboard, and the table on the left of the bookshelf",
+def run_exp_srer(utt_fpath, srer_out_fpath):
+	if not os.path.isfile(srer_out_fpath):
+		srer_outs = []
+		utts = load_from_file(utt_fpath)
+		for utt in tqdm(utts, desc="Running spatial referring expression recognition (SRER) module"):
+			_, srer_out = srer(utt)
+			srer_outs.append(srer_out)
+		save_to_file(srer_outs, srer_out_fpath)
 
+
+if __name__ == "__main__":
+    utts = [
+        "go to the couch in front of the TV, the couch on the left of the kitchen counter, the table next to the door, the table in front of the whiteboard, and the table on the left of the bookshelf",
     ]
 
-    for command in commands:
-        raw_out, parsed_out = srer(command)
+    for utt in utts:
+        raw_out, parsed_out = srer(utt)
 
         print(f"{parsed_out['lifted_utt']}\n{parsed_out['spatial_preds']}")
         breakpoint()

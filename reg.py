@@ -47,8 +47,7 @@ def embed_texts(txts, embed_dpath):
 
 class REG():
     """
-    Referring Expression Grounding (REG) module.
-    Use semantic description of landmarks and objects in text and images.
+    Referring Expression Grounding (REG) module. Use semantic description of landmarks and objects in text and images.
     """
     def __init__(self, img_embeds, txt_embeds):
         self.sem_ids,sem_embeds = [], []
@@ -92,8 +91,7 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
 
     reg = REG(img_embeds, txt_embeds)
 
-    for srer_out in tqdm(srer_outs, desc="Performing referring expression grounding (REG)..."):
-        # print(f"***** REG Command: {srer_out['utt']}\n")
+    for srer_out in tqdm(srer_outs, desc="Running referring expression grounding (REG) module"):
         grounded_sre_to_preds = {}
 
         for sre, spatial_pred in srer_out["sre_to_preds"].items():
@@ -105,13 +103,19 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
                 res = [sre]
 
             grounded_res = []
-            for idx, query in enumerate(res):
+            for query in enumerate(res):
                 lmk_candidates = reg.query(query, topk=topk)
                 grounded_res.append(lmk_candidates)
-                # print(f"{idx}: {sre}\n{query}\n{lmk_candidates}\n")
             grounded_sre_to_preds[sre] = {spatial_relation: grounded_res}
 
         srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
+
+
+def run_exp_reg(srer_out_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_fpath):
+    if not os.path.isfile(reg_out_fpath):
+        srer_outs = load_from_file(srer_out_fpath)
+        reg(graph_dpath, osm_fpath, srer_outs, topk, ablate)
+        save_to_file(srer_outs, reg_out_fpath)
 
 
 if __name__ == "__main__":
