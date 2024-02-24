@@ -111,7 +111,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                 "pattern_type": pattern_type,
                 "props": props_full,
                 "utt": utt_ground,
-                "srer_outs": srer_outs,
+                "sre_to_preds": srer_outs,
                 "reg_spg_outs": reg_spg_outs,
                 "lt_out": ltl_lifted
             })
