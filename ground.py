@@ -3,7 +3,7 @@ import os
 from srer import srer
 from reg import reg
 from spg import load_lmks, spg
-from lt import lt
+from lt import Seq2Seq, lt
 
 
 LOC2GID = {
@@ -30,7 +30,8 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fp
     srer_out['spg_results'] = spg(landmarks, srer_out, topk, rel_embeds_fpath)
 
     # Lifted Translation (LT)
-    lt([srer_out], model_fpath)
+    lt_module = Seq2Seq(model_fpath, "t5-base")
+    lt(srer_out, lt_module)
 
     # Substitute symbols by groundings of spatial referring expressions
     grounded_ltl = srer_out["lifted_ltl"]
