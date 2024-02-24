@@ -1,23 +1,15 @@
+"""
+Full system evaluation.
+"""
 import os
 import argparse
 from tqdm import tqdm
 
-from ground import LOC2GID
+from ground import LOC2GID, lt
 from srer import srer
 from reg import reg
 from spg import load_lmks, spg
-from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
-
-
-def lt(spg_outs, model_fpath):
-    lt_module = Seq2Seq(model_fpath, "t5-base")
-    for spg_out in spg_outs:
-        lifted_utt = spg_out["lifted_utt"]
-        query = lifted_utt.translate(str.maketrans('', '', ',.'))
-        lifted_ltl = lt_module.type_constrained_decode([query])[0]
-        spg_out["lifted_ltl"] = lifted_ltl
-        print(f"{lifted_utt}\n{lifted_ltl}\n")
 
 
 if __name__ == "__main__":

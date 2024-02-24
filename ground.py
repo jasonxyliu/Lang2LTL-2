@@ -15,6 +15,16 @@ LOC2GID = {
 }  # location to Spot graph ID
 
 
+def lt(spg_outs, model_fpath):
+    lt_module = Seq2Seq(model_fpath, "t5-base")
+    for spg_out in spg_outs:
+        lifted_utt = spg_out["lifted_utt"]
+        query = lifted_utt.translate(str.maketrans('', '', ',.'))
+        lifted_ltl = lt_module.type_constrained_decode([query])[0]
+        spg_out["lifted_ltl"] = lifted_ltl
+        print(f"{lifted_utt}\n{lifted_ltl}\n")
+
+
 def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath):
     """
     Grounding API function
@@ -30,10 +40,7 @@ def ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fp
     srer_out['spg_results'] = spg(landmarks, srer_out, topk, rel_embeds_fpath)
 
     # Lifted Translation (LT)
-    lifted_utt = srer_out["lifted_utt"]
-    query = lifted_utt.translate(str.maketrans('', '', ',.'))
-    lt_module = Seq2Seq(model_fpath, "t5-base")
-    srer_out["lifted_ltl"] = lt_module.type_constrained_decode([query])[0]
+    lt([srer_out], model_fpath)
 
     # Substitute symbols by groundings of spatial referring expressions
     grounded_ltl = srer_out["lifted_ltl"]
