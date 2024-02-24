@@ -1,5 +1,5 @@
 import os
-import tqdm
+from tqdm import tqdm
 
 from openai_models import extract
 from utils import load_from_file, save_to_file
