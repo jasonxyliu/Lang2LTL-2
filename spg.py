@@ -591,11 +591,12 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath):
 
 
 def run_exp_spg(reg_out_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath, spg_out_fpath):
-    reg_outs = load_from_file(reg_out_fpath)
-    landmarks = load_lmks(graph_dpath, osm_fpath)
-    for reg_out in tqdm(reg_outs, desc="Running spatial predicate grounding (SPG) module"):
-        reg_out["grounded_sps"] = spg(landmarks, reg_out, topk, rel_embeds_fpath)
-    save_to_file(reg_outs, spg_out_fpath)
+    if not os.path.isfile(spg_out_fpath):
+        reg_outs = load_from_file(reg_out_fpath)
+        landmarks = load_lmks(graph_dpath, osm_fpath)
+        for reg_out in tqdm(reg_outs, desc="Running spatial predicate grounding (SPG) module"):
+            reg_out["grounded_sps"] = spg(landmarks, reg_out, topk, rel_embeds_fpath)
+        save_to_file(reg_outs, spg_out_fpath)
 
 
 if __name__ == "__main__":

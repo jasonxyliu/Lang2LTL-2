@@ -94,71 +94,51 @@ def eval_reg(true_results_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_f
                         topk2acc[end_idx] += 1
 
     for idx in range(1, topk+1):
-        logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_res} = {topk2acc[idx] /total_res}")
+        logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_res} = {topk2acc[idx] / total_res}")
     logging.info("\n\n")
 
 
 def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath, spg_out_fpath):
-	"""
-	Compute the top K accuracy of Spatial Predicate Grounding module.
-	"""
-	logging.info("***** Evaluating SPG Module")
-	run_exp_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath, spg_out_fpath)
+    """
+    Compute the top K accuracy of Spatial Predicate Grounding module.
+    """
+    logging.info("***** Evaluating SPG Module")
+    run_exp_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath, spg_out_fpath)
 
+    true_outs = load_from_file(true_results_fpath)
+    spg_outs = load_from_file(spg_out_fpath)
+    topk2acc = defaultdict(int)
+    total_sps = 0
 
-	total_sres = 0  # count the total number of SREs across all commands in the JSON file
-	total_topk = {f'top-{x+1}': 0 for x in range(topk)}
-	total_utts_correct = 0
+    assert len(spg_outs) == len(true_outs), f"ERROR different numbers of samples\ntrue: {len(true_outs)}\npred: {len(spg_outs)}"
 
-	spg_outs = load_from_file(spg_out_fpath)
-	true_results = load_from_file(true_results_fpath)
-	gtr_utt_to_results = {x['utt']: x for x in true_results}
+    for true_out, spg_out in zip(true_outs, spg_outs):
+        assert spg_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {spg_out['utt']}"
+        logging.info(f"* Command: {true_out['utt']}")
 
-	for spg_out in spg_outs:
-		print(f"Command: {spg_out['utt']}")
-		gtr = gtr_utt_to_results[spg_out['utt']]
+        total_sps += len(true_out["grounded_sps"])
 
-		spgs_gtr = gtr['true_reg_spg']
-		spgs_gen = spg_out['spg_results']
-		total_sres += len(spgs_gtr)
+        for (sre_true, sp_true), (sre_out, sp_topk_out) in zip(true_out["grounded_sps"].items(), spg_out["grounded_sps"].items()):
+            if sre_out != sre_true:
+                logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
 
-		top1_matches = 0
+            for end_idx in range(1, topk+1):
+                for sp_out in sp_topk_out[:end_idx]:
+                    if len(sp_true[0]) != len(sp_out):
+                        logging.info(f"ERROR different number of spatial predicates:\ntrue: {sp_true[0]}\npred: {sp_out}")
+                        continue
 
-		for sre in spgs_gtr:
-			print(f" >> SRE:\t\t{sre}")
-			print(f" >> TRUE GROUNDING:\t{spgs_gtr[sre]}")
+                    is_correct = True
+                    for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true[0].items(), sp_out.items()):
+                        if lmk_type_out != lmk_type_true or ground_out != ground_true:
+                            is_correct = False
 
-			spg_gen = spgs_gen[sre] if sre in spgs_gen else None
-			print(f" >> COMPUTED GROUNDING:\t{[spg_gen[x]['target'] for x in range(len(spg_gen))]}")
+                    if is_correct:
+                        topk2acc[end_idx] += 1
 
-			topk_match = False
-			for k in range(min(topk, len(spg_gen))):
-				if spg_gen[k]['target'] in spgs_gtr[sre]:
-					print(f"   -> grounding found:\tk={k+1}!")
-					topk_match = True
-
-					# -- if we found a match in the top m results, then we found it in all top m to k:
-					for j in range(k, topk):
-						total_topk[f'top-{j+1}'] += 1
-
-					if k == 0:
-						top1_matches += 1
-
-					break
-
-			if not topk_match:
-				print(f"   -> NO MATCH FOUND:\t{spg_gen[k]['target']}")
-			print()
-
-			if top1_matches == len(spgs_gtr):
-				total_utts_correct += 1
-
-		print('\n')
-
-	print("*** SUMMARY: ***")
-	for k in range(topk):
-		print(f" top-{k+1} accuracy: {total_topk[f'top-{k+1}'] / total_sres:.5f}")
-	print(f"\n* Total commands completely correct: {total_utts_correct}/{len(spg_outs)} ({total_utts_correct/len(spg_outs):.5})")
+    for idx in range(1, topk+1):
+        logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_sps} = {topk2acc[idx] / total_sps}")
+    logging.info("\n\n")
 
 
 def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
@@ -232,6 +212,6 @@ if __name__ == "__main__":
 
     eval_reg(true_results_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
 
-    eval_spg(true_results_fpath, spg_out_fpath, args.topk)
+    eval_spg(true_results_fpath, graph_dpath, osm_fpath, args.topk, rel_embeds_fpath, spg_out_fpath)
 
     eval_lt(true_results_fpath, model_fpath, lt_out_fpath)
