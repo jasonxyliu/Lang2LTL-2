@@ -54,7 +54,7 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
         if is_incorrect:
             nincorrects += 1
 
-        logging.info(f"\n\n")
+        logging.info(f"\n")
     logging.info(f"SRER Accuracy: {len(true_outs) - nincorrects}/{len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
 
 
@@ -76,23 +76,22 @@ def eval_reg(true_results_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_f
         assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {reg_out['utt']}"
         logging.info(f"* Command: {true_out['utt']}")
 
-        for (sre_true, res_true), (sre_out, preds_out) in zip(true_out["reg_spg_outs"].items(), reg_out["grounded_sre_to_preds"].items()):
+        for (sre_true, pred_true), (sre_out, pred_out) in zip(true_out["grounded_sre_to_preds"].items(), reg_out["grounded_sre_to_preds"].items()):
             if sre_out != sre_true:
                 logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
 
-            res_out = list(preds_out.values())
-
-            if len(res_out) != len(res_true):
-                logging.info(f"ERROR different numbers of REs\ntrue: {len(res_true)}\npred: {len(res_out)}")
+            if len(pred_true) != len(pred_out):
+                logging.info(f"ERROR different numbers of REs\ntrue: {len(pred_true)}\npred: {len(pred_out)}")
                 continue
 
+            res_true = list(pred_true.values())[0]
+            res_out = [[score_ground[1] for score_ground in grounded_res] for grounded_res in list(pred_out.values())[0]]
             total_res += len(res_true)
 
             for re_true, res_topk in zip(res_true, res_out):
                 for end_idx in range(1, topk+1):
-                    for pred in re_true:
-                        if pred in res_topk[:end_idx]:
-                            topk2acc[end_idx] += 1
+                    if re_true in res_topk[:end_idx]:
+                        topk2acc[end_idx] += 1
 
     for idx in range(1, topk+1):
         logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_res} = {topk2acc[idx] /total_res}")
@@ -177,7 +176,7 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
         logging.info(f"* Command: {lt_out['utt']}")
         is_incorrect = False
 
-        ltl_true, ltl_out = true_out["lt_out"], lt_out["lifted_ltl"]
+        ltl_true, ltl_out = true_out["lifted_ltl"], lt_out["lifted_ltl"]
 
         try:
             spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
@@ -231,8 +230,8 @@ if __name__ == "__main__":
 
     eval_srer(true_results_fpath, utts_fpath, srer_out_fpath)
 
-    # eval_reg(true_results_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
+    eval_reg(true_results_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
 
-    # eval_spg(true_results_fpath, spg_out_fpath, args.topk)
+    eval_spg(true_results_fpath, spg_out_fpath, args.topk)
 
-    # eval_lt(true_results_fpath, model_fpath, lt_out_fpath)
+    eval_lt(true_results_fpath, model_fpath, lt_out_fpath)

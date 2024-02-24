@@ -21,7 +21,8 @@ def split_true_lmk_grounds(lmks_fpath, loc, sp_fpath, res_fpath):
         for ground in grounds:
             if "*" in ground:  # unique referring expression can identify landmark without anchor
                 res[lmk]["proper_names"].append(ground["*"])
-                sp_grounds["None"].append(ground["*"])
+                if lmk not in sp_grounds["None"]:
+                    sp_grounds["None"].append(lmk)
             elif "@" in ground:  # ambiguous referring expression if used without anchor
                 res[lmk]["generic_names"].append(ground["@"])
             else:  # spatial predicate grounding
@@ -63,22 +64,25 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
             props = props_full[0] if len(set(props)) == 1 else props_full  # e.g., visit a at most twice, ['a', 'a']
             rels = random.sample(sorted(sp_grounds_all), len(props))
 
-            srer_outs = {}
-            reg_spg_outs = {}
+            sre_to_preds = {}
+            grounded_sre_to_preds = defaultdict(dict)
+            grounded_sps = defaultdict(list)
 
             for rel in rels:  # every sampled spatial relations
                 sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
                 res_true = []
 
                 if rel == "None":  # referring expression without spatial relation
-                    sre = sp_grounds_sampled
+                    sre = random.sample(res_all[sp_grounds_sampled]["proper_names"], 1)[0]
                     res_true.append(sp_grounds_sampled)
+                    sp_true = {"target": sp_grounds_sampled}
                 elif len(sp_grounds_sampled) == 1:  # sre with only an anchor
                     while "proper_names" not in res_all[sp_grounds_sampled[0]]:
                         sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
                     re_tar = random.sample(res_all[sp_grounds_sampled[0]]["proper_names"], 1)[0]
                     res_true.append(re_tar)
                     sre = f"{rel} {re_tar}"
+                    sp_true = {"anchor": [sp_grounds_sampled[0]]}
                 else:  # for sre with target and one or two anchors, both proper and generic names are valid
                     res_tar = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[0][0]].values()))
                     re_tar = random.sample(res_tar, 1)[0]  # target referring expression
@@ -88,20 +92,23 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                     res_true.append(re_anc1)
                     if len(sp_grounds_sampled) == 2:
                         sre = f"{re_tar} {rel} {re_anc1}"
+                        sp_true = {"target": sp_grounds_sampled[0][0], "anchor": sp_grounds_sampled[1]}
                     else:
                         res_anc2 = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[2][0]].values()))
                         re_anc2 = random.sample(res_anc2, 1)[0] # anchor 2 referring expression
                         res_true.append(re_anc2)
                         sre = f"{re_tar} {rel} {re_anc1} and {re_anc2}"
+                        sp_true = {"target": sp_grounds_sampled[0][0], "anchor": [sp_grounds_sampled[1][0], sp_grounds_sampled[2][0]]}
 
-                srer_outs[sre] = {rel: res_true}
-                reg_spg_outs[sre] = sp_grounds_sampled
+                sre_to_preds[sre] = {rel: res_true}
+                grounded_sre_to_preds[sre][rel] = [sp_grounds_sampled] if rel == "None" else [sp_ground[0] for sp_ground in sp_grounds_sampled]
+                grounded_sps[sre].append(sp_true)
 
             if not utt_lifted.startswith('.'):
                 utt_ground = '.' + utt_lifted
             if not utt_ground.endswith('.'):
                 utt_ground += '.'
-            for prop, sre in zip(props, srer_outs.keys()):
+            for prop, sre in zip(props, sre_to_preds.keys()):
                 utt_ground = re.sub(rf"(\b)([{prop}])(\W)", rf'\1{sre}\3', utt_ground)
             utt_ground = utt_ground[1:-1]
             utts += f"{utt_ground}\n"
@@ -111,9 +118,10 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                 "pattern_type": pattern_type,
                 "props": props_full,
                 "utt": utt_ground,
-                "sre_to_preds": srer_outs,
-                "reg_spg_outs": reg_spg_outs,
-                "lt_out": ltl_lifted
+                "sre_to_preds": sre_to_preds,
+                "grounded_sre_to_preds": grounded_sre_to_preds,
+                "grounded_sps": grounded_sps,
+                "lifted_ltl": ltl_lifted
             })
 
     save_to_file(utts, utts_fpath)
