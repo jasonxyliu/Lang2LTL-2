@@ -162,37 +162,37 @@ def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath,
 
 
 def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
-	logging.info("***** Evaluating LT")
-	run_exp_lt(true_results_fpath, model_fpath, lt_out_fpath)
+    logging.info("***** Evaluating LT")
+    run_exp_lt(true_results_fpath, model_fpath, lt_out_fpath)
 
-	true_outs = load_from_file(true_results_fpath)
-	lt_outs = load_from_file(lt_out_fpath)
-	nincorrects = 0
+    true_outs = load_from_file(true_results_fpath)
+    lt_outs = load_from_file(lt_out_fpath)
+    nincorrects = 0
 
-	assert len(lt_outs) == len(true_outs), f"ERROR different numbers of samples: {len(true_outs)}, {len(lt_outs)}"
+    assert len(lt_outs) == len(true_outs), f"ERROR different numbers of samples: {len(true_outs)}, {len(lt_outs)}"
 
-	for true_out, lt_out in zip(true_outs, lt_outs):
-		assert lt_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {lt_out['utt']}"
-		logging.info(f"* Command: {lt_out['utt']}")
-		is_incorrect = False
+    for true_out, lt_out in zip(true_outs, lt_outs):
+        assert lt_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {lt_out['utt']}"
+        logging.info(f"* Command: {lt_out['utt']}")
+        is_incorrect = False
 
-		ltl_true, ltl_out = true_out["lt_out"], lt_out["lifted_ltl"]
+        ltl_true, ltl_out = true_out["lt_out"], lt_out["lifted_ltl"]
 
-		try:
-			spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
-		except SyntaxError:
-			logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
-			is_incorrect = True
+        try:
+            spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
+        except SyntaxError:
+            logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
+            is_incorrect = True
 
-		if not spot_correct:
-			is_incorrect = True
-			logging.info(f"Incorrect lifted translation:\ntrue: {spot.formula(ltl_true)}\npred: {spot.formula(ltl_out)}")
+        if not spot_correct:
+            is_incorrect = True
+            logging.info(f"Incorrect lifted translation:\ntrue: {spot.formula(ltl_true)}\npred: {spot.formula(ltl_out)}")
 
-		if is_incorrect:
-			nincorrects += 1
+        if is_incorrect:
+            nincorrects += 1
 
 
-	logging.info(f"LT Accuracy: {len(true_outs) - nincorrects} / {len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
+    logging.info(f"LT Accuracy: {len(true_outs) - nincorrects} / {len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
 
 
 if __name__ == "__main__":
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(results_dpath, f"{args.location}_eval_results.log"), mode='w'),
+                            logging.FileHandler(os.path.join(results_dpath, f"eval_results.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
