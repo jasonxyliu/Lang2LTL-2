@@ -147,31 +147,31 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
 
     true_outs = load_from_file(true_results_fpath)
     lt_outs = load_from_file(lt_out_fpath)
-    nincorrects = 0
+    ncorrects = 0
 
     assert len(lt_outs) == len(true_outs), f"ERROR different numbers of samples\ntrue: {len(true_outs)}\npred: {len(lt_outs)}"
 
     for true_out, lt_out in zip(true_outs, lt_outs):
         assert lt_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {lt_out['utt']}"
         logging.info(f"* Command: {lt_out['utt']}")
-        is_incorrect = False
+        is_correct = True
 
         ltl_true, ltl_out = true_out["lifted_ltl"], lt_out["lifted_ltl"]
 
         try:
             spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
         except SyntaxError:
+            is_correct = False
             logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
-            is_incorrect = True
 
         if not spot_correct:
-            is_incorrect = True
+            is_correct = False
             logging.info(f"Incorrect lifted translation:\ntrue: {spot.formula(ltl_true)}\npred: {spot.formula(ltl_out)}")
 
-        if is_incorrect:
-            nincorrects += 1
+        if is_correct:
+            ncorrects += 1
 
-    logging.info(f"LT Accuracy: {len(true_outs) - nincorrects} / {len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
+    logging.info(f"LT Accuracy: {ncorrects} / {len(true_outs)} = {ncorrects / len(true_outs)}\n\n")
 
 
 if __name__ == "__main__":
@@ -205,7 +205,7 @@ if __name__ == "__main__":
                             logging.StreamHandler()
                         ]
     )
-    logging.info(f"***** Evaluating Dataset: {args.location}")
+    logging.info(f"***** Evaluating Dataset: {loc_id}")
 
     eval_srer(true_results_fpath, utts_fpath, srer_out_fpath)
 
