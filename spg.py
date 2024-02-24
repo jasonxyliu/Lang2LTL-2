@@ -518,7 +518,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         if is_valid:
             if plot:
                 # Plot the computed vector range
-                plt.figure()
+                plt.figure(figsize=(10,6))
                 plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
 
                 plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
