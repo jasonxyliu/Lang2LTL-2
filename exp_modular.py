@@ -84,7 +84,7 @@ def eval_reg(true_results_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_f
                 logging.info(f"ERROR different numbers of REs\ntrue: {len(pred_true)}\npred: {len(pred_out)}")
                 continue
 
-            res_true = list(pred_true.values())[0]
+            res_true = [score_re[0][1] for score_re in list(pred_true.values())[0]]
             res_out = [[score_ground[1] for score_ground in grounded_res] for grounded_res in list(pred_out.values())[0]]
             total_res += len(res_true)
 
@@ -157,7 +157,6 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
         logging.info(f"* Command: {lt_out['utt']}")
 
         is_correct = True
-
         ltl_true, ltl_out = true_out["lifted_ltl"], lt_out["lifted_ltl"]
 
         try:
@@ -178,6 +177,7 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--module", type=str, default="lt", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
     parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
     parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula used to create dataset.")
@@ -203,16 +203,20 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(results_dpath, f"eval_results.log"), mode='w'),
+                            logging.FileHandler(os.path.join(results_dpath, f"eval_results_{args.module}.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
-    logging.info(f"***** Evaluating Dataset: {loc_id}")
+    logging.info(f"***** Modular-wise Evaluation on Dataset: {loc_id}")
 
-    eval_srer(true_results_fpath, utts_fpath, srer_out_fpath)
+    if args.module == "srer" or args.module == "all":
+        eval_srer(true_results_fpath, utts_fpath, srer_out_fpath)
 
-    eval_reg(true_results_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
+    if args.module == "reg" or args.module == "all":
+        eval_reg(true_results_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
 
-    eval_spg(true_results_fpath, graph_dpath, osm_fpath, args.topk, rel_embeds_fpath, spg_out_fpath)
+    if args.module == "spg" or args.module == "all":
+        eval_spg(true_results_fpath, graph_dpath, osm_fpath, args.topk, rel_embeds_fpath, spg_out_fpath)
 
-    eval_lt(true_results_fpath, model_fpath, lt_out_fpath)
+    if args.module == "lt" or args.module == "all":
+        eval_lt(true_results_fpath, model_fpath, lt_out_fpath)
