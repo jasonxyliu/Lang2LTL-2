@@ -177,7 +177,7 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--module", type=str, default="lt", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
+    parser.add_argument("--module", type=str, default="srer", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
     parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
     parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula used to create dataset.")
