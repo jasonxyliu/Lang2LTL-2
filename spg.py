@@ -493,7 +493,10 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             is_within_range = False
 
             # -- given the slope, we can determine which side of the line lies the target point:
-            slope = (max_pose[1] - min_pose[1]) / (max_pose[0] - min_pose[0]) if (max_pose[0] - min_pose[0]) != 0 else float('inf')
+            if (max_pose[0] - min_pose[0]) != 0:
+                slope = (max_pose[1] - min_pose[1]) / (max_pose[0] - min_pose[0])
+            else:
+                slope = (max_pose[1] - min_pose[1]) / 1.0e-25
 
             intercept = max_pose[1] - (slope * max_pose[0])
             computed_y_mean = (slope * mean_pose[0]) + intercept
@@ -611,7 +614,7 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
                     if len(groundings) == topk:
                         break
         spg_output[sre] = groundings
-        breakpoint()
+        # breakpoint()
 
         plt.close("all")
         print("\n\n")
