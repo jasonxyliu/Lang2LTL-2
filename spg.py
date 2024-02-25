@@ -1,12 +1,11 @@
 import os
-import utm
-import numpy as np
-import matplotlib.pyplot as plt
-
 from pathlib import Path
 from itertools import product
+import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from pyproj import Transformer  # convert geographic to Cartesian coordinates: https://stackoverflow.com/a/69604627
+import utm
+import matplotlib.pyplot as plt
 
 from load_map import load_map, extract_waypoints
 from openai_models import get_embed

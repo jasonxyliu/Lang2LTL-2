@@ -1,28 +1,28 @@
+"""
+Generate dataset of natural language commands collected from humans using Google Form.
+"""
 import os
 import argparse
+from pathlib import Path
 
 from utils import load_from_file, save_to_file
 
-def create_human_dataset(csv_fpath,):
-    # -- load CSV file given as file path:
+
+def create_human_dataset(csv_fpath):
     csv_df = load_from_file(fpath=csv_fpath, use_pandas=True)
-    location = str(os.path.splitext(os.path.basename(csv_fpath))[0].split("_")[-1]).lower()
+    location = Path(csv_fpath).stem.split("_")[-1].lower()
     human_utts_fpath = os.path.join(os.path.dirname(csv_fpath), f"{location}_human_utts.txt")
+    utts = []
 
-    utts_for_file = []
-
-    for (columnName, columnData) in csv_df.items():
-        # NOTE: each column with "Command" in its title refers to that containing utterances for file generation:
-        if "Command" in columnName:
-            utts_for_file.extend(columnData)
-
-    save_to_file(data="\n".join(utts_for_file), fpth=human_utts_fpath)
-#enddef
+    for col_name, col_data in csv_df.items():
+        if "Command" in col_name:  # column with "Command" in title refers to utterance for dataset
+            utts.extend(col_data)
+    save_to_file(data="\n".join(utts), fpth=human_utts_fpath)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--csv", type=str, default=None, help="path to CSV file from Google Forms.")
+    parser.add_argument("--csv_fpath", type=str, default=None, help="path to Google Form's CSV file.")
     args = parser.parse_args()
 
-    create_human_dataset(args.csv)
+    create_human_dataset(args.csv_fpath)
