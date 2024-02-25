@@ -84,18 +84,19 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                     sre = f"{rel} {re_tar}"
                     sp_true = {"anchor": [sp_grounds_sampled[0]]}
                 else:  # for sre with target and one or two anchors, both proper and generic names are valid
+                    while "proper_names" not in res_all[sp_grounds_sampled[1][0]] \
+                        or (len(sp_grounds_sampled) == 3 and "proper_names" not in res_all[sp_grounds_sampled[2][0]]):
+                        sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
                     res_tar = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[0][0]].values()))
                     re_tar = random.sample(res_tar, 1)[0]  # target referring expression
                     res_true.append(re_tar)
-                    res_anch1 = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[1][0]].values()))
-                    re_anc1 = random.sample(res_anch1, 1)[0]  # anchor 1 referring expression
+                    re_anc1 = random.sample(res_all[sp_grounds_sampled[1][0]]["proper_names"], 1)[0]  # anchor 1 referring expression
                     res_true.append(re_anc1)
                     if len(sp_grounds_sampled) == 2:
                         sre = f"{re_tar} {rel} {re_anc1}"
                         sp_true = {"target": sp_grounds_sampled[0][0], "anchor": sp_grounds_sampled[1]}
                     else:
-                        res_anc2 = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[2][0]].values()))
-                        re_anc2 = random.sample(res_anc2, 1)[0] # anchor 2 referring expression
+                        re_anc2 = random.sample(res_all[sp_grounds_sampled[2][0]]["proper_names"], 1)[0] # anchor 2 referring expression
                         res_true.append(re_anc2)
                         sre = f"{re_tar} {rel} {re_anc1} and {re_anc2}"
                         sp_true = {"target": sp_grounds_sampled[0][0], "anchor": [sp_grounds_sampled[1][0], sp_grounds_sampled[2][0]]}
