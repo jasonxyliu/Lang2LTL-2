@@ -1,11 +1,13 @@
 import os
-from pathlib import Path
-from itertools import product
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from pyproj import Transformer  # convert geographic to Cartesian coordinates: https://stackoverflow.com/a/69604627
 import utm
 import matplotlib.pyplot as plt
+
+from sklearn.metrics.pairwise import cosine_similarity
+from pyproj import Transformer  # convert geographic to Cartesian coordinates: https://stackoverflow.com/a/69604627
+from pathlib import Path
+from itertools import product
+from tqdm import tqdm
 
 from load_map import load_map, extract_waypoints
 from openai_models import get_embed
@@ -512,6 +514,9 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
             dist_a2t = np.linalg.norm(np.array([target["x"], target["y"]]) - np.array([anchor["x"], anchor["y"]]))
 
+            if spatial_rel == "northeast of":
+                breakpoint()
+
             if is_within_range and dist_a2t <= MAX_RANGE:
                 print(f"    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates[0]}")
                 is_valid = True
@@ -619,6 +624,15 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
         plt.close("all")
         print("\n\n")
     return spg_output
+
+
+def run_exp_spg(reg_out_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath, spg_out_fpath):
+    if not os.path.isfile(spg_out_fpath):
+        reg_outs = load_from_file(reg_out_fpath)
+        landmarks = load_lmks(graph_dpath, osm_fpath)
+        for reg_out in tqdm(reg_outs, desc="Running spatial predicate grounding (SPG) module"):
+            reg_out["grounded_sps"] = spg(landmarks, reg_out, topk, rel_embeds_fpath)
+        save_to_file(reg_outs, spg_out_fpath)
 
 
 if __name__ == "__main__":
