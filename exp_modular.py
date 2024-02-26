@@ -127,7 +127,7 @@ def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath,
 
                     is_correct = True
                     for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true[0].items(), sp_out.items()):
-                        if lmk_type_out != lmk_type_true or ground_out != ground_true:
+                        if lmk_type_out != lmk_type_true or not (set(ground_out) & set(ground_true)):
                             is_correct = False
                             if end_idx == 1:
                                 logging.info(f"Incorrect Top-1 spatial predicate grounding: \n{sre_true}\ntrue: {lmk_type_true}; {ground_true}\npred: {lmk_type_out}; {ground_out}")

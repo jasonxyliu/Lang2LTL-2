@@ -451,13 +451,46 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
         # Check target between two lines: a.x_tar + b.y_tar between c and d
         offset_tar = slope * target[0] + target[1]
+
         is_tar_between = (offset_tar >= offset_1 and offset_tar <= offset_2) or (offset_tar >= offset_2 and offset_tar <= offset_1)
 
         # Check target within max distance to two achors
         dist_anchor1_to_tar = np.linalg.norm(target - anchor_1)
         dist_anchor2_to_tar = np.linalg.norm(target - anchor_2)
 
-        return is_tar_between and dist_anchor1_to_tar <= MAX_RANGE and dist_anchor2_to_tar <= MAX_RANGE
+        is_valid = is_tar_between and dist_anchor1_to_tar <= MAX_RANGE and dist_anchor2_to_tar <= MAX_RANGE
+
+        if is_valid:
+            print(f'    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates}')
+
+            if plot:
+                vec_a1_to_a2 = anchor_2 - anchor_1; vec_a1_to_a2 /= np.linalg.norm(vec_a1_to_a2)
+                vec_a2_to_a1 = anchor_1 - anchor_2; vec_a2_to_a1 /= np.linalg.norm(vec_a2_to_a1)
+                A, B = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_1, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_1
+                C, D = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_2, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_2
+
+                plt.figure(figsize=(10,6))
+                plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchors:{anchor_candidates})")
+
+                plt.scatter(x=[target[0]], y=[target[1]], marker='o', color='green', label='target')
+                plt.scatter(x=[anchor_1[0]], y=[anchor_1[1]], marker='o', color='orange', label='anchor_1')
+                plt.scatter(x=[anchor_2[0]], y=[anchor_2[1]], marker='o', color='orange', label='anchor_2')
+
+                plt.plot([A[0], anchor_1[0]], [A[1], anchor_1[1]], linestyle='dotted', c='r')
+                plt.plot([C[0], anchor_2[0]], [C[1], anchor_2[1]], linestyle='dotted', c='b')
+                plt.plot([B[0], anchor_1[0]], [B[1], anchor_1[1]], linestyle='dotted', c='r')
+                plt.plot([D[0], anchor_2[0]], [D[1], anchor_2[1]], linestyle='dotted', c='b')
+                plt.plot([anchor_1[0], anchor_2[0]], [anchor_1[1], anchor_2[1]], linestyle='dotted', c='black')
+
+                plt.text(x=target[0], y=target[1], s=target_candidate)
+                plt.text(x=anchor_1[0], y=anchor_1[1], s=anchor_candidates[0])
+                plt.text(x=anchor_2[0], y=anchor_2[1], s=anchor_candidates[1])
+
+                plt.axis('square')
+                plt.show(block=False)
+
+        return is_valid
+
     else:
         try:
             anchor = landmarks[anchor_candidates[0]]
