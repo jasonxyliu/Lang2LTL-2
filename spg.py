@@ -316,7 +316,7 @@ def get_target_loc(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
     return loc_min
 
 
-def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
+def compute_area(spatial_rel, robot, anchor, do_360_search=False, anchor_name=None, plot=False):
     """
     Compute a vector from anchor to robot as a normal vector pointing outside of anchor
     and a range within which the vector from anchor to target can lie.
@@ -332,9 +332,9 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
     elif spatial_rel in ["behind"]:
         mean_angle = 180
     elif spatial_rel in ["left"]:
-        mean_angle = -90  # positive 90 degrees
+        mean_angle = -90
     elif spatial_rel in ["right"]:
-        mean_angle = 90  # negative 90 degrees
+        mean_angle = 90
     elif spatial_rel in ["north of", "north", "south of", "south", "east of", "east", "west of", "west",
                          "northeast of", "northeast", "northwest of", "northwest",
                          "southeast of", "southeast", "southwest of", "southwest"]:
@@ -377,7 +377,7 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
         # Plot robot and anchor location
         plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
         plt.scatter(x=[anchor["x"]], y=[anchor["y"]], marker="o", color="orange", label="anchor")
-        plt.text(anchor["x"], anchor["y"], s=anchor["name"])
+        plt.text(anchor["x"], anchor["y"], s=anchor_name)
 
         # Plot the normal vector from the robot to the anchor:
         plt.plot([robot["x"], anchor["x"]], [robot["y"], anchor["y"]], color="black")
@@ -405,7 +405,7 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, plot=False):
         plt.legend()
         plt.axis("square")
         plt.show(block=False)
-        plt.savefig(f"compute_area_{'_'.join(spatial_rel.split(' '))}.png")
+        plt.savefig(f"compute-area_{'_'.join(spatial_rel.split(' '))}.png")
 
     return range_vecs
 
@@ -430,7 +430,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             anchor_1 = landmarks[anchor_candidates[0]]
             anchor_2 = landmarks[anchor_candidates[1]]
         except KeyError:
-            return False  # this anchor may instead be a waypoint in the Spot's space
+            return False  # anchor may instead be a waypoint in the Spot space
 
         # Avoid evaluating a target ''between'' the same anchor
         if anchor_candidates[0] == anchor_candidates[1]:
@@ -445,6 +445,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         # Find two lines perpendicular to the vector defined by two anchors and passing through them
         vec_a1_to_a2 = anchor_2 - anchor_1
         slope = - vec_a1_to_a2[0] / vec_a1_to_a2[1]  # line slope is negative recipical of vector slope
+        # slope = np.tan([- vec_a1_to_a2[1], vec_a1_to_a2[0]])  # line slope is negative recipical of vector slope
         offset_1 = slope * anchor_1[0] + anchor_1[1]  # a.x + b.y = c
         offset_2 = slope * anchor_2[0] + anchor_2[1]  # a.x + b.y = d
 
@@ -461,11 +462,28 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         try:
             anchor = landmarks[anchor_candidates[0]]
         except KeyError:
-            return False
+            return False  # anchor may instead be a waypoint in the Spot space
+
+        is_pred_true = False
+        range_vecs = compute_area(spatial_rel, robot, anchor, anchor_name=anchor_candidates[0], plot=False)
+        target = np.array([target["x"], target["y"]])
+        anchor = np.array([anchor["x"], anchor["y"]])
+
+        for range_vec in range_vecs:
+            vec_mean = np.array([range_vec["mean"][0], range_vec["mean"][1]])
+            vec_anc2tar = target - anchor
+            dist_anc2tar = np.linalg.norm(vec_anc2tar)
+
+            if np.dot(vec_mean, vec_anc2tar) >= 0 and dist_anc2tar <= MAX_RANGE:
+                is_pred_true = True
+                break
+
+        return is_pred_true
+
 
         is_valid = False
-        anchor["name"] = anchor_candidates[0]
-        range_vecs = compute_area(spatial_rel, robot, anchor, plot=False)
+
+        range_vecs = compute_area(spatial_rel, robot, anchor, anchor_name=anchor_candidates[0], plot=False)
 
         for range_vec in range_vecs:
             min_pose = np.array([(range_vec["min"][0] * MAX_RANGE) + anchor["x"],
@@ -473,7 +491,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             max_pose = np.array([(range_vec["max"][0] * MAX_RANGE) + anchor["x"],
                                  (range_vec["max"][1] * MAX_RANGE) + anchor["y"]])
             mean_pose = np.array([(range_vec["mean"][0] * MAX_RANGE) + anchor["x"],
-                                 (range_vec["mean"][1] * MAX_RANGE) + anchor["y"]])
+                                  (range_vec["mean"][1] * MAX_RANGE) + anchor["y"]])
 
             # -- checking:
             #   1) where the mean range point lies w.r.t. the spatial rel line.
@@ -591,7 +609,7 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
                 for lmk_ground in lmk_grounds_sorted:
                     target_name = lmk_ground["target"][0]
                     anchor_names = lmk_ground["anchor"]
-                    is_valid = eval_spatial_pred(landmarks, rel_match, target_name, anchor_names, sre)
+                    is_valid = eval_spatial_pred(landmarks, rel_match, target_name, anchor_names, sre, plot=True)
                     if is_valid:
                         groundings.append({"target": target_name,  "anchor": anchor_names})
                     if len(groundings) == topk:
