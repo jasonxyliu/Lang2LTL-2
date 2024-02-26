@@ -21,41 +21,37 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
 
     true_outs = load_from_file(true_results_fpath)
     srer_outs = load_from_file(srer_out_fpath)
-    nincorrects = 0
+    ncorrects = 0
 
     assert len(srer_outs) == len(true_outs), f"ERROR different numbers of samples:\ntrue: {len(true_outs)}\npred: {len(srer_outs)}"
 
     for true_out, srer_out in zip(true_outs, srer_outs):
         assert srer_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {srer_out['utt']}"
         logging.info(f"* Command: {srer_out['utt']}")
-        is_incorrect = False
+        is_correct = True
 
         for (sre_true, preds_true), (sre_out, preds_out) in zip(true_out["sre_to_preds"].items(), srer_out["sre_to_preds"].items()):
             if sre_out != sre_true:
-                is_incorrect = True
+                is_correct = False
                 logging.info(f"Incorrect SREs\ntrue: {sre_true}\npred: {sre_out}")
-                # breakpoint()
 
             for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
                 if rel_out != rel_true:
-                    is_incorrect = True
+                    is_correct = False
                     logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
-                    # breakpoint()
                 if res_out != res_true:
-                    is_incorrect = True
+                    is_correct = False
                     logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
-                    # breakpoint()
 
         if srer_out["lifted_utt"] != true_out["lifted_utt"]:
-            is_incorrect = True
+            is_correct = False
             logging.info(f"Incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
-            # breakpoint()
 
-        if is_incorrect:
-            nincorrects += 1
+        if is_correct:
+            ncorrects += 1
 
         logging.info(f"\n")
-    logging.info(f"SRER Accuracy: {len(true_outs) - nincorrects}/{len(true_outs)} = {(len(true_outs) - nincorrects) / len(true_outs)}\n\n")
+    logging.info(f"SRER Accuracy: {ncorrects}/{len(true_outs)} = {ncorrects / len(true_outs)}\n\n")
 
 
 def eval_reg(true_results_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_fpath):
@@ -177,7 +173,7 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--module", type=str, default="srer", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
+    parser.add_argument("--module", type=str, default="all", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
     parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
     parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula used to create dataset.")
