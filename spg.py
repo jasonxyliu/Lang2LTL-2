@@ -20,7 +20,7 @@ KNOWN_RELATIONS = [
     "between",
     "north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"
 ]
-MAX_RANGE = 25.0  # assume target within this radius of the anchor
+MAX_RANGE = 100.0  # assume target within this radius of the anchor
 FOV = 180  # robot's field-of-view
 DIST_TO_ANCHOR = 2.0  # distance to robot when compute a target location for SRE with only an anchor
 
@@ -419,8 +419,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
     # If target equals to any anchor, spatial predicate is True
     if target_candidate in anchor_candidates:
         return False
-
-    # Check if any anchor has same xy coordinate as target
+    # Check if target has same location as any anchor
     # OSM landmark name and Spot waypoint ID refer to same location
     for lmk_id in anchor_candidates:
         if target["x"] == landmarks[lmk_id]["x"] and target["y"] == landmarks[lmk_id]["y"]:
@@ -436,7 +435,6 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         # Avoid evaluating a target ''between'' the same anchor
         if anchor_candidates[0] == anchor_candidates[1]:
             return False
-
         if anchor_1["x"] == anchor_2["x"] and anchor_1["y"] == anchor_2["y"]:
             return False
 
@@ -454,9 +452,9 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         offset_tar = slope * target[0] + target[1]
         is_tar_between = (offset_tar >= offset_1 and offset_tar <= offset_2) or (offset_tar >= offset_2 and offset_tar <= offset_1)
 
-        # Check target within max distance of two achors
-        dist_anchor1_to_tar = np.linalg.norm(np.array([target[0], target[1]]) - np.array([anchor_1[0], anchor_1[1]]))
-        dist_anchor2_to_tar = np.linalg.norm(np.array([target[0], target[1]]) - np.array([anchor_2[0], anchor_2[1]]))
+        # Check target within max distance to two achors
+        dist_anchor1_to_tar = np.linalg.norm(target - anchor_1)
+        dist_anchor2_to_tar = np.linalg.norm(target - anchor_2)
 
         return is_tar_between and dist_anchor1_to_tar <= MAX_RANGE and dist_anchor2_to_tar <= MAX_RANGE
     else:
@@ -549,7 +547,6 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
                 plt.show(block=False)
 
             return True
-
     return False
 
 
@@ -559,10 +556,9 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
     if max_range:
         global MAX_RANGE
         MAX_RANGE = max_range
-
     print(f" -> MAX_RANGE = {MAX_RANGE}\n")
 
-    spg_output = {}
+    spg_out = {}
 
     for sre, grounded_spatial_preds in reg_out["grounded_sre_to_preds"].items():
         print(f"Grounding SRE: {sre}")
@@ -570,8 +566,6 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
         rel_query, lmk_grounds = list(grounded_spatial_preds.items())[0]
 
         # Rank all combinations of target and anchor landmarks
-        # TODO: currently pick topk combinations based on joint cosine similarity score
-        # is there a better way to weigh both distance of target and the joint score?
         lmk_grounds_sorted = sort_combs(lmk_grounds)
 
         if rel_query == "None":
@@ -592,7 +586,7 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
                     groundings.append(get_target_loc(landmarks, rel_match, lmk_ground["target"][0], sre))
             else:
                 # Spatial referring expression contains a target landmark and one or two anchor landmarks
-                # one anchor, e.g., <tar> left of <anc1>
+                # one anchor, e.g., <tar> left of <anc>
                 # two anchors, e.g., <tar> between <anc1> and <anc2>
                 for lmk_ground in lmk_grounds_sorted:
                     target_name = lmk_ground["target"][0]
@@ -600,14 +594,14 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
                     is_valid = eval_spatial_pred(landmarks, rel_match, target_name, anchor_names, sre)
                     if is_valid:
                         groundings.append({"target": target_name,  "anchor": anchor_names})
-
                     if len(groundings) == topk:
                         break
-        spg_output[sre] = groundings
+
+        spg_out[sre] = groundings
 
         plt.close("all")
         print("\n\n")
-    return spg_output
+    return spg_out
 
 
 def run_exp_spg(reg_out_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath, spg_out_fpath):
