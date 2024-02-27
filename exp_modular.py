@@ -136,8 +136,8 @@ def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath,
                         topk2acc[end_idx] += 1
 
     for idx in range(1, topk+1):
-        logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_sps} = {topk2acc[idx] / total_sps}")
-    logging.info("\n\n")
+        logging.info(f"SPG Top-{idx} Accuracy: {topk2acc[idx]} / {total_sps} = {topk2acc[idx] / total_sps}")
+    logging.info("\n\n")REG
 
 
 def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
