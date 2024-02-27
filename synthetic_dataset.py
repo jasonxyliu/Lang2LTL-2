@@ -59,9 +59,9 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
     for ltl_lifted, ltl_data in ltl2data:  # every lifted LTL formula
         data_sampled = random.sample(sorted(ltl_data), nsamples)
         for data in data_sampled:  # every sampled lifted utterances
-            pattern_type, props, utt_lifted = data
-            props_full = eval(props)
-            props = props_full[0] if len(set(props)) == 1 else props_full  # e.g., visit a at most twice, ['a', 'a']
+            pattern_type, props_full_str, utt_lifted = data
+            props_full = eval(props_full_str)
+            props = [props_full[0]] if len(set(props_full)) == 1 else props_full  # e.g., visit a at most twice, ['a', 'a']
             rels = random.sample(sorted(sp_grounds_all), len(props))
 
             sre_to_preds = {}
