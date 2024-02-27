@@ -514,7 +514,6 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
 
         is_pred_true = False
-
         range_vecs = compute_area(spatial_rel, robot, anchor, anchor_name=anchor_candidates[0], plot=False)
 
         for range_vec in range_vecs:
