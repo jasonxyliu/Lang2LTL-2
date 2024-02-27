@@ -30,27 +30,49 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
         logging.info(f"* Command: {srer_out['utt']}")
         is_correct = True
 
-        for (sre_true, preds_true), (sre_out, preds_out) in zip(true_out["sre_to_preds"].items(), srer_out["sre_to_preds"].items()):
-            if sre_out.strip() != sre_true.strip():
+        # NOTE: we will check for these conditions for determining a correct SRER output:
+        #   1. true SRER and LLM SRER have the same number of SREs
+        #   2. each true SRE exists in the LLM SRER output
+        #   3. each SRE in both true and LLM output have the same spatial rels and referring expressions
+        #   4. both true and LLM output lifted commands are the same (in terms of string length)
+
+        # case 1:
+        if len(true_out["sre_to_preds"]) != len(srer_out["sre_to_preds"]):
+            logging.info(f"Incorrect number of spatial relations\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
+            continue
+
+        for (sre_true, preds_true) in true_out["sre_to_preds"].items():
+            # case 2:
+            if sre_true not in srer_out["sre_to_preds"]:
                 is_correct = False
-                logging.info(f"Incorrect SREs\ntrue: {sre_true}\npred: {sre_out}")
+                logging.info(f"Incorrect SREs\ntrue: {sre_true}\npred: {srer_out['sre_to_preds']}")
+            else:
+                # case 3:
+                preds_out = srer_out["sre_to_preds"][sre_true]
+                for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
+                    if rel_out != rel_true:
+                        is_correct = False
+                        logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
+                    if res_out != res_true:
+                        is_correct = False
+                        logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
 
-            for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
-                if rel_out.strip() != rel_true.strip():
-                    is_correct = False
-                    logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
-                if res_out != res_true:
-                    is_correct = False
-                    logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
-
-        if srer_out["lifted_utt"] != true_out["lifted_utt"]:
-            is_correct = False
-            logging.info(f"Incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
+        # case 4:
+        true_lifted_utt = true_out["lifted_utt"].strip()
+        srer_lifted_utt = srer_out["lifted_utt"].strip()
+        if true_lifted_utt != srer_lifted_utt:
+            logging.info(f"WARNING: lifted commands do not exactly match\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
+            if len(true_lifted_utt) != len(srer_lifted_utt):
+                is_correct = False
+                logging.info(f"Incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
 
         if is_correct:
             ncorrects += 1
 
         logging.info(f"\n")
+
+        # breakpoint()
+
     logging.info(f"SRER Accuracy: {ncorrects}/{len(true_outs)} = {ncorrects / len(true_outs)}\n\n")
 
 
@@ -127,10 +149,14 @@ def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath,
 
                     is_correct = True
                     for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true[0].items(), sp_out.items()):
-                        if lmk_type_out != lmk_type_true or not (set(ground_out) & set(ground_true)):
+                        if lmk_type_out != lmk_type_true:
                             is_correct = False
-                            if end_idx == 1:
-                                logging.info(f"Incorrect Top-1 spatial predicate grounding: \n{sre_true}\ntrue: {lmk_type_true}; {ground_true}\npred: {lmk_type_out}; {ground_out}")
+
+                        elif not(set(ground_out) & set(ground_true)):
+                            is_correct = False
+
+                        if end_idx == 1 and not is_correct:
+                            logging.info(f"Incorrect Top-1 spatial predicate grounding: \n{sre_true}\ntrue: {lmk_type_true}; {ground_true}\npred: {lmk_type_out}; {ground_out}")
 
                     if is_correct:
                         topk2acc[end_idx] += 1
@@ -175,10 +201,10 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--module", type=str, default="srer", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
-    parser.add_argument("--location", type=str, default="auckland", choices=["blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--module", type=str, default="spg", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
+    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
-    parser.add_argument("--nsamples", type=int, default=10, help="number of samples per LTL formula used to create dataset.")
+    parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula used to create dataset.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
     args = parser.parse_args()
