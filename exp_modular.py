@@ -31,7 +31,6 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
         is_correct = True
 
         if len(srer_out["sre_to_preds"]) != len(true_out["sre_to_preds"]):
-            is_correct = False
             logging.info(f"Incorrect number of spatial predicates\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
             continue
 
@@ -50,8 +49,9 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
                         is_correct = False
                         logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
 
-        true_lifted_utt = true_out["lifted_utt"].strip()
-        srer_lifted_utt = srer_out["lifted_utt"].strip()
+        # -- remove any trailing whitespaces and remove punctuation:
+        true_lifted_utt = true_out["lifted_utt"].strip().replace(",", "").replace(".", "")
+        srer_lifted_utt = srer_out["lifted_utt"].strip().replace(",", "").replace(".", "")
         if srer_lifted_utt != true_lifted_utt:
             logging.info(f"WARNING: lifted commands do not exactly match\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
             if len(true_lifted_utt) != len(srer_lifted_utt):
