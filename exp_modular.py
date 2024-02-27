@@ -34,11 +34,11 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
             is_correct = False
             logging.info(f"Incorrect number of spatial predicates\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
             continue
-        
+
         for sre_out, preds_out in srer_out["sre_to_preds"].items():
             if sre_out not in true_out["sre_to_preds"]:
                 is_correct = False
-                logging.info(f"Incorrect SRE:\ntrue: {list(true_out["sre_to_preds"].keys())}\nnot contain pred: {sre_out}")
+                logging.info(f"Incorrect SRE:\ntrue: {list(true_out['sre_to_preds'].keys())}\nnot contain pred: {sre_out}")
             else:
                 preds_true = true_out["sre_to_preds"][sre_out]
 
