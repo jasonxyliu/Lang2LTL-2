@@ -458,9 +458,9 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         dist_anchor1_to_tar = np.linalg.norm(target - anchor_1)
         dist_anchor2_to_tar = np.linalg.norm(target - anchor_2)
 
-        is_valid = is_tar_between and dist_anchor1_to_tar <= MAX_RANGE and dist_anchor2_to_tar <= MAX_RANGE
+        is_pred_true = is_tar_between and dist_anchor1_to_tar <= MAX_RANGE and dist_anchor2_to_tar <= MAX_RANGE
 
-        if is_valid:
+        if is_pred_true:
             print(f'    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates}')
 
             if plot:
@@ -489,8 +489,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
                 plt.axis('square')
                 plt.show(block=False)
 
-        return is_valid
-
+        return is_pred_true
     else:
         try:
             anchor = landmarks[anchor_candidates[0]]
@@ -514,7 +513,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         return is_pred_true
 
 
-        is_valid = False
+        is_pred_true = False
 
         range_vecs = compute_area(spatial_rel, robot, anchor, anchor_name=anchor_candidates[0], plot=False)
 
@@ -553,10 +552,10 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
             if is_within_range and dist_a2t <= MAX_RANGE:
                 print(f"    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates[0]}")
-                is_valid = True
+                is_pred_true = True
                 break
 
-        if is_valid:
+        if is_pred_true:
             if plot:
                 # Plot the computed vector range
                 plt.figure(figsize=(10,6))
