@@ -38,7 +38,7 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
         for sre_out, preds_out in srer_out["sre_to_preds"].items():
             if sre_out not in true_out["sre_to_preds"]:
                 is_correct = False
-                logging.info(f"Incorrect SRE:\npred: {sre_out}\nnot exist in true: {list(srer_out["sre_to_preds"].keys())}\n")
+                logging.info(f"Incorrect SRE:\ntrue: {list(true_out["sre_to_preds"].keys())}\nnot contain pred: {sre_out}")
             else:
                 preds_true = true_out["sre_to_preds"][sre_out]
 
