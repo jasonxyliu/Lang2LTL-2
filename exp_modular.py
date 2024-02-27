@@ -26,20 +26,20 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
     assert len(srer_outs) == len(true_outs), f"ERROR different numbers of samples:\ntrue: {len(true_outs)}\npred: {len(srer_outs)}"
 
     for true_out, srer_out in zip(true_outs, srer_outs):
-        assert srer_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {srer_out['utt']}"
+        assert srer_out["utt"].strip() == true_out["utt"].strip(), f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {srer_out['utt']}"
         logging.info(f"* Command: {srer_out['utt']}")
         is_correct = True
 
         for (sre_true, preds_true), (sre_out, preds_out) in zip(true_out["sre_to_preds"].items(), srer_out["sre_to_preds"].items()):
-            if sre_out != sre_true:
+            if sre_out.strip() != sre_true.strip():
                 is_correct = False
                 logging.info(f"Incorrect SREs\ntrue: {sre_true}\npred: {sre_out}")
 
             for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
-                if rel_out != rel_true:
+                if rel_out.strip() != rel_true.strip():
                     is_correct = False
                     logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
-                if res_out != res_true:
+                if res_out.strip() != res_true.strip():
                     is_correct = False
                     logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
 
