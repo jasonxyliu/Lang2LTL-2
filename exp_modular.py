@@ -39,7 +39,7 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
                 if rel_out.strip() != rel_true.strip():
                     is_correct = False
                     logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
-                if res_out.strip() != res_true.strip():
+                if res_out != res_true:
                     is_correct = False
                     logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
 
@@ -175,10 +175,10 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--module", type=str, default="spg", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
-    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--module", type=str, default="srer", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
+    parser.add_argument("--location", type=str, default="auckland", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
-    parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula used to create dataset.")
+    parser.add_argument("--nsamples", type=int, default=10, help="number of samples per LTL formula used to create dataset.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
     args = parser.parse_args()
