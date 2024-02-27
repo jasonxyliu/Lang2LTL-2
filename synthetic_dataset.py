@@ -32,11 +32,11 @@ def split_true_lmk_grounds(lmks_fpath, loc, sp_fpath, res_fpath):
     save_to_file(res, res_fpath)
 
 
-def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsamples):
+def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsamples, seed):
     """
     Generate input utterances and ground truth results for each grounding module.
     """
-    random.seed(0)
+    random.seed(seed)
 
     lifted_data = load_from_file(ltl_fpath)
     sp_grounds_all = load_from_file(sp_fpath)
@@ -138,6 +138,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula.")
+    parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     args = parser.parse_args()
     loc_id = f"{args.location}_n{args.nsamples}"
 
@@ -162,4 +163,4 @@ if __name__ == "__main__":
         split_true_lmk_grounds(lmks_fpath, args.location, sp_fpath, res_fpath)
 
     if not os.path.isfile(utts_fpath):
-        generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, args.nsamples)
+        generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, args.nsamples, args.seed)
