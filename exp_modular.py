@@ -5,6 +5,7 @@ import os
 import argparse
 import logging
 from collections import defaultdict
+import string
 import spot
 
 from ground import LOC2GID
