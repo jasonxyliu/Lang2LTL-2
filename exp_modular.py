@@ -32,7 +32,7 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
 
         if len(srer_out["sre_to_preds"]) != len(true_out["sre_to_preds"]):
             logging.info(f"Incorrect number of spatial predicates\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
-            continue
+            is_correct = False
 
         for sre_out, preds_out in srer_out["sre_to_preds"].items():
             if sre_out not in true_out["sre_to_preds"]:
@@ -142,7 +142,7 @@ def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath,
                         if lmk_type_out != lmk_type_true:
                             is_correct = False
 
-                        elif not(set(ground_out) & set(ground_true)):
+                        elif len(set(ground_out) & set(ground_true)) != len(ground_out):
                             is_correct = False
 
                         if end_idx == 1 and not is_correct:
