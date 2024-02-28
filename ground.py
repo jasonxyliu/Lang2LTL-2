@@ -62,6 +62,9 @@ if __name__ == "__main__":
     reg_out_fname = srer_out_fname.replace("srer", "reg")
     spg_out_fname = srer_out_fname.replace("srer", "spg")
 
-    utt = "go to the couch in front of the TV, the couch to the left of the kitchen counter, the kitchen counter between the couch and the refrigerator, the table next to the door, and the chair on the left of the bookshelf in any order"
-    ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath)
-    print(ground_out["grounded_ltl"])
+    utts = [
+        "go to the couch in front of the TV, the couch to the left of the kitchen counter, the kitchen counter between the couch and the refrigerator, the table next to the door, and the chair on the left of the bookshelf in any order",
+    ]
+    for idx, utt in enumerate(utts):
+        ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath)
+        print(f"{idx}/{len(utts)}\nInput utt: {ground_out["grounded_ltl"]}\nOutput LTL: {ground_out}\n")
