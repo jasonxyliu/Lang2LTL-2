@@ -3,12 +3,13 @@ import base64
 import json
 from time import sleep
 import logging
-
 import openai
 from openai import OpenAI
 
+from utils import load_from_file
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
+srer_prompt_fpath = os.path.join(os.path.expanduser("~"), "ground", "data", "srer_prompt.txt")
 
 
 def extract(command):
@@ -23,22 +24,7 @@ def extract(command):
         messages=[
             {
                 "role": "system",
-                "content":
-                    "Your task is to extract referring expressions from a natural language command."
-                    " These referring expressions correspond to entities (landmarks, objects, or other nouns), and spatial relations describing relative locations."
-                    " Avoid adding temporal relations indicating time sequencing of visits to spatial relations."
-                    " Create a dictionary that maps each spatial relation to its corresponding entities."
-                    " Repeat the command before writing output."
-                    " When generating the symbol map, do not use the letters \"e\", \"f\", or \"g\"." \
-                    # NOTE: below are the in-context examples:
-                    "\n\nHere are some examples:" \
-                    "\n\nCommand: \"move to red room\"\nEntities: [\"red room\"]\nReferring Expressions: [\"red room\"]\nSpatial Predicates: []\nReferring Expression to Predicates Map: {\"red room\": {}}\nLifted Command: \"move to a\"\nSymbol Map: {\"a\": \"red room}" \
-                    "\n\nCommand: \"Walk to the north of Subway\"\nEntities: [\"Subway\"]\nReferring Expressions: [\"the north of Subway\"]\nSpatial Predicates [{\"north of\": [\"Subway\"]}]\nReferring Expression to Predicates Map: {\"the north of Subway\": {\"north of\": [\"Subway\"]}}\nLifted Command: \"Walk to a\"\nSymbol Map: {\"a\": \"the north of Subway\"}" \
-                    "\n\nCommand: \"go to the bicycle rack in front of the CIT\"\nEntities: [\"the bicycle rack\", \"the CIT\"]\nReferring Expressions: [\"the bicycle rack in front of the CIT\"]\nSpatial Predicates: [{\"in front of\": [\"the bicycle rack\", \"the CIT\"]}]\nReferring Expression to Predicates Map: {\"the bicycle rack in front of the CIT\": {\"in front of\": [\"the bicycle rack\", \"the CIT\"]}}\nLifted Command: \"go to a\"\nSymbol Map: {\"a\": \"the bicycle rack in front of the CIT\"}" \
-                    "\n\nCommand: \"go through red room to blue room or yellow room to green room but do not go in purple room\"\nEntities: [\"red room\", \"blue room\", \"yellow room\", \"green room\", \"purple room\"]\nReferring Expressions: [\"red room\", \"blue room\", \"yellow room\", \"green room\", \"purple room\"]\nSpatial Predicates: []\nReferring Expression to Predicates Map: {\"red room\": {}, \"blue room\": {}, \"yellow room\": {}, \"green room\": {}, \"purple room\": {}}\nLifted Command: \"go through a to b or c to d but do not go in h\"\nSymbol Map: {\"a\": \"red room\", \"b\": \"blue room\", \"c\": \"yellow room\", \"d\": \"green room\", \"h\": \"purple room\"}" \
-                    "\n\nCommand: \"Visit The Kensington, HI Boston, and Dunkin' Donuts in that specific order. make sure not to visit waypoints out of turn\"\nEntities: [\"The Kensington\", \"HI Boston\", \"Dunkin' Donuts\"]\nReferring Expressions: [\"The Kensington\", \"HI Boston\", \"Dunkin' Donuts\"]\nSpatial Predicates: []\nReferring Expression to Predicates Map: {\"The Kensington\", \"HI Boston\", \"Dunkin' Donuts\"]\nReferring Expressions: [\"The Kensington\": {}, \"HI Boston\": {}, \"Dunkin' Donuts\": {}}\nLifted Command: \"Visit a, b, and c in that specific order. make sure not to visit waypoints out of turn\"\nSymbol Map: {\"a\": \"The Kensington\",  \"b\": \"HI Boston\", \"c\": \"Dunkin' Donuts\"}" \
-                    "\n\nCommand: \"do not go to the bench in front of SciLi until you visit the bicycle rack in front of the CIT\"\nEntities: [\"the bench\",  \"SciLi\", \"the bicycle rack\", \"the CIT\"]\nReferring Expressions: [\"the bench in front of SciLi\", \"the bicycle rack in front of the CIT\"]\nSpatial Predicates: [{\"in front of\": [\"the bench\", \"SciLi\"]}, {\"in front of\": [\"the bicycle rack, \"the CIT\"]}]\nReferring Expression to Predicate Map: {\"the bench in front of SciLi\": {\"in front of\": [\"the bench\", \"SciLi\"]} \"the bicycle rack in front of the CIT\": {\"in front of\": [\"the bicycle rack, \"the CIT\"]}}\nLifted Command: \"do not go to a until you visit b\"\nSymbol Map: {\"a\": \"the bench in front of SciLi\", \"b\": \"the bicycle rack in front of the CIT\"}"
-            },
+                "content": load_from_file(srer_prompt_fpath)
             {
                 "role": "user",
                 "content": f"Extract the referring expressions to predicates map, lifted command, and symbol map for the following command:\n\nCommand:{command}"
