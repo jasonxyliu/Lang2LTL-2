@@ -5,7 +5,7 @@ from openai_models import extract
 from utils import load_from_file, save_to_file
 
 
-def parse_llm_output(raw_out):
+def parse_llm_output(utt, raw_out):
     parsed_out = {}
     for line in raw_out.split('\n'):
         if line.startswith('Referring Expressions:'):
@@ -39,13 +39,31 @@ def parse_llm_output(raw_out):
         if not found_re:  # find a referring expression (RE) without spatial relation
             parsed_out["sre_to_preds"][sre] = {}
 
+    # -- perform lifting via string matching:
+    lifted_vars_to_sres = {}
+    lifted_utt = utt
+
+    # -- we need to sort the SREs in reverse order of the number of spatial preds they have:
+    sorted_sres = sorted(list(parsed_out['sre_to_preds'].items()), key=lambda x: len(x[1]), reverse=True)
+    lifted_vars = ['a', 'b', 'c', 'd', 'h', 'i', 'j'][0:len(parsed_out['sre_to_preds'].items())]
+    lifted_vars = [x for _, x in sorted(zip(list(parsed_out['sre_to_preds'].items()), lifted_vars), key=lambda pair:len(pair[0][1]), reverse=True)]
+
+    for x in range(len(sorted_sres)):
+        lifted_utt = lifted_utt.replace(sorted_sres[x][0], lifted_vars[x])
+        lifted_vars_to_sres[lifted_vars[x]] = sorted_sres[x][0]
+
+    print(parsed_out['lifted_utt'])
+    print(lifted_utt)
+    parsed_out['lifted_utt'] = lifted_utt
+    parsed_out['lifted_symbol_map'] = lifted_vars_to_sres
+
     return parsed_out
 
 
 def srer(utt):
     raw_out = extract(utt)
     parsed_out = {"utt": utt}
-    parsed_out.update(parse_llm_output(raw_out))
+    parsed_out.update(parse_llm_output(utt, raw_out))
     return raw_out, parsed_out
 
 
