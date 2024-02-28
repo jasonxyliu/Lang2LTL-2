@@ -31,8 +31,8 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
         is_correct = True
 
         if len(srer_out["sre_to_preds"]) != len(true_out["sre_to_preds"]):
-            logging.info(f"Incorrect number of spatial predicates\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
             is_correct = False
+            logging.info(f"Incorrect number of spatial predicates\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
 
         for sre_out, preds_out in srer_out["sre_to_preds"].items():
             if sre_out not in true_out["sre_to_preds"]:
