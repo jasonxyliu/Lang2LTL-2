@@ -40,20 +40,19 @@ def parse_llm_output(utt, raw_out):
             parsed_out["sre_to_preds"][sre] = {}
 
     # Replace spatial referring expressions by symbols
-    lifted_symbol_map = {}  # symbol to SRE
     lifted_utt = utt
+    lifted_symbol_map = {}  # symbol to SRE
 
     # Sort SREs in reverse order of number of their spatial preds
     sre_to_preds = parsed_out["sre_to_preds"].items()
-    sorted_sres = sorted(list(sre_to_preds), key=lambda kv: len(kv[1]), reverse=True)
     syms = ['a', 'b', 'c', 'd', 'h', 'i', 'j'][0: len(sre_to_preds)]
-    syms = [sym for _, sym in sorted(zip(list(sre_to_preds), syms), key=lambda kv: len(kv[0][1]), reverse=True)]
+    lifted_symbol_map = {sym: sre[0] for sre, sym in sorted(zip(list(sre_to_preds), syms), key=lambda kv: len(kv[0][1]), reverse=True)}
 
-    for idx, sre in enumerate(sorted_sres):
-        lifted_utt = lifted_utt.replace(sre[0], syms[idx])
-        lifted_symbol_map[syms[idx]] = sre[0]
+    for sym, sre in (lifted_symbol_map.items()):
+        lifted_utt = lifted_utt.replace(sre, sym)
 
-    print(f"SRER lifted utt:\nLLM: {parsed_out['lifted_utt']}\nManual: {lifted_utt}")
+    print(lifted_symbol_map)
+    print(f"SRER lifted utt:\nLLM: {parsed_out['lifted_utt']}\nMAN: {lifted_utt}")
     parsed_out["lifted_utt"] = lifted_utt
     parsed_out["lifted_symbol_map"] = lifted_symbol_map
     return parsed_out
