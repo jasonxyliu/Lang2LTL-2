@@ -60,6 +60,13 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
             if len(true_lifted_utt) != len(srer_lifted_utt):
                 is_correct = False
                 logging.info(f"Incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
+            else:
+                # NOTE: whitespace check to make sure the lifted utterances are equivalent:
+                whitespaces_srer = [i for i, letter in enumerate(srer_lifted_utt) if letter == ' ']
+                whitespaces_true = [i for i, letter in enumerate(true_lifted_utt) if letter == ' ']
+                if whitespaces_srer != whitespaces_true:
+                    is_correct = False
+                    logging.info(f"Non-matching whitespaces:\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
 
         if is_correct:
             ncorrects += 1
