@@ -182,7 +182,7 @@ def load_lmks(graph_dpath=None, osm_fpath=None, ignore_graph=False):
     try:
         graph, _, _, _, _, _ = load_map(graph_dpath)
     except Exception:
-        print(" >> WARNING: no Spot graph file found in provided directory path")
+        print(" >> WARNING: no Spot graph file found in provided directory path\nCreate waypoints from object locations")
         waypoints, transformer = create_waypoints(os.path.join(graph_dpath, "obj_locs.json"), crs=None)
     else:
         # Get important details from Spot graph and create a dict instead of using their data structure
@@ -649,7 +649,7 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
         spg_out[sre] = groundings
 
         plt.close("all")
-        print("\n\n")
+        print("\n")
     return spg_out
 
 
