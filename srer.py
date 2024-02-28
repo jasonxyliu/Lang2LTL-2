@@ -51,8 +51,9 @@ def parse_llm_output(utt, raw_out):
     for sym, sre in (lifted_symbol_map.items()):
         lifted_utt = lifted_utt.replace(sre, sym)
 
-    print(lifted_symbol_map)
-    print(f"SRER lifted utt:\nLLM: {parsed_out['lifted_utt']}\nMAN: {lifted_utt}")
+    if parsed_out['lifted_utt'] != lifted_utt:
+        print(lifted_symbol_map)
+        print(f"SRER lifted utt:\nLLM: {parsed_out['lifted_utt']}\nMAN: {lifted_utt}")
     parsed_out["lifted_utt"] = lifted_utt
     parsed_out["lifted_symbol_map"] = lifted_symbol_map
     return parsed_out
