@@ -20,3 +20,15 @@ def run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath):
         for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module"):
             lt(spg_out, lt_model)
         save_to_file(spg_outs, lt_out_fpath)
+
+
+if __name__ == "__main__":
+    spg_out = {
+        "lifted_utt": "go to all of the following: a, b, and c"
+    }
+    model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
+    lt_model = Seq2Seq(model_fpath, "t5-base")
+    lt(spg_out, lt_model)
+
+    print(f"Utt: {spg_out['lifted_utt']}\nLTL: {spg_out['lifted_ltl']}")
+    breakpoint()
