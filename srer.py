@@ -39,24 +39,23 @@ def parse_llm_output(utt, raw_out):
         if not found_re:  # find a referring expression (RE) without spatial relation
             parsed_out["sre_to_preds"][sre] = {}
 
-    # -- perform lifting via string matching:
-    lifted_vars_to_sres = {}
+    # Replace spatial referring expressions by symbols
+    lifted_symbol_map = {}  # symbol to SRE
     lifted_utt = utt
 
-    # -- we need to sort the SREs in reverse order of the number of spatial preds they have:
-    sorted_sres = sorted(list(parsed_out['sre_to_preds'].items()), key=lambda x: len(x[1]), reverse=True)
-    lifted_vars = ['a', 'b', 'c', 'd', 'h', 'i', 'j'][0:len(parsed_out['sre_to_preds'].items())]
-    lifted_vars = [x for _, x in sorted(zip(list(parsed_out['sre_to_preds'].items()), lifted_vars), key=lambda pair:len(pair[0][1]), reverse=True)]
+    # Sort SREs in reverse order of number of their spatial preds
+    sre_to_preds = parsed_out["sre_to_preds"].items()
+    sorted_sres = sorted(list(sre_to_preds), key=lambda kv: len(kv[1]), reverse=True)
+    syms = ['a', 'b', 'c', 'd', 'h', 'i', 'j'][0: len(sre_to_preds)]
+    syms = [sym for _, sym in sorted(zip(list(sre_to_preds), syms), key=lambda kv: len(kv[0][1]), reverse=True)]
 
-    for x in range(len(sorted_sres)):
-        lifted_utt = lifted_utt.replace(sorted_sres[x][0], lifted_vars[x])
-        lifted_vars_to_sres[lifted_vars[x]] = sorted_sres[x][0]
+    for idx, sre in enumerate(sorted_sres):
+        lifted_utt = lifted_utt.replace(sre[0], syms[idx])
+        lifted_symbol_map[syms[idx]] = sre[0]
 
-    print(parsed_out['lifted_utt'])
-    print(lifted_utt)
-    parsed_out['lifted_utt'] = lifted_utt
-    parsed_out['lifted_symbol_map'] = lifted_vars_to_sres
-
+    print(f"SRER lifted utt:\nLLM: {parsed_out['lifted_utt']}\nManual: {lifted_utt}")
+    parsed_out["lifted_utt"] = lifted_utt
+    parsed_out["lifted_symbol_map"] = lifted_symbol_map
     return parsed_out
 
 
