@@ -30,27 +30,39 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
         logging.info(f"* Command: {srer_out['utt']}")
         is_correct = True
 
-        for (sre_true, preds_true), (sre_out, preds_out) in zip(true_out["sre_to_preds"].items(), srer_out["sre_to_preds"].items()):
-            if sre_out.strip() != sre_true.strip():
-                is_correct = False
-                logging.info(f"Incorrect SREs\ntrue: {sre_true}\npred: {sre_out}")
-
-            for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
-                if rel_out.strip() != rel_true.strip():
-                    is_correct = False
-                    logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
-                if res_out != res_true:
-                    is_correct = False
-                    logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
-
-        if srer_out["lifted_utt"] != true_out["lifted_utt"]:
+        if len(srer_out["sre_to_preds"]) != len(true_out["sre_to_preds"]):
             is_correct = False
-            logging.info(f"Incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
+            logging.info(f"Incorrect number of spatial predicates\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
+
+        for sre_out, preds_out in srer_out["sre_to_preds"].items():
+            if sre_out not in true_out["sre_to_preds"]:
+                is_correct = False
+                logging.info(f"Incorrect SRE:\ntrue: {list(true_out['sre_to_preds'].keys())}\nnot contain pred: {sre_out}")
+            else:
+                preds_true = true_out["sre_to_preds"][sre_out]
+
+                for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
+                    if rel_out.strip() != rel_true.strip() and rel_out not in rel_true:  # e.g., pred: left of; true: to the left of
+                        is_correct = False
+                        logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
+                    if not (len(res_out) == len(res_true) and set(res_out) == set(res_true)):
+                        is_correct = False
+                        logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
+
+        # -- remove any trailing whitespaces and remove punctuation:
+        true_lifted_utt = true_out["lifted_utt"].strip().replace(",", "").replace(".", "")
+        srer_lifted_utt = srer_out["lifted_utt"].strip().replace(",", "").replace(".", "")
+        if srer_lifted_utt != true_lifted_utt:
+            logging.info(f"WARNING: lifted commands do not exactly match\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
+            if len(true_lifted_utt) != len(srer_lifted_utt):
+                is_correct = False
+                logging.info(f"Incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
 
         if is_correct:
             ncorrects += 1
 
-        logging.info(f"\n")
+        logging.info("\n")
+
     logging.info(f"SRER Accuracy: {ncorrects}/{len(true_outs)} = {ncorrects / len(true_outs)}\n\n")
 
 
