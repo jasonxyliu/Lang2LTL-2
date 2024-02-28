@@ -56,15 +56,14 @@ if __name__ == "__main__":
     osm_fpath = os.path.join(data_dpath, "osm", f"{location}.json")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     utt_fpath = os.path.join(data_dpath, f"utts_{location}.txt")
-    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results")
-    rel_embeds_fpath = os.path.join(os.path.expanduser("~"), "ground", "results", f"known_rel_embeds.json")
-    srer_out_fname = f"srer_outs_{location}_ablate_{ablate}.json" if ablate else f"srer_outs_{location}.json"
-    reg_out_fname = srer_out_fname.replace("srer", "reg")
-    spg_out_fname = srer_out_fname.replace("srer", "spg")
+    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_spot", location)
+    os.makedirs(results_dpath, exist_ok=True)
+    rel_embeds_fpath = os.path.join(results_dpath, f"known_rel_embeds.json")
 
     utts = [
         "go to the couch in front of the TV, the couch to the left of the kitchen counter, the kitchen counter between the couch and the refrigerator, the table next to the door, and the chair on the left of the bookshelf in any order",
     ]
     for idx, utt in enumerate(utts):
         ground_out = ground(graph_dpath, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath)
-        print(f"{idx}/{len(utts)}\nInput utt: {ground_out["grounded_ltl"]}\nOutput LTL: {ground_out}\n")
+        print(f"***** {idx}/{len(utts)}\nInput utt: {utt}\nLifted LTL: {ground_out['grounded_ltl']}\n{ground_out['sym2ground']}\n")
+        breakpoint()
