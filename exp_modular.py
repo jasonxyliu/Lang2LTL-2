@@ -130,8 +130,7 @@ def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath,
 
         for (sre_true, sp_true), (sre_out, sp_topk_out) in zip(true_out["grounded_sps"].items(), spg_out["grounded_sps"].items()):
             if sre_out != sre_true:
-                logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
-                breakpoint()
+                logging.info(f"WARNING different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
 
             for end_idx in range(1, topk+1):
                 for sp_out in sp_topk_out[:end_idx]:
