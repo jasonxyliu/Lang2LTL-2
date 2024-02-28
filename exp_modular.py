@@ -127,7 +127,8 @@ def eval_spg(true_results_fpath, graph_dpath, osm_fpath, topk, rel_embeds_fpath,
 
                     is_correct = True
                     for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true[0].items(), sp_out.items()):
-                        if lmk_type_out != lmk_type_true or not (set(ground_out) & set(ground_true)):
+                        if lmk_type_out != lmk_type_true or ground_out != ground_true:
+                        # if lmk_type_out != lmk_type_true or not (set(ground_out) & set(ground_true)):
                             is_correct = False
                             if end_idx == 1:
                                 logging.info(f"Incorrect Top-1 spatial predicate grounding: \n{sre_true}\ntrue: {lmk_type_true}; {ground_true}\npred: {lmk_type_out}; {ground_out}")
@@ -175,8 +176,8 @@ def eval_lt(true_results_fpath, model_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--module", type=str, default="srer", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
-    parser.add_argument("--location", type=str, default="auckland", choices=["blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--module", type=str, default="spg", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
+    parser.add_argument("--location", type=str, default="blackstone", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
     parser.add_argument("--nsamples", type=int, default=10, help="number of samples per LTL formula used to create dataset.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
