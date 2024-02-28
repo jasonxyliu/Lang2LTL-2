@@ -94,7 +94,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                     res_true.append(re_anc1)
                     if len(sp_grounds_sampled) == 2:
                         sre = f"{re_tar} {rel} {re_anc1}"
-                        sp_true = {"target": sp_grounds_sampled[0][0], "anchor": sp_grounds_sampled[1]}
+                        sp_true = {"target": sp_grounds_sampled[0][0], "anchor": [sp_grounds_sampled[1][0]]}
                     else:
                         re_anc2 = random.sample(res_all[sp_grounds_sampled[2][0]]["proper_names"], 1)[0] # anchor 2 referring expression
                         res_true.append(re_anc2)
@@ -107,6 +107,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                     grounded_sre_to_preds[sre][rel] = [[[1.0, sp_grounds_sampled]]]
                 else:
                     grounded_sre_to_preds[sre][rel] = [[score_ground] for score_ground in [[1.0, sp_ground[0]] for sp_ground in sp_grounds_sampled]]
+
                 grounded_sps[sre].append(sp_true)
 
             if not utt_lifted.startswith('.'):
@@ -136,8 +137,8 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
-    parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula.")
+    parser.add_argument("--location", type=str, default="blackstone", choices=["blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--nsamples", type=int, default=10, help="number of samples per LTL formula.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     args = parser.parse_args()
     loc_id = f"{args.location}_n{args.nsamples}_seed{args.seed}"
