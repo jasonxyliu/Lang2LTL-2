@@ -46,9 +46,12 @@ def eval_srer(true_results_fpath, utts_fpath, srer_out_fpath):
                     if rel_out.strip() != rel_true.strip() and rel_out not in rel_true:  # e.g., pred: left of; true: to the left of
                         is_correct = False
                         logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
-                    if not (len(res_out) == len(res_true) and set(res_out) == set(res_true)):
+
+                    res_out_lower = [re_true.lower() for re_true in res_out]  # output lowercase e.g., italian resturant
+                    res_true_lower = [re_true.lower() for re_true in res_true]
+                    if not (len(res_out) == len(res_true) and set(res_out_lower) == set(res_true_lower)):
                         is_correct = False
-                        logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}")
+                        logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}\n true lower: {res_true_lower}\npred lower: {res_out_lower}")
 
         true_lifted_utt = true_out["lifted_utt"].translate(str.maketrans('', '', string.punctuation))
         srer_lifted_utt = srer_out["lifted_utt"].translate(str.maketrans('', '', string.punctuation))
