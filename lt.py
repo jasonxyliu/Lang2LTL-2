@@ -1,5 +1,6 @@
 import os
 from tqdm import tqdm
+import string
 
 from lt_s2s_sup_tcd import Seq2Seq
 from utils import load_from_file, save_to_file
@@ -7,7 +8,7 @@ from utils import load_from_file, save_to_file
 
 def lt(spg_out, lt_model):
     lifted_utt = spg_out["lifted_utt"]
-    query = lifted_utt.translate(str.maketrans('', '', ',.'))
+    query = lifted_utt.translate(str.maketrans('', '', string.punctuation))
     lifted_ltl = lt_model.type_constrained_decode([query])[0]
     spg_out["lifted_ltl"] = lifted_ltl
     # print(f"{lifted_utt}\n{lifted_ltl}\n")
