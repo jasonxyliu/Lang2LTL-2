@@ -25,6 +25,7 @@ def extract(command):
             {
                 "role": "system",
                 "content": load_from_file(srer_prompt_fpath)
+            },
             {
                 "role": "user",
                 "content": f"Extract the referring expressions to predicates map, lifted command, and symbol map for the following command:\n\nCommand:{command}"
