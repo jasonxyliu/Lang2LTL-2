@@ -85,22 +85,34 @@ def eval_reg(true_results_fpath, topk, reg_out_fpath):
         assert reg_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {reg_out['utt']}"
         logging.info(f"* Command: {true_out['utt']}")
 
-        for (sre_true, pred_true), (sre_out, pred_out) in zip(true_out["grounded_sre_to_preds"].items(), reg_out["grounded_sre_to_preds"].items()):
-            if sre_out != sre_true:
-                logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
+        true_ground_sre_to_preds = true_out["grounded_sre_to_preds"]
+        reg_ground_sre_to_preds = reg_out["grounded_sre_to_preds"]
+        if len(reg_ground_sre_to_preds) != len(true_ground_sre_to_preds):
+            logging.info(f"ERROR different number of spatial referring expression:\ntrue: {true_ground_sre_to_preds}\npred: {reg_ground_sre_to_preds}")
 
-            if len(pred_true) != len(pred_out):
-                logging.info(f"ERROR different numbers of REs\ntrue: {len(pred_true)}\npred: {len(pred_out)}")
+        for sre_out, pred_out in reg_ground_sre_to_preds.items():
+            if sre_out not in true_ground_sre_to_preds:
+                logging.info(f"ERROR incorrect SRE:\ntrue: {list(true_ground_sre_to_preds.keys())}\nnot contain pred: {sre_out}")
                 continue
+            else:
+                pred_true = true_ground_sre_to_preds[sre_out]
 
-            res_true = [score_re[0][1] for score_re in list(pred_true.values())[0]]
-            res_out = [[score_ground[1] for score_ground in grounded_res] for grounded_res in list(pred_out.values())[0]]
-            total_res += len(res_true)
+                if len(pred_true) != len(pred_out):
+                    logging.info(f"ERROR different size of spatial predicate:\ntrue: {len(pred_true)}\npred: {len(pred_out)}")
+                    continue
 
-            for re_true, res_topk in zip(res_true, res_out):
-                for end_idx in range(1, topk+1):
-                    if re_true in res_topk[:end_idx]:
-                        topk2acc[end_idx] += 1
+                res_true = [score_re[0][1] for score_re in list(pred_true.values())[0]]
+                res_out = [[score_ground[1] for score_ground in grounded_res] for grounded_res in list(pred_out.values())[0]]
+                total_res += len(res_true)
+
+                for re_true, res_topk in zip(res_true, res_out):
+                    for end_idx in range(1, topk+1):
+                        if re_true in res_topk[:end_idx]:
+                            topk2acc[end_idx] += 1
+                        else:
+                            if end_idx == topk:
+                                logging.info(f"Incorrect Top-{topk} REG: \n{sre_out}\ntrue: {re_true}\npred: {res_topk}")
+        logging.info("\n")
 
     for idx in range(1, topk+1):
         logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_res} = {topk2acc[idx] / total_res}")
