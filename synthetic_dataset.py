@@ -137,30 +137,30 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--location", type=str, default="auckland", choices=["blackstone", "boston", "auckland"], help="domain name.")
     parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     args = parser.parse_args()
     loc_id = f"{args.location}_n{args.nsamples}_seed{args.seed}"
 
-    data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    ltl_fpath = os.path.join(data_dpath, "ltl_samples_sorted.csv")
-    sp_fpath = os.path.join(data_dpath, f"{args.location}_sp_grounds.json")
-    res_fpath = os.path.join(data_dpath,f"{args.location}_res.json")
-    utts_fpath = os.path.join(data_dpath, f"{loc_id}_utts.txt")
-    outs_fpath = os.path.join(data_dpath, f"{loc_id}_true_results.json")
+    dataset_dpath = os.path.join(os.path.expanduser("~"), "ground", "data", "dataset")
+    ltl_fpath = os.path.join(dataset_dpath, "ltl_samples_sorted.csv")
+    sp_fpath = os.path.join(dataset_dpath, f"{args.location}_sp_grounds.json")
+    res_fpath = os.path.join(dataset_dpath,f"{args.location}_res.json")
+    utts_fpath = os.path.join(dataset_dpath, f"{loc_id}_utts.txt")
+    outs_fpath = os.path.join(dataset_dpath, f"{loc_id}_true_results.json")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(data_dpath, f"{args.location}_synthetic_dataset.log"), mode='w'),
+                            logging.FileHandler(os.path.join(dataset_dpath, f"{args.location}_synthetic_dataset.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
     logging.info(f"Generating dataset location: {args.location}\n***** Dataset Statisitcs\n")
 
     if not os.path.isfile(sp_fpath) or not os.path.isfile(res_fpath):
-        lmks_fpath = os.path.join(data_dpath, "true_lmk_grounds.json")
+        lmks_fpath = os.path.join(dataset_dpath, "true_lmk_grounds.json")
         split_true_lmk_grounds(lmks_fpath, args.location, sp_fpath, res_fpath)
 
     if not os.path.isfile(utts_fpath):
