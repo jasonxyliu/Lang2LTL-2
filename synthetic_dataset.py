@@ -74,8 +74,8 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 
                 if rel == "None":  # referring expression without spatial relation
                     sre = random.sample(res_all[sp_grounds_sampled]["proper_names"], 1)[0]
-                    res_true.append(sp_grounds_sampled)
-                    sp_true = {"target": sre}
+                    res_true.append(sre)
+                    sp_true = {"target": sp_grounds_sampled}
                 elif len(sp_grounds_sampled) == 1:  # sre with only an anchor
                     while "proper_names" not in res_all[sp_grounds_sampled[0]]:
                         sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
@@ -121,7 +121,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 
             true_outs.append({
                 "pattern_type": pattern_type,
-                "utt": utt_ground,
+                "utt": utt_ground.strip(),
                 "lifted_utt": utt_lifted,
                 "props": props_full,
                 "sre_to_preds": sre_to_preds,
@@ -137,8 +137,8 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="blackstone", choices=["blackstone", "boston", "auckland"], help="domain name.")
-    parser.add_argument("--nsamples", type=int, default=10, help="number of samples per LTL formula.")
+    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="domain name.")
+    parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     args = parser.parse_args()
     loc_id = f"{args.location}_n{args.nsamples}_seed{args.seed}"
