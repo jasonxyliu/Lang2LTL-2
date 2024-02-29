@@ -45,8 +45,8 @@ def eval_srer(true_results_fpath, srer_out_fpath):
                         is_correct = False
                         logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}\n true lower: {res_true_lower}\npred lower: {res_out_lower}")
 
-        true_lifted_utt = true_out["lifted_utt"].translate(str.maketrans('', '', string.punctuation))
-        srer_lifted_utt = srer_out["lifted_utt"].translate(str.maketrans('', '', string.punctuation))
+        true_lifted_utt = true_out["lifted_utt"].translate(str.maketrans('', '', string.punctuation)).strip()
+        srer_lifted_utt = srer_out["lifted_utt"].translate(str.maketrans('', '', string.punctuation)).strip()
         if srer_lifted_utt != true_lifted_utt:
             logging.info(f"WARNING: lifted commands do not exactly match\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
             if len(true_lifted_utt) != len(srer_lifted_utt):
