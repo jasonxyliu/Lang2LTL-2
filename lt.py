@@ -24,7 +24,8 @@ def run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     spg_out = {
-        "lifted_utt": "go to all of the following: a, b, and c"
+        "lifted_utt": "go to a then go to a"
+        # "lifted_utt": "go to all of the following: a, b, and c"
     }
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     lt_model = Seq2Seq(model_fpath, "t5-base")
