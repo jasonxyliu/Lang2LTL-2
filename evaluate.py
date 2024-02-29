@@ -31,6 +31,9 @@ def eval_srer(true_results_fpath, srer_out_fpath):
             else:
                 preds_true = true_out["sre_to_preds"][sre_out]
 
+                if list(preds_true.keys())[0] == "None" and preds_out:  # referring expression with spatial relation
+                    logging.info(f"Incorrect spatial predicate:\ntrue: {preds_true}\nnot contain pred: {preds_out}")
+
                 for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
                     if rel_out.strip() != rel_true.strip() and rel_out not in rel_true:  # e.g., pred: left of; true: to the left of
                         is_correct = False
