@@ -27,7 +27,7 @@ if __name__ == "__main__":
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.location])
     osm_fpath = os.path.join(data_dpath, "osm", f"{args.location}.json")
-    utts_fpath = os.path.join(data_dpath, f"{loc_id}_utts.txt")
+    utts_fpath = os.path.join(data_dpath, "dataset", f"{loc_id}_utts.txt")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_modular", loc_id)
     os.makedirs(results_dpath, exist_ok=True)
