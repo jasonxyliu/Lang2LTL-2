@@ -158,6 +158,7 @@ def eval_spg(true_results_fpath, topk, spg_out_fpath):
 
                     if is_correct:
                         topk2acc[end_idx] += 1
+        logging.info("\n")
 
     for idx in range(1, topk+1):
         logging.info(f"SPG Top-{idx} Accuracy: {topk2acc[idx]} / {total_sps} = {topk2acc[idx] / total_sps}")
