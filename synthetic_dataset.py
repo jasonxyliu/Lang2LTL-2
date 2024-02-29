@@ -75,7 +75,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
                 if rel == "None":  # referring expression without spatial relation
                     sre = random.sample(res_all[sp_grounds_sampled]["proper_names"], 1)[0]
                     res_true.append(sp_grounds_sampled)
-                    sp_true = {"target": sp_grounds_sampled}
+                    sp_true = {"target": sre}
                 elif len(sp_grounds_sampled) == 1:  # sre with only an anchor
                     while "proper_names" not in res_all[sp_grounds_sampled[0]]:
                         sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
