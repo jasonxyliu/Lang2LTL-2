@@ -11,6 +11,7 @@ from srer import run_exp_srer
 from reg import run_exp_reg
 from spg import run_exp_spg
 from lt import run_exp_lt
+from evaluate import eval_srer, eval_reg, eval_spg, eval_lt
 from utils import load_from_file
 
 
@@ -25,61 +26,68 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
         assert sys_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {sys_out['utt']}"
         logging.info(f"* Command: {sys_out['utt']}")
 
-        is_correct = True
-
         # Lifted LTL formula
+        is_correct = True
         ltl_true, ltl_out = true_out["lifted_ltl"], sys_out["lifted_ltl"]
+
         try:
             spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
         except SyntaxError:
-            is_correct = False
             logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
+            continue
 
         if not spot_correct:
-            is_correct = False
             logging.info(f"Incorrect lifted translation:\ntrue: {spot.formula(ltl_true)}\npred: {spot.formula(ltl_out)}")
-
-        if not is_correct:
             continue
 
         # Spatial referring expression grounding
-        for (sre_true, sp_true), (sre_out, sp_topk_out) in zip(true_out["grounded_sps"].items(), sys_out["grounded_sps"].items()):
-            if sre_out != sre_true:
-                is_correct = False
-                logging.info(f"ERROR different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
+        true_ground_sps = true_out["grounded_sps"]
+        spg_ground_sps = sys_out["grounded_sps"]
+        if len(spg_ground_sps) != len(true_ground_sps):
+            logging.info(f"ERROR incorrect number of spatial referring expression:\ntrue: {true_ground_sps}\npred: {spg_ground_sps}")
+            continue
 
-            sp_out = sp_topk_out[0]
-            if len(sp_true[0]) != len(sp_out):
+        for sre_out, sps_topk_out in spg_ground_sps.items():
+            if sre_out not in true_ground_sps:
+                logging.info(f"ERROR incorrect SRE:\ntrue: {list(true_ground_sps.keys())}\nnot contain pred: {sre_out}")
                 is_correct = False
-                logging.info(f"ERROR different number of spatial predicates:\ntrue: {sp_true[0]}\npred: {sp_out}")
+                break
+            else:
+                sp_true = true_ground_sps[sre_out][0]
+                sp_out = sps_topk_out[0]
 
-            for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true[0].items(), sp_out.items()):
-                if lmk_type_out != lmk_type_true or ground_out != ground_true:
+                if len(sp_true) != len(sp_out):
                     is_correct = False
+                    logging.info(f"ERROR spatial predicates have different sizes:\ntrue: {sp_true}\npred: {sp_out}")
                     break
 
-            if not is_correct:
-                break
+                for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true.items(), sp_out.items()):
+                    if lmk_type_out != lmk_type_true or ground_out != ground_true:
+                        is_correct = False
+                        break
+                if not is_correct:
+                    break
 
         if is_correct:
             ncorrects += 1
 
-    logging.info(f"Accuracy: {ncorrects} / {len(true_outs)} = {ncorrects / len(true_outs)}")
+    logging.info(f"Full Accuracy: {ncorrects} / {len(true_outs)} = {ncorrects / len(true_outs)}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="boston", choices=["lab", "alley", "blackstone", "boston", "auckland"], help="env name.")
+    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="env name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
-    parser.add_argument("--nsamples", type=int, default=None, help="provide an integer to use synthetic dataset otherwise None.")
+    parser.add_argument("--nsamples", type=int, default=2, help="provide an integer to use synthetic dataset otherwise None.")
+    parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
-    loc_id = f"{args.location}_n{args.nsamples}" if args.nsamples else f"{args.location}"
+    loc_id = f"{args.location}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.location}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.location])
     osm_fpath = os.path.join(data_dpath, "osm", f"{args.location}.json")
-    utts_fpath = os.path.join(data_dpath, f"{loc_id}_utts.txt")
+    utts_fpath = os.path.join(data_dpath, "dataset", f"{loc_id}_utts.txt")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_full", loc_id)
     os.makedirs(results_dpath, exist_ok=True)
@@ -89,12 +97,12 @@ if __name__ == "__main__":
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "lt"))
-    true_results_fpath = os.path.join(data_dpath, f"{loc_id}_true_results.json")
+    true_results_fpath = os.path.join(data_dpath, "dataset", f"{loc_id}_true_results.json")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(results_dpath, f"eval_results.log"), mode='w'),
+                            logging.FileHandler(os.path.join(results_dpath, f"eval_results_full.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
@@ -113,4 +121,8 @@ if __name__ == "__main__":
     run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath)
 
     # Full system evaluation
+    eval_srer(true_results_fpath, srer_out_fpath)
+    eval_reg(true_results_fpath, args.topk, reg_out_fpath)
+    eval_spg(true_results_fpath, args.topk, spg_out_fpath)
+    eval_lt(true_results_fpath, lt_out_fpath)
     eval_full_system(true_results_fpath, lt_out_fpath)
