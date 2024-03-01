@@ -22,43 +22,43 @@ def eval_srer(true_results_fpath, srer_out_fpath):
 
         if len(srer_out["sre_to_preds"]) != len(true_out["sre_to_preds"]):
             is_correct = False
-            logging.info(f"Incorrect number of spatial predicates\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
+            logging.info(f"ERROR incorrect number of spatial predicates\ntrue: {true_out['sre_to_preds']}\npred: {srer_out['sre_to_preds']}")
 
         for sre_out, preds_out in srer_out["sre_to_preds"].items():
             if sre_out not in true_out["sre_to_preds"]:
                 is_correct = False
-                logging.info(f"Incorrect SRE:\ntrue: {list(true_out['sre_to_preds'].keys())}\nnot contain pred: {sre_out}")
+                logging.info(f"ERROR incorrect SRE:\ntrue: {list(true_out['sre_to_preds'].keys())}\nnot contain pred: {sre_out}")
             else:
                 preds_true = true_out["sre_to_preds"][sre_out]
 
                 if list(preds_true.keys())[0] == "None" and preds_out:  # referring expression with spatial relation
-                    logging.info(f"Incorrect spatial predicate:\ntrue: {preds_true}\nnot contain pred: {preds_out}")
+                    logging.info(f"ERROR incorrect spatial predicate:\ntrue: {preds_true}\nnot contain pred: {preds_out}")
 
                 for (rel_true, res_true), (rel_out, res_out) in zip(preds_true.items(), preds_out.items()):
                     if rel_out.strip() != rel_true.strip() and rel_out not in rel_true:  # e.g., pred: left of; true: to the left of
                         is_correct = False
-                        logging.info(f"Incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
+                        logging.info(f"ERROR incorrect spatial relation\ntrue: {rel_true}\npred: {rel_out}")
 
                     res_out_lower = [re_true.lower() for re_true in res_out]  # output lowercase e.g., italian resturant
                     res_true_lower = [re_true.lower() for re_true in res_true]
                     if not (len(res_out) == len(res_true) and set(res_out_lower) == set(res_true_lower)):
                         is_correct = False
-                        logging.info(f"Incorrect REs\ntrue: {res_true}\npred: {res_out}\n true lower: {res_true_lower}\npred lower: {res_out_lower}")
+                        logging.info(f"ERROR incorrect REs\ntrue: {res_true}\npred: {res_out}\n true lower: {res_true_lower}\npred lower: {res_out_lower}")
 
         true_lifted_utt = true_out["lifted_utt"].strip().translate(str.maketrans('', '', string.punctuation))
         srer_lifted_utt = srer_out["lifted_utt"].strip().translate(str.maketrans('', '', string.punctuation))
         if srer_lifted_utt != true_lifted_utt:
-            logging.info(f"WARNING: lifted commands do not exactly match\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
+            logging.info(f"WARNING lifted commands do not exactly match\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
             if len(true_lifted_utt) != len(srer_lifted_utt):
                 is_correct = False
-                logging.info(f"Incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
+                logging.info(f"ERROR incorrect lifted utterances\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
             else:
                 # NOTE: whitespace check to make sure the lifted utterances are equivalent:
                 whitespaces_srer = [i for i, letter in enumerate(srer_lifted_utt) if letter == ' ']
                 whitespaces_true = [i for i, letter in enumerate(true_lifted_utt) if letter == ' ']
                 if whitespaces_srer != whitespaces_true:
                     is_correct = False
-                    logging.info(f"Non-matching whitespaces:\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
+                    logging.info(f"ERROR Non-matching whitespaces:\ntrue: {true_out['lifted_utt']}\npred: {srer_out['lifted_utt']}")
 
         if is_correct:
             ncorrects += 1
@@ -88,9 +88,11 @@ def eval_reg(true_results_fpath, topk, reg_out_fpath):
         true_ground_sre_to_preds = true_out["grounded_sre_to_preds"]
         reg_ground_sre_to_preds = reg_out["grounded_sre_to_preds"]
         if len(reg_ground_sre_to_preds) != len(true_ground_sre_to_preds):
-            logging.info(f"ERROR different number of spatial referring expression:\ntrue: {true_ground_sre_to_preds}\npred: {reg_ground_sre_to_preds}")
+            logging.info(f"ERROR incorrect number of spatial referring expression:\ntrue: {true_ground_sre_to_preds}\npred: {reg_ground_sre_to_preds}")
 
         for sre_out, pred_out in reg_ground_sre_to_preds.items():
+            total_res += sum([len(res) for res in list(pred_out.values())[0]])
+
             if sre_out not in true_ground_sre_to_preds:
                 logging.info(f"ERROR incorrect SRE:\ntrue: {list(true_ground_sre_to_preds.keys())}\nnot contain pred: {sre_out}")
                 continue
@@ -98,12 +100,11 @@ def eval_reg(true_results_fpath, topk, reg_out_fpath):
                 pred_true = true_ground_sre_to_preds[sre_out]
 
                 if len(pred_true) != len(pred_out):
-                    logging.info(f"ERROR different size of spatial predicate:\ntrue: {len(pred_true)}\npred: {len(pred_out)}")
+                    logging.info(f"ERROR incorrect size of spatial predicate:\ntrue: {len(pred_true)}\npred: {len(pred_out)}")
                     continue
 
                 res_true = [score_re[0][1] for score_re in list(pred_true.values())[0]]
                 res_out = [[score_ground[1] for score_ground in grounded_res] for grounded_res in list(pred_out.values())[0]]
-                total_res += len(res_true)
 
                 for re_true, res_topk in zip(res_true, res_out):
                     for end_idx in range(1, topk+1):
@@ -145,7 +146,7 @@ def eval_spg(true_results_fpath, topk, spg_out_fpath):
             for end_idx in range(1, topk+1):
                 for sp_out in sp_topk_out[:end_idx]:
                     if len(sp_true[0]) != len(sp_out):
-                        logging.info(f"ERROR different number of spatial predicates:\ntrue: {sp_true[0]}\npred: {sp_out}")
+                        logging.info(f"ERROR incorrect number of spatial predicates:\ntrue: {sp_true[0]}\npred: {sp_out}")
                         continue
 
                     is_correct = True
@@ -185,11 +186,11 @@ def eval_lt(true_results_fpath, lt_out_fpath):
             spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
         except SyntaxError:
             is_correct = False
-            logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
+            logging.info(f"ERROR incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
 
         if not spot_correct:
             is_correct = False
-            logging.info(f"Incorrect lifted translation:\ntrue: {spot.formula(ltl_true)}\npred: {spot.formula(ltl_out)}")
+            logging.info(f"ERROR incorrect lifted translation:\ntrue: {spot.formula(ltl_true)}\npred: {spot.formula(ltl_out)}")
 
         if is_correct:
             ncorrects += 1
