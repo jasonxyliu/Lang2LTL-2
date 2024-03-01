@@ -76,18 +76,18 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--location", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="env name.")
+    parser.add_argument("--loc", type=str, default="boston", choices=["blackstone", "boston", "auckland"], help="env name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
     parser.add_argument("--nsamples", type=int, default=2, help="provide an integer to use synthetic dataset otherwise None.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
-    loc_id = f"{args.location}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.location}"
+    loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.location])
-    osm_fpath = os.path.join(data_dpath, "osm", f"{args.location}.json")
-    utts_fpath = os.path.join(data_dpath, "dataset", f"{loc_id}_utts.txt")
+    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.loc])
+    osm_fpath = os.path.join(data_dpath, "osm", f"{args.loc}.json")
+    utts_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_utts.txt")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_full", loc_id)
     os.makedirs(results_dpath, exist_ok=True)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "lt"))
-    true_results_fpath = os.path.join(data_dpath, "dataset", f"{loc_id}_true_results.json")
+    true_results_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_true_results.json")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
