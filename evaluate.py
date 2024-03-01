@@ -91,7 +91,7 @@ def eval_reg(true_results_fpath, topk, reg_out_fpath):
             logging.info(f"ERROR incorrect number of spatial referring expression:\ntrue: {true_ground_sre_to_preds}\npred: {reg_ground_sre_to_preds}")
 
         for sre_out, pred_out in reg_ground_sre_to_preds.items():
-            total_res += sum([len(res) for res in list(pred_out.values())[0]])
+            total_res += len(list(pred_out.values())[0])
 
             if sre_out not in true_ground_sre_to_preds:
                 logging.info(f"ERROR incorrect SRE:\ntrue: {list(true_ground_sre_to_preds.keys())}\nnot contain pred: {sre_out}")
