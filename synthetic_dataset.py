@@ -143,17 +143,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}"
 
-    dataset_dpath = os.path.join(os.path.expanduser("~"), "ground", "data", "dataset", args.loc)
+    dataset_dpath = os.path.join(os.path.expanduser("~"), "ground", "data", "dataset")
+    loc_dpath = os.path.join(dataset_dpath, args.loc)
     ltl_fpath = os.path.join(dataset_dpath, "ltl_samples_sorted.csv")
-    sp_fpath = os.path.join(dataset_dpath, f"{args.loc}_sp_grounds.json")
-    res_fpath = os.path.join(dataset_dpath,f"{args.loc}_res.json")
-    utts_fpath = os.path.join(dataset_dpath, f"{loc_id}_utts.txt")
-    outs_fpath = os.path.join(dataset_dpath, f"{loc_id}_true_results.json")
+    sp_fpath = os.path.join(loc_dpath, f"{args.loc}_sp_grounds.json")
+    res_fpath = os.path.join(loc_dpath, f"{args.loc}_res.json")
+    utts_fpath = os.path.join(loc_dpath, f"{loc_id}_utts.txt")
+    outs_fpath = os.path.join(loc_dpath, f"{loc_id}_true_results.json")
+
+    if not os.path.isdir(loc_dpath):
+        os.mkdir(loc_dpath)
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(dataset_dpath, f"{args.loc}_synthetic_dataset.log"), mode='w'),
+                            logging.FileHandler(os.path.join(loc_dpath, f"{args.loc}_synthetic_dataset.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
