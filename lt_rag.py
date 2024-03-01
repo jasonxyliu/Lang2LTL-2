@@ -1,6 +1,7 @@
 import os
 import json
 import numpy as np
+from tqdm import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 
 from openai_models import get_embed, translate
@@ -86,10 +87,11 @@ def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, raw_data, topk):
     if not os.path.isfile(lt_out_fpath):
         spg_outs = load_from_file(spg_out_fpath)
         for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module (method='rag')"):
-            query = [spg_out['lifted_utt'], json.dumps(list(spg_out["lifted_symbol_map"].keys()))]
-            print(f"query: {query}\n{lifted_ltl}\n")
+            query = [spg_out['lifted_utt'], json.dumps(list(spg_out["props"]))]
 
-            spg_out["lifted_ltl"] = lifted_translate(query, raw_data, topk)
+            lifted_ltl = lifted_translate(query, raw_data, topk)
+            print(f"query: {query}\n{lifted_ltl}\n")
+            spg_out["lifted_ltl"] = lifted_ltl
 
         save_to_file(spg_outs, lt_out_fpath)
 
