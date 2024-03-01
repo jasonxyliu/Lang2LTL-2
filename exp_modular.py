@@ -40,7 +40,7 @@ if __name__ == "__main__":
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "lt"))
     true_results_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_true_results.json")
-    ltl_fpath = os.path.join(data_dpath, "ltl_samples_sorted.csv")
+    ltl_fpath = os.path.join(data_dpath, "dataset", "ltl_samples_sorted.csv")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
