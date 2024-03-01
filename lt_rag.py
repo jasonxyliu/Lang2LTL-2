@@ -26,8 +26,8 @@ def lt(data_dpath, srer_out_fname, raw_data, topk):
 
 
 
-def lifted_translate(query, raw_data, topk):
-    prompt_examples = retriever(query, raw_data, topk)
+def lifted_translate(query, utt2embed, raw_data, topk):
+    prompt_examples = retriever(query, utt2embed, raw_data, topk)
 
     breakpoint()
 
@@ -35,7 +35,7 @@ def lifted_translate(query, raw_data, topk):
     return lifted_ltl
 
 
-def retriever(query, raw_data, topk):
+def retriever(query, utt2embed, raw_data, topk):
     nprops_query = len(deserialize_props_str(query[1]))
     query = query[:1]
 
@@ -52,8 +52,6 @@ def retriever(query, raw_data, topk):
 
     # Embed lifted commands then save or load from cache
     embeds = []
-    embeds_fpath = os.path.join(data_dpath, f"data_embeds.pkl")
-    utt2embed = load_from_file(embeds_fpath) if os.path.isfile(embeds_fpath) else {}
     embeds_updated = False
     for idx, (_, _, utt, _) in enumerate(data):
         # print(f"{idx}/{len(data)}. getting embedding:\n{utt}")
@@ -83,13 +81,18 @@ def retriever(query, raw_data, topk):
     return prompt_examples
 
 
-def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, raw_data, topk):
+def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, data_dpath, ltl_fpath, topk):
     if not os.path.isfile(lt_out_fpath):
+        raw_data = load_from_file(ltl_fpath)
         spg_outs = load_from_file(spg_out_fpath)
+
+        embeds_fpath = os.path.join(data_dpath, f"data_embeds.pkl")
+        utt2embed = load_from_file(embeds_fpath) if os.path.isfile(embeds_fpath) else {}
+
         for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module (method='rag')"):
             query = [spg_out['lifted_utt'], json.dumps(list(spg_out["props"]))]
 
-            lifted_ltl = lifted_translate(query, raw_data, topk)
+            lifted_ltl = lifted_translate(query, utt2embed, raw_data, topk)
             print(f"query: {query}\n{lifted_ltl}\n")
             spg_out["lifted_ltl"] = lifted_ltl
 
