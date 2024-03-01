@@ -145,14 +145,12 @@ if __name__ == "__main__":
 
     dataset_dpath = os.path.join(os.path.expanduser("~"), "ground", "data", "dataset")
     loc_dpath = os.path.join(dataset_dpath, args.loc)
+    os.makedirs(loc_dpath, exist_ok=True)
     ltl_fpath = os.path.join(dataset_dpath, "ltl_samples_sorted.csv")
     sp_fpath = os.path.join(loc_dpath, f"{args.loc}_sp_grounds.json")
     res_fpath = os.path.join(loc_dpath, f"{args.loc}_res.json")
     utts_fpath = os.path.join(loc_dpath, f"{loc_id}_utts.txt")
     outs_fpath = os.path.join(loc_dpath, f"{loc_id}_true_results.json")
-
-    if not os.path.isdir(loc_dpath):
-        os.mkdir(loc_dpath)
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
