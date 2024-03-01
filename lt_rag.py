@@ -25,7 +25,6 @@ def lt(data_dpath, srer_out_fname, raw_data, topk):
     return lifted_ltl
 
 
-
 def lifted_translate(query, embeds_fpath, raw_data, topk):
     prompt_examples = retriever(query, embeds_fpath, raw_data, topk)
 
@@ -69,7 +68,7 @@ def retriever(query, embeds_fpath, raw_data, topk):
         save_to_file(utt2embed, embeds_fpath)
     embeds = np.array(embeds)
 
-    # Retrieve prompt examples
+    # Retrieve prompt in-context examples
     query_embed = get_embed(query)
     query_scores = cosine_similarity(np.array(query_embed).reshape(1, -1), embeds)[0]
     data_sorted = sorted(zip(query_scores, data), reverse=True)

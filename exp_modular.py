@@ -68,6 +68,6 @@ if __name__ == "__main__":
         if args.lt == "t5":
             run_exp_lt(true_results_fpath, model_fpath, lt_out_fpath)
         elif args.lt == "rag":
-            run_exp_lt_rag(true_results_fpath, lt_out_fpath, data_dpath, ltl_fpath, topk=50)
+            run_exp_lt_rag(true_results_fpath, lt_out_fpath, data_dpath, ltl_fpath, args.nexamples)
 
         eval_lt(true_results_fpath, lt_out_fpath)
