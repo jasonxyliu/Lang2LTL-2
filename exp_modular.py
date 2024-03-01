@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--nsamples", type=int, default=10, help="number of samples per LTL formula used to create dataset.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG")
+    parser.add_argument("--lt", type=str, default="t5", help="embedding model for LT (['t5', 'rag'])")
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}"
 
@@ -61,5 +62,9 @@ if __name__ == "__main__":
         eval_spg(true_results_fpath, args.topk, spg_out_fpath)
 
     if args.module == "lt" or args.module == "all":
-        run_exp_lt(true_results_fpath, model_fpath, lt_out_fpath)
+        if args.lt == "t5":
+            run_exp_lt(true_results_fpath, model_fpath, lt_out_fpath)
+        elif args.lt == "rag":
+            pass
+
         eval_lt(true_results_fpath, lt_out_fpath)
