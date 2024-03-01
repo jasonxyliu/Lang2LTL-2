@@ -10,6 +10,7 @@ from srer import run_exp_srer
 from reg import run_exp_reg
 from spg import run_exp_spg
 from lt import run_exp_lt
+from lt_rag import run_exp_lt_rag
 from evaluate import eval_srer, eval_reg, eval_spg, eval_lt
 
 
@@ -39,6 +40,7 @@ if __name__ == "__main__":
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "lt"))
     true_results_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_true_results.json")
+    ltl_fpath = os.path.join(dataset_dpath, "ltl_samples_sorted.csv")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
@@ -65,6 +67,6 @@ if __name__ == "__main__":
         if args.lt == "t5":
             run_exp_lt(true_results_fpath, model_fpath, lt_out_fpath)
         elif args.lt == "rag":
-            pass
+            run_exp_lt_rag(true_results_fpath, lt_out_fpath, ltl_fpath, topk=50)
 
         eval_lt(true_results_fpath, lt_out_fpath)

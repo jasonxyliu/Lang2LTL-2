@@ -82,6 +82,18 @@ def retriever(query, raw_data, topk):
     return prompt_examples
 
 
+def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, raw_data, topk):
+    if not os.path.isfile(lt_out_fpath):
+        spg_outs = load_from_file(spg_out_fpath)
+        for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module (method='rag')"):
+            query = [spg_out['lifted_utt'], json.dumps(list(spg_out["lifted_symbol_map"].keys()))]
+            print(f"query: {query}\n{lifted_ltl}\n")
+
+            spg_out["lifted_ltl"] = lifted_translate(query, raw_data, topk)
+
+        save_to_file(spg_outs, lt_out_fpath)
+
+
 if __name__ == "__main__":
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     data_fpath = os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
