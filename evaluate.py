@@ -99,7 +99,7 @@ def eval_reg(true_results_fpath, topk, reg_out_fpath):
             else:
                 pred_true = true_ground_sre_to_preds[sre_out]
 
-                if len(pred_true) != len(pred_out):
+                if len(pred_out) != len(pred_true):
                     logging.info(f"ERROR incorrect size of spatial predicate:\ntrue: {len(pred_true)}\npred: {len(pred_out)}")
                     continue
 
@@ -139,26 +139,34 @@ def eval_spg(true_results_fpath, topk, spg_out_fpath):
 
         total_sps += len(true_out["grounded_sps"])
 
-        for (sre_true, sp_true), (sre_out, sp_topk_out) in zip(true_out["grounded_sps"].items(), spg_out["grounded_sps"].items()):
-            if sre_out != sre_true:
-                logging.info(f"WARNING different spatial referring expression:\ntrue: {sre_true}\npred: {sre_out}")
+        true_ground_sps = true_out["grounded_sps"]
+        spg_ground_sps = spg_out["grounded_sps"]
+        if len(spg_ground_sps) != len(true_ground_sps):
+            logging.info(f"ERROR incorrect number of spatial referring expression:\ntrue: {true_ground_sps}\npred: {spg_ground_sps}")
 
-            for end_idx in range(1, topk+1):
-                for sp_out in sp_topk_out[:end_idx]:
-                    if len(sp_true[0]) != len(sp_out):
-                        logging.info(f"ERROR incorrect number of spatial predicates:\ntrue: {sp_true[0]}\npred: {sp_out}")
-                        continue
+        for sre_out, sps_topk_out in spg_ground_sps.items():
+            if sre_out not in true_ground_sps:
+                logging.info(f"ERROR incorrect SRE:\ntrue: {list(true_ground_sps.keys())}\nnot contain pred: {sre_out}")
+                continue
+            else:
+                sp_true = true_ground_sps[sre_out][0]
 
-                    is_correct = True
-                    for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true[0].items(), sp_out.items()):
-                        if lmk_type_out != lmk_type_true or ground_out != ground_true:
-                        # if lmk_type_out != lmk_type_true or not (set(ground_out) & set(ground_true)):
-                            is_correct = False
-                            if end_idx == 1:
-                                logging.info(f"Incorrect Top-1 spatial predicate grounding: \n{sre_true}\ntrue: ({lmk_type_true}) {ground_true}\npred: ({lmk_type_out}) {ground_out}")
+                for end_idx in range(1, topk+1):
+                    for sp_out in sps_topk_out[:end_idx]:
+                        if len(sp_true) != len(sp_out):
+                            logging.info(f"ERROR spatial predicates have different sizes\ntrue: {sp_true}\npred: {sp_out}")
+                            continue
 
-                    if is_correct:
-                        topk2acc[end_idx] += 1
+                        is_correct = True
+                        for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true.items(), sp_out.items()):
+                            if lmk_type_out != lmk_type_true or ground_out != ground_true:
+                            # if lmk_type_out != lmk_type_true or not (set(ground_out) & set(ground_true)):
+                                is_correct = False
+                                if end_idx == 1:
+                                    logging.info(f"Incorrect Top-1 spatial predicate grounding: \n{sre_out}\ntrue: ({lmk_type_true}) {ground_true}\npred: ({lmk_type_out}) {ground_out}")
+
+                        if is_correct:
+                            topk2acc[end_idx] += 1
         logging.info("\n")
 
     for idx in range(1, topk+1):
