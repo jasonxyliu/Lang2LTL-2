@@ -154,7 +154,7 @@ def eval_spg(true_results_fpath, topk, spg_out_fpath):
                 for end_idx in range(1, topk+1):
                     for sp_out in sps_topk_out[:end_idx]:
                         if len(sp_true) != len(sp_out):
-                            logging.info(f"ERROR spatial predicates have different sizes\ntrue: {sp_true}\npred: {sp_out}")
+                            logging.info(f"ERROR spatial predicates have different sizes\n{sre_out}\ntrue: {sp_true}\npred: {sp_out}")
                             continue
 
                         is_correct = True

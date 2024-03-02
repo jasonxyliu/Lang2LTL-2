@@ -58,7 +58,7 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
                 if len(sp_true) != len(sp_out):
                     is_correct = False
-                    logging.info(f"ERROR spatial predicates have different sizes:\ntrue: {sp_true}\npred: {sp_out}")
+                    logging.info(f"ERROR spatial predicates have different sizes:\n{sre_out}\ntrue: {sp_true}\npred: {sp_out}")
                     break
 
                 for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true.items(), sp_out.items()):
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
     parser.add_argument("--nsamples", type=int, default=2, help="provide an integer to use synthetic dataset otherwise None.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
-    parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG.")
+    parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}"
 
