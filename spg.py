@@ -446,11 +446,11 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         vec_a1_to_a2 = anchor_2 - anchor_1
         slope = - vec_a1_to_a2[0] / vec_a1_to_a2[1]  # line slope is negative recipical of vector slope
         # slope = np.tan([- vec_a1_to_a2[1], vec_a1_to_a2[0]])  # line slope is negative recipical of vector slope
-        offset_1 = slope * anchor_1[0] + anchor_1[1]  # a.x + b.y = c
-        offset_2 = slope * anchor_2[0] + anchor_2[1]  # a.x + b.y = d
+        offset_1 = - slope * anchor_1[0] + anchor_1[1]  # -m.x + y = c
+        offset_2 = - slope * anchor_2[0] + anchor_2[1]  # -m.x + y = d
 
         # Check target between two lines: a.x_tar + b.y_tar between c and d
-        offset_tar = slope * target[0] + target[1]
+        offset_tar = -slope * target[0] + target[1]
 
         is_tar_between = (offset_tar >= offset_1 and offset_tar <= offset_2) or (offset_tar >= offset_2 and offset_tar <= offset_1)
 
@@ -465,7 +465,6 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
             if plot:
                 vec_a1_to_a2 = anchor_2 - anchor_1; vec_a1_to_a2 /= np.linalg.norm(vec_a1_to_a2)
-                vec_a2_to_a1 = anchor_1 - anchor_2; vec_a2_to_a1 /= np.linalg.norm(vec_a2_to_a1)
                 A, B = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_1, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_1
                 C, D = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_2, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_2
 
@@ -488,7 +487,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
                 plt.axis('square')
                 plt.show(block=False)
-
+                plt.savefig(f"eval-spatial-pred-{spatial_rel}-{target_candidate}-{'-'.join(anchor_candidates)}.png")
         return is_pred_true
     else:
         try:
