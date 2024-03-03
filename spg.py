@@ -20,8 +20,7 @@ KNOWN_RELATIONS = [
     "between",
     "north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"
 ]
-MAX_RANGE = 100.0  # assume target within this radius of the anchor
-FOV = 180  # robot's field-of-view
+MAX_RANGE = 60.0  # assume target within this radius of the anchor
 DIST_TO_ANCHOR = 2.0  # distance to robot when compute a target location for SRE with only an anchor
 
 
@@ -30,6 +29,7 @@ def plot_landmarks(landmarks=None, osm_fpth=None):
     Plot landmarks in the shared world space local to the Spot's map.
     """
     plt.figure()
+    plt.rcParams.update({'font.size': 5})
 
     if landmarks:
         plt.scatter(x=[landmarks[L]["x"] for L in landmarks], y=[landmarks[L]["y"] for L in landmarks], c="green", label="landmarks")
@@ -41,18 +41,17 @@ def plot_landmarks(landmarks=None, osm_fpth=None):
                 y=landmarks["robot"]["y"], c="orange", label="robot")
     plt.text(landmarks["robot"]["x"],
              landmarks["robot"]["y"], "robot")
-
     plt.legend()
-    # plt.axis("square")
 
     if osm_fpth:
         location_name = os.path.splitext(os.path.basename(osm_fpth))[0]
         plt.title(f"Landmark Map: {location_name}")
         plt.show(block=False)
-        plt.savefig(f"{os.path.join(os.path.dirname(osm_fpth), f'{location_name}_landmarks.png')}", dpi=300)
     else:
         plt.title(f"Landmark Map")
         plt.show(block=True)
+    plt.savefig(f"{os.path.join(os.path.dirname(osm_fpth), f'{location_name}_landmarks.png')}", dpi=300)
+    plt.rcdefaults()  # reset font size to default
 
 
 def rotate(vec, angle):
@@ -326,6 +325,7 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, anchor_name=No
     # Compute unit vector from anchor to robot
     vec_a2r = [robot["x"] - anchor["x"], robot["y"] - anchor["y"]]
     unit_vec_a2r = np.array(vec_a2r) / np.linalg.norm(vec_a2r)
+    fov = 180  # robot's field-of-view
 
     if spatial_rel in ["in front of", "opposite to"]:
         mean_angle = 0
@@ -349,12 +349,16 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, anchor_name=No
             mean_angle = np.rad2deg(np.arctan2(0, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
         elif spatial_rel in ["northeast", "northeast of"]:
             mean_angle = np.rad2deg(np.arctan2(1, 1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+            fov = 90
         elif spatial_rel in ["northwest", "northwest of"]:
             mean_angle = np.rad2deg(np.arctan2(1, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+            fov = 90
         elif spatial_rel in ["southeast", "southeast of"]:
             mean_angle = np.rad2deg(np.arctan2(-1, 1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+            fov = 90
         elif spatial_rel in ["southwest", "southwest of"]:
             mean_angle = np.rad2deg(np.arctan2(-1, -1) - np.arctan2(unit_vec_a2r[1], unit_vec_a2r[0]))
+            fov = 90
 
         do_360_search = False  # NOTE: since cardinal directions are absolute, we should not do any 360-sweep:
 
@@ -362,16 +366,17 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, anchor_name=No
     rots_a2r = [0]
     if spatial_rel in ["near", "next to", "adjacent to", "close to", "by"] or do_360_search:
         mean_angle = 0
-        rots_a2r = [rot for rot in range(0, 360, FOV)]
+        rots_a2r = [rot for rot in range(0, 360, fov)]
 
     for rot in rots_a2r:
         # Compute the mean vector and vectors representing min and max range
         vec_a2t_mean = rotate(unit_vec_a2r, np.deg2rad(mean_angle + rot))
-        vec_a2t_min = rotate(vec_a2t_mean, np.deg2rad(- FOV / 2))
-        vec_a2t_max = rotate(vec_a2t_mean, np.deg2rad(FOV / 2))
+        vec_a2t_min = rotate(vec_a2t_mean, np.deg2rad(- fov / 2))
+        vec_a2t_max = rotate(vec_a2t_mean, np.deg2rad(fov / 2))
         range_vecs.append({"mean": vec_a2t_mean, "min": vec_a2t_min, "max": vec_a2t_max})
 
     if plot:
+    # if ("south" in spatial_rel or "north" in spatial_rel ) and anchor_name == "Sephora":
         plt.figure()
 
         # Plot robot and anchor location
@@ -410,7 +415,7 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, anchor_name=No
     return range_vecs
 
 
-def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidates, sre=None, plot=True):
+def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidates, sre=None, plot=False):
     """
     Evaluate if a spatial relation is valid given candidate target landmark and anchor landmark(s).
     """
@@ -501,13 +506,22 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         anchor = np.array([anchor["x"], anchor["y"]])
 
         for range_vec in range_vecs:
-            vec_mean = np.array([range_vec["mean"][0], range_vec["mean"][1]])
             vec_anc2tar = target - anchor
-            dist_anc2tar = np.linalg.norm(vec_anc2tar)
+            vec_mean = np.array([range_vec["mean"][0], range_vec["mean"][1]])
+            vec_min = np.array([range_vec["min"][0], range_vec["min"][1]])
+            vec_max = np.array([range_vec["max"][0], range_vec["max"][1]])
 
-            if np.dot(vec_mean, vec_anc2tar) >= 0 and dist_anc2tar <= MAX_RANGE:
+            is_same_dir_mean = np.dot(vec_anc2tar, vec_mean) >= 0  # angle between anchor and mean vectors [-90, 90]
+            is_between_min_max = np.cross(vec_min, vec_anc2tar) >= 0 and np.cross(vec_max, vec_anc2tar) <= 0  # angle between anchor and min vectors [0, 180], between anchor and max vectors [-180, 0)
+            is_within_dist = np.linalg.norm(vec_anc2tar) <= MAX_RANGE
+
+            if is_same_dir_mean and is_between_min_max and is_within_dist:
                 is_pred_true = True
                 break
+
+        # if (target_candidate == "fire_hydrant_1" or target_candidate == "fire_hydrant_3") and anchor_candidates == ['Sephora']:
+        #     print(f"{spatial_rel}\n{target_candidate}\n{anchor_candidates}\n{is_pred_true}\n{range_vecs}")
+        #     breakpoint()
 
         return is_pred_true
 
@@ -639,7 +653,7 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
                 for lmk_ground in lmk_grounds_sorted:
                     target_name = lmk_ground["target"][0]
                     anchor_names = lmk_ground["anchor"]
-                    is_valid = eval_spatial_pred(landmarks, rel_match, target_name, anchor_names, sre, plot=True)
+                    is_valid = eval_spatial_pred(landmarks, rel_match, target_name, anchor_names, sre)
                     if is_valid:
                         groundings.append({"target": target_name,  "anchor": anchor_names})
                     if len(groundings) == topk:
