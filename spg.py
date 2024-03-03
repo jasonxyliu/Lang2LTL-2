@@ -376,7 +376,6 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, anchor_name=No
         range_vecs.append({"mean": vec_a2t_mean, "min": vec_a2t_min, "max": vec_a2t_max})
 
     if plot:
-    # if ("south" in spatial_rel or "north" in spatial_rel ) and anchor_name == "Sephora":
         plt.figure()
 
         # Plot robot and anchor location
@@ -411,7 +410,6 @@ def compute_area(spatial_rel, robot, anchor, do_360_search=False, anchor_name=No
         plt.axis("square")
         plt.show(block=False)
         plt.savefig(f"compute-area_{'_'.join(spatial_rel.split(' '))}.png")
-
     return range_vecs
 
 
@@ -518,11 +516,6 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             if is_same_dir_mean and is_between_min_max and is_within_dist:
                 is_pred_true = True
                 break
-
-        # if (target_candidate == "fire_hydrant_1" or target_candidate == "fire_hydrant_3") and anchor_candidates == ['Sephora']:
-        #     print(f"{spatial_rel}\n{target_candidate}\n{anchor_candidates}\n{is_pred_true}\n{range_vecs}")
-        #     breakpoint()
-
         return is_pred_true
 
 
@@ -607,7 +600,6 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
                 plt.legend()
                 plt.axis("square")
                 plt.show(block=False)
-
             return True
     return False
 
