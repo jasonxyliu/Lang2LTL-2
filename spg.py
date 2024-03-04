@@ -294,9 +294,9 @@ def get_target_loc(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
         plt.scatter(x=[loc_min["x"]], y=[loc_min["y"]], marker="x", c="g", s=15, label="new robot loc")
 
         # Plot all target and anchor landmarks
-        for A in landmarks:
-            plt.scatter(x=landmarks[A]["x"], y=landmarks[A]["y"], marker="o", c="darkorange", label=f"anchor: {A}")
-            plt.text(landmarks[A]["x"], landmarks[A]["y"], A)
+        for lmk in landmarks:
+            plt.scatter(x=landmarks[lmk]["x"], y=landmarks[lmk]["y"], marker="o", c="darkorange", label=f"anchor: {lmk}")
+            plt.text(landmarks[lmk]["x"], landmarks[lmk]["y"], lmk)
 
         # Plot the range
         plt.plot([anchor["x"], (range_vec_closest["min"][0] * DIST_TO_ANCHOR) + anchor["x"]],
