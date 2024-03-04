@@ -32,6 +32,24 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
         try:
             spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
+
+            if not spot_correct:  # invariant to order of propositions
+                ltl_str_true, ltl_str_out = str(ltl_true), str(ltl_out)
+                prop2sre_true, prop2sre_out = {}, {}
+
+                for prop, sre in zip(true_out["props"], true_out["sre_to_preds"].keys()):
+                    ltl_str_true = ltl_str_true.replace(prop, f"<{prop}>")
+                    prop2sre_true[f"<{prop}>"] = sre
+                for prop, sre in prop2sre_true.items():
+                    ltl_str_true = ltl_str_true.replace(prop, sre.lower())
+
+                for prop, sre in sys_out["lifted_symbol_map"].items():
+                    ltl_str_out = ltl_str_out.replace(prop, f"<{prop}>")
+                    prop2sre_out[f"<{prop}>"] = sre
+                for prop, sre in prop2sre_out.items():
+                    ltl_str_out = ltl_str_out.replace(prop, sre.lower())
+
+                spot_correct = ltl_str_out == ltl_str_true
         except SyntaxError:
             logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
             continue
