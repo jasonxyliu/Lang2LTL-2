@@ -258,18 +258,17 @@ def find_match_rel(rel_unseen, rel_embeds_fpath):
 
 def get_target_loc(landmarks, spatial_rel, anchor_candidate, sre=None, plot=False):
     """
-    Ground spatial referring expression with only an anchor landmark: left and right side, cardinal directions
+    Ground spatial referring expression with only an anchor landmark: left, right, cardinal directions
     by finding a location relative to the given anchor landmark.
-    e.g., go to the north of the bakery, go to the right side of the bakery
+    e.g., go to the left side of the bakery, go to the north of the bakery
     """
+    robot = landmarks["robot"]
     try:
         anchor = landmarks[anchor_candidate]
     except KeyError:
         return None
 
-    robot = landmarks["robot"]
-
-    # Get the list of valid ranges (potentially only one) for an anchoring landmark
+    # Compute valid the range vector(s) (potentially only one) for an anchoring landmark
     range_vecs = compute_area(spatial_rel, robot, anchor)
 
     # Compute robot location that is at given distance to the anchor
@@ -311,7 +310,6 @@ def get_target_loc(landmarks, spatial_rel, anchor_candidate, sre=None, plot=Fals
         plt.axis("square")
         plt.legend()
         plt.show(block=False)
-
     return loc_min
 
 
