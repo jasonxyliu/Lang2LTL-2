@@ -427,10 +427,11 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             return False
 
     if spatial_rel in ["between"]:
+        assert len(anchor_candidates) != 2, f"between but candidate anchors less than two: {anchor_candidates}"
         try:
             anchor_1 = landmarks[anchor_candidates[0]]
             anchor_2 = landmarks[anchor_candidates[1]]
-        except KeyError:
+        except (KeyError, IndexError):
             return False  # anchor may instead be a waypoint in the Spot space
 
         # Avoid evaluating a target ''between'' the same anchor
