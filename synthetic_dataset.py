@@ -138,7 +138,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--loc", type=str, default="boston", choices=["blackstone", "boston", "auckland", "san_francisco"], help="domain name.")
-    parser.add_argument("--nsamples", type=int, default=2, help="number of samples per LTL formula.")
+    parser.add_argument("--nsamples", type=int, default=20, help="number of samples per LTL formula.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}"

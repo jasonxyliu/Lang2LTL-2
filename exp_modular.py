@@ -16,10 +16,10 @@ from evaluate import eval_srer, eval_reg, eval_spg, eval_lt
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--module", type=str, default="spg", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
+    parser.add_argument("--module", type=str, default="all", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
     parser.add_argument("--loc", type=str, default="blackstone", choices=["blackstone", "boston", "auckland", "san_francisco"], help="domain name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
-    parser.add_argument("--nsamples", type=int, default=10, help="number of samples per LTL formula used to create dataset.")
+    parser.add_argument("--nsamples", type=int, default=20, help="number of samples per LTL formula used to create dataset.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG.")
     parser.add_argument("--lt", type=str, default="t5", choices=["t5", "rag"], help="lifted translation model.")
