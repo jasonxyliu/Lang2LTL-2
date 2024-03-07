@@ -8,14 +8,14 @@ from utils import load_from_file, save_to_file
 def parse_llm_output(utt, raw_out):
     parsed_out = {}
     for line in raw_out.split('\n'):
-        # if line.startswith("Referring Expressions:"):
-        #     parsed_out["sres"] = eval(line.split("Referring Expressions: ")[1])
+        if line.startswith("Referring Expressions:"):
+            parsed_out["sres"] = eval(line.split("Referring Expressions: ")[1])
         if line.startswith("Lifted Command:"):
             parsed_out["lifted_utt"] = eval(line.split("Lifted Command: ")[1])
         if line.startswith("Symbol Map:"):
             parsed_out["lifted_symbol_map"] = eval(line.split("Symbol Map: ")[1])
-        # if line.startswith("Spatial Predicates: "):
-        #     parsed_out["spatial_preds"] = eval(line.split("Spatial Predicates: ")[1])
+        if line.startswith("Spatial Predicates: "):
+            parsed_out["spatial_preds"] = eval(line.split("Spatial Predicates: ")[1])
 
     # Map each referring expression to its corresponding spatial predicate:
     parsed_out["sre_to_preds"] = {}
