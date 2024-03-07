@@ -427,7 +427,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             return False
 
     if spatial_rel in ["between"]:
-        assert len(anchor_candidates) != 2, f"between but candidate anchors less than two: {anchor_candidates}"
+        assert len(anchor_candidates) == 2, f"between but candidate anchors less than two: {anchor_candidates}"
         try:
             anchor_1 = landmarks[anchor_candidates[0]]
             anchor_2 = landmarks[anchor_candidates[1]]
