@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--loc", type=str, default="boston", choices=["blackstone", "boston", "auckland", "san_francisco"], help="env name.")
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
-    parser.add_argument("--nsamples", type=int, default=2, help="number of sample utts per LTL formula or None for all")
+    parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
@@ -133,19 +133,19 @@ if __name__ == "__main__":
         copy2(srer_out_fpath_modular, srer_out_fpath)
     else:
         run_exp_srer(utts_fpath, srer_out_fpath)
+    eval_srer(true_results_fpath, srer_out_fpath)
 
     # Referring Expression Grounding (REG)
     run_exp_reg(srer_out_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
+    eval_reg(true_results_fpath, args.topk, reg_out_fpath)
 
     # Spatial Predicate Grounding (SPG)
     run_exp_spg(reg_out_fpath, graph_dpath, osm_fpath, args.topk, rel_embeds_fpath, spg_out_fpath)
+    eval_spg(true_results_fpath, args.topk, spg_out_fpath)
 
     # Lifted Translation (LT)
     run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath)
+    eval_lt(true_results_fpath, lt_out_fpath)
 
     # Full system evaluation
-    eval_srer(true_results_fpath, srer_out_fpath)
-    eval_reg(true_results_fpath, args.topk, reg_out_fpath)
-    eval_spg(true_results_fpath, args.topk, spg_out_fpath)
-    eval_lt(true_results_fpath, lt_out_fpath)
     eval_full_system(true_results_fpath, lt_out_fpath)
