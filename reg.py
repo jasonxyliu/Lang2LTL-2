@@ -62,7 +62,7 @@ class REG():
 
         self.sem_embeds = np.array(sem_embeds)
 
-        if os.isfile(query_cache_fpath):
+        if os.path.isfile(query_cache_fpath):
             self.query_cache = load_from_file(query_cache_fpath)
         else:
             self.query_cache = {}
