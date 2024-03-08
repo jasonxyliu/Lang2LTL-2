@@ -203,7 +203,11 @@ def eval_lt(true_results_fpath, lt_out_fpath):
                 for prop, sre in prop2sre_true.items():
                     ltl_str_true = ltl_str_true.replace(prop, sre.lower())
 
-                for prop, sre in lt_out["lifted_symbol_map"].items():
+                if "lifted_symbol_map" in lt_out:  # exp_full input previous module
+                    lifted_symbol_map = lt_out["lifted_symbol_map"]
+                else:  # exp_modular input ground truth (does not have "lifted_symbol_map" key)
+                    lifted_symbol_map = {prop: sre for prop, sre in zip(lt_out["props"], lt_out["sre_to_preds"].keys())}
+                for prop, sre in lifted_symbol_map.items():
                     ltl_str_out = ltl_str_out.replace(prop, f"<{prop}>")
                     prop2sre_out[f"<{prop}>"] = sre
                 for prop, sre in prop2sre_out.items():
