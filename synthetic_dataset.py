@@ -43,13 +43,18 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
     res_all = load_from_file(res_fpath)
 
     ltl2data = defaultdict(set)
+    utts = []
     for pattern_type, props, utt_lifted, ltl_lifted in lifted_data:
-        ltl2data[ltl_lifted].add((pattern_type, props, utt_lifted))
+        if utt_lifted not in utts:
+            ltl2data[ltl_lifted].add((pattern_type, props, utt_lifted))
     ltl2data = sorted(ltl2data.items(), key=lambda kv: len(kv[0]))
 
     logging.info(f"# unique lifted LTL formulas: {len(ltl2data)}")
+    nutts = 0
     for ltl, data in ltl2data:
+        nutts += len(data)
         logging.info(f"{ltl}: {len(data)}")
+    logging.info(f"# unique utterances: {nutts}")
     logging.info(f"# unique spatial relations: {len(sp_grounds_all)}")
     logging.info(f"# unique landmarks: {len(res_all)}")
 
@@ -57,7 +62,7 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
     true_outs = []
 
     for ltl_lifted, ltl_data in ltl2data:  # every lifted LTL formula
-        data_sampled = random.sample(sorted(ltl_data), nsamples)
+        data_sampled = random.sample(sorted(ltl_data), nsamples) if nsamples else sorted(ltl_data)
         for data in data_sampled:  # every sampled lifted utterances
             pattern_type, props_full_str, utt_lifted = data
             props_full = eval(props_full_str)
@@ -138,10 +143,10 @@ def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--loc", type=str, default="boston", choices=["blackstone", "boston", "auckland", "san_francisco"], help="domain name.")
-    parser.add_argument("--nsamples", type=int, default=20, help="number of samples per LTL formula.")
-    parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
+    parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all.")
+    parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     args = parser.parse_args()
-    loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}"
+    loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
 
     dataset_dpath = os.path.join(os.path.expanduser("~"), "ground", "data", "dataset")
     loc_dpath = os.path.join(dataset_dpath, args.loc)
