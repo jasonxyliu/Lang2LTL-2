@@ -26,6 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("--nexamples", type=int, default=5, help="number of in-context examples if use RAG lifted translation model.")
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
+    lt_id = f"lt-{args.lt}{args.nexamples}" if args.lt == "rag" else f"{args.lt}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.loc])
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
-    lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "lt"))
+    lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", f"lt-{lt_id}"))
     true_results_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_true_results.json")
     ltl_fpath = os.path.join(data_dpath, "dataset", "ltl_samples_sorted.csv")
 
