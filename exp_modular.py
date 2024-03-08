@@ -39,6 +39,7 @@ if __name__ == "__main__":
     srer_out_fname = f"srer_outs_ablate_{args.ablate}.json" if args.ablate else f"srer_outs.json"
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
+    reg_in_cache_fpath = os.path.join(results_dpath, "reg_in_cache.pkl")
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", f"lt-{lt_id}"))
     true_results_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_true_results.json")
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         eval_srer(true_results_fpath, srer_out_fpath)
 
     if args.module == "reg" or args.module == "all":
-        run_exp_reg(true_results_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
+        run_exp_reg(true_results_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath, reg_in_cache_fpath)
         eval_reg(true_results_fpath, args.topk, reg_out_fpath)
 
     if args.module == "spg" or args.module == "all":

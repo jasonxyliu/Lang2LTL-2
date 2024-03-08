@@ -115,6 +115,7 @@ if __name__ == "__main__":
     srer_out_fpath_modular = os.path.join(os.path.expanduser("~"), "ground", "results_modular", loc_id, srer_out_fname)
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
+    reg_in_cache_fpath = os.path.join(results_dpath, "reg_in_cache.pkl")
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "lt"))
     true_results_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_true_results.json")
@@ -129,14 +130,14 @@ if __name__ == "__main__":
     logging.info(f"***** Full System Evaluation Dataset: {loc_id}")
 
     # Spatial Referring Expression Recognition (SRER)
-    if os.path.isfile(srer_out_fpath_modular):
+    if os.path.isfile(srer_out_fpath_modular):  # same SRER output for exp_full and exp_modular
         copy2(srer_out_fpath_modular, srer_out_fpath)
     else:
         run_exp_srer(utts_fpath, srer_out_fpath)
     eval_srer(true_results_fpath, srer_out_fpath)
 
     # Referring Expression Grounding (REG)
-    run_exp_reg(srer_out_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
+    run_exp_reg(srer_out_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath, reg_in_cache_fpath)
     eval_reg(true_results_fpath, args.topk, reg_out_fpath)
 
     # Spatial Predicate Grounding (SPG)

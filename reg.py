@@ -49,7 +49,7 @@ class REG():
     """
     Referring Expression Grounding (REG) module. Use semantic description of landmarks and objects in text and images.
     """
-    def __init__(self, img_embeds, txt_embeds):
+    def __init__(self, img_embeds, txt_embeds, query_cache_fpath):
         self.sem_ids,sem_embeds = [], []
 
         if img_embeds:
@@ -62,14 +62,26 @@ class REG():
 
         self.sem_embeds = np.array(sem_embeds)
 
+        if os.isfile(query_cache_fpath):
+            self.query_cache = load_from_file(query_cache_fpath)
+        else:
+            self.query_cache = {}
+        self.query_cache_fpath = query_cache_fpath
+
     def query(self, query, topk):
-        query_embeds = get_embed(query)
+        if query in self.query_cache:
+            query_embeds = self.query_cache[query]
+        else:
+            query_embeds = get_embed(query)
+            self.query_cache[query] = query_embeds
+            save_to_file(self.query_cache, self.query_cache_fpath)
+
         query_scores = cosine_similarity(np.array(query_embeds).reshape(1, -1), self.sem_embeds)[0]
         lmks_sorted = sorted(zip(query_scores, self.sem_ids), reverse=True)
         return lmks_sorted[:topk]
 
 
-def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
+def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate, in_cache_fpath):
     img_embeds, txt_embeds = None, None
 
     if not ablate or ablate == "text":
@@ -89,7 +101,7 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
         txts = load_from_file(osm_fpath)  # OSM
         txt_embeds = embed_texts(txts, txt_embed_dpath)
 
-    reg = REG(img_embeds, txt_embeds)
+    reg = REG(img_embeds, txt_embeds, in_cache_fpath)
 
     for srer_out in tqdm(srer_outs, desc="Running referring expression grounding (REG) module"):
         grounded_sre_to_preds = {}
@@ -111,10 +123,10 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate):
         srer_out["grounded_sre_to_preds"] = grounded_sre_to_preds
 
 
-def run_exp_reg(srer_out_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_fpath):
+def run_exp_reg(srer_out_fpath, graph_dpath, osm_fpath, topk, ablate, reg_out_fpath, in_cache_fpath):
     if not os.path.isfile(reg_out_fpath):
         srer_outs = load_from_file(srer_out_fpath)
-        reg(graph_dpath, osm_fpath, srer_outs, topk, ablate)
+        reg(graph_dpath, osm_fpath, srer_outs, topk, ablate, in_cache_fpath)
         save_to_file(srer_outs, reg_out_fpath)
 
 
