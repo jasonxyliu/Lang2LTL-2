@@ -78,9 +78,12 @@ def run_exp_srer(utts_fpath, srer_out_fpath):
 
 if __name__ == "__main__":
     utts = [
-        "you cannot go to other place from the park bench by the comics store unless you see the vendor cart between the Best of Boston clothing store and Boston Pewter Company",
-        "move the ATM to the right of TD Bank then find Starbucks behind the restaurant called Ned Devines",
-        "visit the street vendor cart in front of the coffee shop called Cafe Pulse exactly once avoid the car at the shop called Boston Pewter Company or the bicycle rack before the street vendor cart in front of the coffee shop called Cafe Pulse then reach the car at the shop called Boston Pewter Company exactly once avoid the bicycle rack before the car at the shop called Boston Pewter Company finally move to the bicycle rack",
+        # "head to the clothing store called Lucy's League and then to A&F south of Historic Faneuil Hall after the clothing store called Lucy's League is visited and then to the cafe southeast of the restaurant called Salty Dog Seafood Grille & Bar after A&F south of Historic Faneuil Hall is visited and then to the clothing store called Lucy's League left of Newbury Comics after the cafe southeast of the restaurant called Salty Dog Seafood Grille & Bar is visited and then to the vendor cart behind the clocktower after the clothing store called Lucy's League left of Newbury Comics is visited",
+        # "first go to the restaurant called Wagamama then go to the bar by the bicycle rack only after the restaurant called Wagamama finally go to the Santander ATM to the right of TD Bank only after the bar by the bicycle rack",
+        "go to the coffee shop called Cafe Pulse exactly once while avoiding the park bench northeast of the restaurant called Dick's Last Resort and the Asian restaurant left of the restaurant called Ned Devines then go to the park bench northeast of the restaurant called Dick's Last Resort exactly once while avoiding the Asian restaurant left of the restaurant called Ned Devines finally go to the Asian restaurant left of the restaurant called Ned Devines",
+        # "you cannot go to other place from the park bench by the comics store unless you see the vendor cart between the Best of Boston clothing store and Boston Pewter Company",
+        # "move the ATM to the right of TD Bank then find Starbucks behind the restaurant called Ned Devines",
+        # "visit the street vendor cart in front of the coffee shop called Cafe Pulse exactly once avoid the car at the shop called Boston Pewter Company or the bicycle rack before the street vendor cart in front of the coffee shop called Cafe Pulse then reach the car at the shop called Boston Pewter Company exactly once avoid the bicycle rack before the car at the shop called Boston Pewter Company finally move to the bicycle rack",
     ]
 
     for utt in utts:
