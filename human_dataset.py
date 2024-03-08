@@ -16,7 +16,7 @@ def create_human_dataset(csv_fpath):
 
     for col_name, col_data in csv_df.items():
         if "Command" in col_name:  # column with "Command" in title refers to utterance for dataset
-            utts.extend(col_data)
+            utts.extend(col_data.strip())
     save_to_file(data="\n".join(utts), fpth=human_utts_fpath)
 
 
