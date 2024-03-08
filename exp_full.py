@@ -4,6 +4,7 @@ Full system evaluation: check lifted LTL formula and grounded propositions.
 import os
 import argparse
 import logging
+from shutil import copy2
 import spot
 
 from ground import LOC2GID
@@ -111,6 +112,7 @@ if __name__ == "__main__":
     os.makedirs(results_dpath, exist_ok=True)
     rel_embeds_fpath = os.path.join(results_dpath, f"known_rel_embeds.json")
     srer_out_fname = f"srer_outs_ablate_{args.ablate}.json" if args.ablate else f"srer_outs.json"
+    srer_out_fpath_modular = os.path.join(os.path.expanduser("~"), "ground", "results_modular", loc_id, srer_out_fname)
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
@@ -127,7 +129,10 @@ if __name__ == "__main__":
     logging.info(f"***** Full System Evaluation Dataset: {loc_id}")
 
     # Spatial Referring Expression Recognition (SRER)
-    run_exp_srer(utts_fpath, srer_out_fpath)
+    if os.path.isfile(srer_out_fpath_modular):
+        copy2(srer_out_fpath_modular, srer_out_fpath)
+    else:
+        run_exp_srer(utts_fpath, srer_out_fpath)
 
     # Referring Expression Grounding (REG)
     run_exp_reg(srer_out_fpath, graph_dpath, osm_fpath, args.topk, args.ablate, reg_out_fpath)
