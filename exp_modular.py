@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
-    parser.add_argument("--topk", type=int, default=5, help="top k most likely landmarks grounded by REG.")
+    parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
     parser.add_argument("--lt", type=str, default="t5", choices=["t5", "rag"], help="lifted translation model.")
     parser.add_argument("--nexamples", type=int, default=5, help="number of in-context examples if use RAG lifted translation model.")
     args = parser.parse_args()
