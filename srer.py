@@ -1,5 +1,6 @@
 import os
 from tqdm import tqdm
+import logging
 
 from openai_models import extract
 from utils import load_from_file, save_to_file
@@ -10,18 +11,16 @@ def parse_llm_output(utt, raw_out):
     for line in raw_out.split('\n'):
         if line.startswith("Referring Expressions:"):
             parsed_out["sres"] = eval(line.split("Referring Expressions: ")[1])
-        if line.startswith("Lifted Command:"):
-            parsed_out["lifted_utt"] = eval(line.split("Lifted Command: ")[1])
-        if line.startswith("Symbol Map:"):
-            parsed_out["lifted_symbol_map"] = eval(line.split("Symbol Map: ")[1])
         if line.startswith("Spatial Predicates: "):
             parsed_out["spatial_preds"] = eval(line.split("Spatial Predicates: ")[1])
+        if line.startswith("Lifted Command:"):
+            parsed_out["lifted_utt"] = eval(line.split("Lifted Command: ")[1])
 
-    # Map each referring expression to its corresponding spatial predicate:
+    # Map each spatial referring expression (SRE) to its corresponding spatial predicate
     parsed_out["sre_to_preds"] = {}
 
     for sre in parsed_out["sres"]:
-        found_re = False  # there may be referring expression (RE) without spatial relation
+        found_re = False  # there may be RE without spatial relation
 
         for pred in parsed_out["spatial_preds"]:
             relation, lmks = list(pred.items())[0]
@@ -36,7 +35,7 @@ def parse_llm_output(utt, raw_out):
                     parsed_out["sre_to_preds"][sre] = pred
                     found_re = True
 
-        if not found_re:  # find a referring expression (RE) without spatial relation
+        if not found_re:  # find RE without spatial relation
             parsed_out["sre_to_preds"][sre] = {}
 
     # Replace spatial referring expressions by symbols
@@ -51,9 +50,10 @@ def parse_llm_output(utt, raw_out):
     for sym, sre in (lifted_symbol_map.items()):
         lifted_utt = lifted_utt.replace(sre, sym)
 
-    if parsed_out["lifted_utt"] != lifted_utt:
-        print(f"{utt}\n{lifted_symbol_map}")
-        print(f"SRER lifted utt:\nLLM: {parsed_out['lifted_utt']}\nMAN: {lifted_utt}")
+    # if parsed_out["lifted_utt"] != lifted_utt:
+    #     logging.info(f"{utt}\n{lifted_symbol_map}")
+    #     logging.info(f"SRER lifted utt:\nLLM: {parsed_out['lifted_utt']}\nMAN: {lifted_utt}\n")
+    #     breakpoint()
     parsed_out["lifted_utt"] = lifted_utt
     parsed_out["lifted_symbol_map"] = lifted_symbol_map
     return parsed_out
