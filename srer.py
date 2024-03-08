@@ -78,11 +78,13 @@ def run_exp_srer(utts_fpath, srer_out_fpath):
 
 if __name__ == "__main__":
     utts = [
-        "go to the couch in front of the TV, the couch on the left of the kitchen counter, the table next to the door, the table in front of the whiteboard, and the table on the left of the bookshelf",
+        "you cannot go to other place from the park bench by the comics store unless you see the vendor cart between the Best of Boston clothing store and Boston Pewter Company",
+        "move the ATM to the right of TD Bank then find Starbucks behind the restaurant called Ned Devines",
+        "visit the street vendor cart in front of the coffee shop called Cafe Pulse exactly once avoid the car at the shop called Boston Pewter Company or the bicycle rack before the street vendor cart in front of the coffee shop called Cafe Pulse then reach the car at the shop called Boston Pewter Company exactly once avoid the bicycle rack before the car at the shop called Boston Pewter Company finally move to the bicycle rack",
     ]
 
     for utt in utts:
         raw_out, parsed_out = srer(utt)
 
-        print(f"{parsed_out['lifted_utt']}\n{parsed_out['spatial_preds']}")
+        print(f"{parsed_out['lifted_utt']}\n\n{parsed_out['lifted_symbol_map']}\n\n{parsed_out['sre_to_preds']}\n\n\n")
         breakpoint()
