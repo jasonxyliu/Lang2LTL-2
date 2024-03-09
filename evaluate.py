@@ -151,6 +151,10 @@ def eval_spg(true_results_fpath, topk, spg_out_fpath):
             else:
                 sp_true = true_ground_sps[sre_out][0]
 
+                if len(sps_topk_out) == 0:
+                    logging.info(f"ERROR empty spatila predicate grounding:\n{sre_out}\n{spg_ground_sps}")
+                    continue
+
                 for end_idx in range(1, topk+1):
                     for sp_out in sps_topk_out[:end_idx]:
                         if len(sp_true) != len(sp_out):
@@ -163,7 +167,7 @@ def eval_spg(true_results_fpath, topk, spg_out_fpath):
                             # if lmk_type_out != lmk_type_true or not (set(ground_out) & set(ground_true)):
                                 is_correct = False
                                 if end_idx == 1:
-                                    logging.info(f"Incorrect Top-1 SPG: \n{sre_out}\ntrue: ({lmk_type_true}) {ground_true}\npred: ({lmk_type_out}) {ground_out}")
+                                    logging.info(f"Incorrect Top-1 SPG:\n{sre_out}\ntrue: ({lmk_type_true}) {ground_true}\npred: ({lmk_type_out}) {ground_out}")
 
                         if is_correct:
                             topk2acc[end_idx] += 1
