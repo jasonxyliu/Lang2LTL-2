@@ -3,6 +3,7 @@ from collections import defaultdict
 import string
 import spot
 
+from srer import PROPS
 from utils import load_from_file
 
 
@@ -151,8 +152,8 @@ def eval_spg(true_results_fpath, topk, spg_out_fpath):
             else:
                 sp_true = true_ground_sps[sre_out][0]
 
-                if len(sps_topk_out) == 0:
-                    logging.info(f"ERROR empty spatila predicate grounding:\n{sre_out}\n{spg_ground_sps}")
+                if not sps_topk_out:
+                    logging.info(f"ERROR incorrect spatila predicate grounding size empty:\n{sre_out}\n{spg_ground_sps}")
                     continue
 
                 for end_idx in range(1, topk+1):
@@ -191,33 +192,32 @@ def eval_lt(true_results_fpath, lt_out_fpath):
         assert lt_out["utt"] == true_out["utt"], f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {lt_out['utt']}"
         logging.info(f"* Command: {lt_out['utt']}")
 
+        ltl_true, ltl_out = true_out["lifted_ltl"], lt_out["lifted_ltl"]
+
+        props_out = [prop for prop in PROPS if prop in ltl_out]
+        for prop_out, prop in zip(props_out, PROPS):  # replace out of order props, e.g., G i h X G ! a -> G i b X G ! a
+            ltl_out = ltl_out.replace(prop_out, prop)
+
         is_correct = True
-        ltl_true, ltl_out = spot.formula(true_out["lifted_ltl"]), spot.formula(lt_out["lifted_ltl"])
-
         try:
-            spot_correct = spot.are_equivalent(ltl_true, ltl_out)
+            spot_correct = spot.are_equivalent(spot.formula(ltl_out), spot.formula(ltl_true))
 
-            if not spot_correct:  # invariant to order of propositions
-                ltl_str_true, ltl_str_out = str(ltl_true), str(ltl_out)
-                prop2sre_true, prop2sre_out = {}, {}
-
-                for prop, sre in zip(true_out["props"], true_out["sre_to_preds"].keys()):
-                    ltl_str_true = ltl_str_true.replace(prop, f"<{prop}>")
-                    prop2sre_true[f"<{prop}>"] = sre
-                for prop, sre in prop2sre_true.items():
-                    ltl_str_true = ltl_str_true.replace(prop, sre.lower())
-
+            if not spot_correct and len(ltl_out) == len(ltl_true):  # invariant to order of propositions
                 if "lifted_symbol_map" in lt_out:  # exp_full input previous module
                     lifted_symbol_map = lt_out["lifted_symbol_map"]
                 else:  # exp_modular input ground truth (does not have "lifted_symbol_map" key)
                     lifted_symbol_map = {prop: sre for prop, sre in zip(lt_out["props"], lt_out["sre_to_preds"].keys())}
-                for prop, sre in lifted_symbol_map.items():
-                    ltl_str_out = ltl_str_out.replace(prop, f"<{prop}>")
-                    prop2sre_out[f"<{prop}>"] = sre
-                for prop, sre in prop2sre_out.items():
-                    ltl_str_out = ltl_str_out.replace(prop, sre.lower())
 
-                spot_correct = ltl_str_out == ltl_str_true
+                sre2prop_true = {sre.lower(): prop for prop, sre in zip(true_out["props"], true_out["sre_to_preds"].keys())}
+                prop_out2true = {f"<{prop}>": sre2prop_true[sre] for prop, sre in lifted_symbol_map.items()}
+
+                ltl_out_reorder = ltl_out
+                for prop in lifted_symbol_map.keys():
+                    ltl_out_reorder = ltl_out_reorder.replace(prop, f"<{prop}>")
+                for prop_out, prop in prop_out2true.items():
+                    ltl_out_reorder = ltl_out_reorder.replace(prop_out, prop)
+
+                spot_correct = spot.are_equivalent(spot.formula(ltl_out_reorder), spot.formula(ltl_true))
         except SyntaxError:
             is_correct = False
             logging.info(f"ERROR incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")

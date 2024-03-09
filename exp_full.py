@@ -8,7 +8,7 @@ from shutil import copy2
 import spot
 
 from ground import LOC2GID
-from srer import run_exp_srer
+from srer import PROPS, run_exp_srer
 from reg import run_exp_reg
 from spg import run_exp_spg
 from lt import run_exp_lt
@@ -28,29 +28,27 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
         logging.info(f"* Command: {sys_out['utt']}")
 
         # Lifted LTL formula
-        is_correct = True
         ltl_true, ltl_out = true_out["lifted_ltl"], sys_out["lifted_ltl"]
 
+        props_out = [prop for prop in PROPS if prop in ltl_out]
+        for prop_out, prop in zip(props_out, PROPS):  # replace out of order props, e.g., G i h X G ! a -> G i b X G ! a
+            ltl_out = ltl_out.replace(prop_out, prop)
+
+        is_correct = True
         try:
-            spot_correct = spot.are_equivalent(spot.formula(ltl_true), spot.formula(ltl_out))
+            spot_correct = spot.are_equivalent(spot.formula(ltl_out), spot.formula(ltl_true))
 
-            if not spot_correct:  # invariant to order of propositions
-                ltl_str_true, ltl_str_out = str(ltl_true), str(ltl_out)
-                prop2sre_true, prop2sre_out = {}, {}
+            if not spot_correct and len(ltl_out) == len(ltl_true):  # invariant to order of propositions
+                sre2prop_true = {sre.lower(): prop for prop, sre in zip(true_out["props"], true_out["sre_to_preds"].keys())}
+                prop_out2true = {f"<{prop}>": sre2prop_true[sre] for prop, sre in sys_out["lifted_symbol_map"].items()}
 
-                for prop, sre in zip(true_out["props"], true_out["sre_to_preds"].keys()):
-                    ltl_str_true = ltl_str_true.replace(prop, f"<{prop}>")
-                    prop2sre_true[f"<{prop}>"] = sre
-                for prop, sre in prop2sre_true.items():
-                    ltl_str_true = ltl_str_true.replace(prop, sre.lower())
+                ltl_out_reorder = ltl_out
+                for prop in sys_out["lifted_symbol_map"].keys():
+                    ltl_out_reorder = ltl_out_reorder.replace(prop, f"<{prop}>")
+                for prop_out, prop in prop_out2true.items():
+                    ltl_out_reorder = ltl_out_reorder.replace(prop_out, prop)
 
-                for prop, sre in sys_out["lifted_symbol_map"].items():
-                    ltl_str_out = ltl_str_out.replace(prop, f"<{prop}>")
-                    prop2sre_out[f"<{prop}>"] = sre
-                for prop, sre in prop2sre_out.items():
-                    ltl_str_out = ltl_str_out.replace(prop, sre.lower())
-
-                spot_correct = ltl_str_out == ltl_str_true
+                spot_correct = spot.are_equivalent(spot.formula(ltl_out_reorder), spot.formula(ltl_true))
         except SyntaxError:
             logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
             continue
@@ -63,21 +61,26 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
         true_ground_sps = true_out["grounded_sps"]
         spg_ground_sps = sys_out["grounded_sps"]
         if len(spg_ground_sps) != len(true_ground_sps):
-            logging.info(f"ERROR incorrect number of spatial referring expression:\ntrue: {true_ground_sps}\npred: {spg_ground_sps}")
+            logging.info(f"Incorrect number of spatial referring expression:\ntrue: {true_ground_sps}\npred: {spg_ground_sps}")
             continue
 
         for sre_out, sps_topk_out in spg_ground_sps.items():
             if sre_out not in true_ground_sps:
-                logging.info(f"ERROR incorrect SRE:\ntrue: {list(true_ground_sps.keys())}\nnot contain pred: {sre_out}")
+                logging.info(f"Incorrect SRE:\ntrue: {list(true_ground_sps.keys())}\nnot contain pred: {sre_out}")
                 is_correct = False
                 break
             else:
                 sp_true = true_ground_sps[sre_out][0]
+
+                if not sps_topk_out:
+                    logging.info(f"Incorrect spatila predicate grounding size empty:\n{sre_out}\n{spg_ground_sps}")
+                    continue
+
                 sp_out = sps_topk_out[0]
 
                 if len(sp_true) != len(sp_out):
                     is_correct = False
-                    logging.info(f"ERROR spatial predicates have different sizes:\n{sre_out}\ntrue: {sp_true}\npred: {sp_out}")
+                    logging.info(f"Incorrect spatial predicates size:\n{sre_out}\ntrue: {sp_true}\npred: {sp_out}")
                     break
 
                 for (lmk_type_true, ground_true), (lmk_type_out, ground_out) in zip(sp_true.items(), sp_out.items()):
@@ -89,6 +92,8 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
         if is_correct:
             ncorrects += 1
+        else:
+            logging.info("Incorrect full system output")
 
     logging.info(f"Full Accuracy: {ncorrects} / {len(true_outs)} = {ncorrects / len(true_outs)}")
 
