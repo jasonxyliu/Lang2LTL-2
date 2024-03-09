@@ -6,6 +6,9 @@ from openai_models import extract
 from utils import load_from_file, save_to_file
 
 
+PROPS = ['a', 'b', 'c', 'd', 'h', 'j', 'k']
+
+
 def parse_llm_output(utt, raw_out):
     parsed_out = {}
     for line in raw_out.split('\n'):
@@ -44,7 +47,7 @@ def parse_llm_output(utt, raw_out):
 
     # Sort SREs in reverse order of number of their spatial preds
     sre_to_preds = parsed_out["sre_to_preds"].items()
-    syms = ['a', 'b', 'c', 'd', 'h', 'i', 'j'][0: len(sre_to_preds)]
+    syms = PROPS[0: len(sre_to_preds)]
     lifted_symbol_map = {sym: sre[0].lower() for sre, sym in sorted(zip(list(sre_to_preds), syms), key=lambda kv: len(kv[0][1]), reverse=True)}
 
     for sym, sre in (lifted_symbol_map.items()):
