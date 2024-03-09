@@ -11,7 +11,7 @@ def lt(spg_out, lt_model):
     query = lifted_utt.translate(str.maketrans('', '', string.punctuation))
     lifted_ltl = lt_model.type_constrained_decode([query])[0]
     spg_out["lifted_ltl"] = lifted_ltl
-    # print(f"{lifted_utt}\n{lifted_ltl}\n")
+
 
 def run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath):
     if not os.path.isfile(lt_out_fpath):
@@ -24,7 +24,7 @@ def run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     spg_out = {
-        "lifted_utt": "go to a then go to a"
+        "lifted_utt": "you must avoid a only after you go to b"
         # "lifted_utt": "go to all of the following: a, b, and c"
     }
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
