@@ -231,7 +231,7 @@ def sort_combs(lmk_grounds):
             # Get target or anchor landmark name of the combination
             if idx == 0:  # target landmark is always the first in a combination
                 target.append(score_lmk[1])
-            else:  # SRE with 0, 1 or 2 target landmarks
+            else:  # SRE with 0, 1 or 2 anchor landmarks
                 anchor.append(score_lmk[1])
 
         combs_sorted.append({"score": joint_score, "target": target, "anchor": anchor})
