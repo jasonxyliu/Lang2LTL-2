@@ -4,6 +4,7 @@ Modular-wise Evaluation: correct input to each module, check modular output.
 import os
 import argparse
 import logging
+from shutil import copy2
 
 from ground import LOC2GID
 from srer import run_exp_srer
@@ -38,6 +39,7 @@ if __name__ == "__main__":
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_modular", loc_id)
     os.makedirs(results_dpath, exist_ok=True)
     srer_out_fname = f"srer_outs_ablate_{args.ablate}.json" if args.ablate else f"srer_outs.json"
+    srer_out_fpath_full = os.path.join(os.path.expanduser("~"), "ground", "results_full", loc_id, srer_out_fname)
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
@@ -55,7 +57,10 @@ if __name__ == "__main__":
     logging.info(f"***** Modular-wise Evaluation on Dataset: {loc_id}")
 
     if args.module == "srer" or args.module == "all":
-        run_exp_srer(utts_fpath, srer_out_fpath)
+        if os.path.isfile(srer_out_fpath_full):  # same SRER output for exp_full and exp_modular
+            copy2(srer_out_fpath_full, srer_out_fpath)
+        else:
+            run_exp_srer(utts_fpath, srer_out_fpath)
         eval_srer(true_results_fpath, srer_out_fpath)
 
     if args.module == "reg" or args.module == "all":
