@@ -203,18 +203,16 @@ def eval_lt(true_results_fpath, lt_out_fpath):
             spot_correct = spot.are_equivalent(spot.formula(ltl_out), spot.formula(ltl_true))
 
             if not spot_correct and len(ltl_out) == len(ltl_true):  # invariant to order of propositions
-                if "lifted_symbol_map" in lt_out:  # exp_full input previous module
+                if "lifted_symbol_map" in lt_out:  # exp_full input previous module, SRER
                     lifted_symbol_map = lt_out["lifted_symbol_map"]
                 else:  # exp_modular input ground truth (does not have "lifted_symbol_map" key)
                     lifted_symbol_map = {prop: sre for prop, sre in zip(lt_out["props"], lt_out["sre_to_preds"].keys())}
 
+                sre2prop_true = {sre.lower(): prop for prop, sre in zip(true_out["props"], true_out["sre_to_preds"].keys())}
+
                 try:
-                    sre2prop_true = {sre.lower(): prop for prop, sre in zip(true_out["props"], true_out["sre_to_preds"].keys())}
                     prop_out2true = {f"<{prop}>": sre2prop_true[sre.lower()] for prop, sre in lifted_symbol_map.items()}
-                except KeyError:
-                    # there is some error due to SRER:
-                    is_correct = False
-                else:
+
                     ltl_out_reorder = ltl_out
                     for prop in lifted_symbol_map.keys():
                         ltl_out_reorder = ltl_out_reorder.replace(prop, f"<{prop}>")
@@ -222,7 +220,8 @@ def eval_lt(true_results_fpath, lt_out_fpath):
                         ltl_out_reorder = ltl_out_reorder.replace(prop_out, prop)
 
                     spot_correct = spot.are_equivalent(spot.formula(ltl_out_reorder), spot.formula(ltl_true))
-
+                except KeyError:  # SRER extracted incorrect SRE
+                    spot_correct = False
         except SyntaxError:
             is_correct = False
             logging.info(f"ERROR incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
