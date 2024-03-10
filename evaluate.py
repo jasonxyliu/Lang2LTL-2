@@ -220,6 +220,7 @@ def eval_lt(true_results_fpath, lt_out_fpath):
                         ltl_out_reorder = ltl_out_reorder.replace(prop_out, prop)
 
                     spot_correct = spot.are_equivalent(spot.formula(ltl_out_reorder), spot.formula(ltl_true))
+
                 except KeyError:  # SRER extracted incorrect SRE
                     spot_correct = False
         except SyntaxError:
