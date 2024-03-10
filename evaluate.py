@@ -67,7 +67,7 @@ def eval_srer(true_results_fpath, srer_out_fpath):
             logging.info("Incorrect SRER output")
 
         logging.info("\n")
-    logging.info(f"SRER Accuracy: {ncorrects}/{len(true_outs)} = {ncorrects / len(true_outs)}\n\n")
+    logging.info(f"SRER Accuracy: {ncorrects} / {len(true_outs)} = {ncorrects / len(true_outs)}\n\n")
 
 
 def eval_reg(true_results_fpath, topk, reg_out_fpath):
