@@ -40,15 +40,20 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
             if not spot_correct and len(ltl_out) == len(ltl_true):  # invariant to order of propositions
                 sre2prop_true = {sre.lower(): prop for prop, sre in zip(true_out["props"], true_out["sre_to_preds"].keys())}
-                prop_out2true = {f"<{prop}>": sre2prop_true[sre] for prop, sre in sys_out["lifted_symbol_map"].items()}
 
-                ltl_out_reorder = ltl_out
-                for prop in sys_out["lifted_symbol_map"].keys():
-                    ltl_out_reorder = ltl_out_reorder.replace(prop, f"<{prop}>")
-                for prop_out, prop in prop_out2true.items():
-                    ltl_out_reorder = ltl_out_reorder.replace(prop_out, prop)
+                try:
+                    prop_out2true = {f"<{prop}>": sre2prop_true[sre] for prop, sre in sys_out["lifted_symbol_map"].items()}
 
-                spot_correct = spot.are_equivalent(spot.formula(ltl_out_reorder), spot.formula(ltl_true))
+                    ltl_out_reorder = ltl_out
+                    for prop in sys_out["lifted_symbol_map"].keys():
+                        ltl_out_reorder = ltl_out_reorder.replace(prop, f"<{prop}>")
+                    for prop_out, prop in prop_out2true.items():
+                        ltl_out_reorder = ltl_out_reorder.replace(prop_out, prop)
+
+                    spot_correct = spot.are_equivalent(spot.formula(ltl_out_reorder), spot.formula(ltl_true))
+
+                except KeyError:  # SRER extracted incorrect SRE
+                    spot_correct = False
         except SyntaxError:
             logging.info(f"Incorrect lifted translation Syntax Error\ntrue: {ltl_true}\npred: {ltl_out}")
             continue
