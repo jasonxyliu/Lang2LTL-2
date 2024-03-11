@@ -20,7 +20,7 @@ KNOWN_RELATIONS = [
     "between",
     "north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"
 ]
-MAX_RANGE = 60.0  # assume target within this radius of the anchor
+MAX_RANGE = 80.0  # assume target within this radius of the anchor
 DIST_TO_ANCHOR = 2.0  # distance to robot when compute a target location for SRE with only an anchor
 
 
@@ -463,7 +463,7 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
         is_pred_true = is_tar_between and dist_anchor1_to_tar <= MAX_RANGE and dist_anchor2_to_tar <= MAX_RANGE
 
         if is_pred_true:
-            print(f'    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates}')
+            # print(f'    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates}')
 
             if plot:
                 vec_a1_to_a2 = anchor_2 - anchor_1; vec_a1_to_a2 /= np.linalg.norm(vec_a1_to_a2)
@@ -515,49 +515,6 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             if is_same_dir_mean and is_between_min_max and is_within_dist:
                 is_pred_true = True
                 break
-        return is_pred_true
-
-
-        is_pred_true = False
-        range_vecs = compute_area(spatial_rel, robot, anchor, anchor_name=anchor_candidates[0], plot=False)
-
-        for range_vec in range_vecs:
-            min_pose = np.array([(range_vec["min"][0] * MAX_RANGE) + anchor["x"],
-                                 (range_vec["min"][1] * MAX_RANGE) + anchor["y"]])
-            max_pose = np.array([(range_vec["max"][0] * MAX_RANGE) + anchor["x"],
-                                 (range_vec["max"][1] * MAX_RANGE) + anchor["y"]])
-            mean_pose = np.array([(range_vec["mean"][0] * MAX_RANGE) + anchor["x"],
-                                  (range_vec["mean"][1] * MAX_RANGE) + anchor["y"]])
-
-            # -- checking:
-            #   1) where the mean range point lies w.r.t. the spatial rel line.
-            #   2) if the target position lies on the same side of the spatial rel line.
-            is_within_range = False
-
-            # Given the slope, determine which side of the line target lies
-            if (max_pose[0] - min_pose[0]) != 0:
-                slope = (max_pose[1] - min_pose[1]) / (max_pose[0] - min_pose[0])
-            else:
-                slope = (max_pose[1] - min_pose[1]) / 1.0e-25
-
-            intercept = max_pose[1] - (slope * max_pose[0])
-            computed_y_mean = (slope * mean_pose[0]) + intercept
-            computed_y_target = (slope * target["x"]) + intercept
-
-            # Source: https://math.stackexchange.com/a/324595
-            if computed_y_mean > mean_pose[1] and computed_y_target > target["y"]:
-                # print("below line")
-                is_within_range = True
-            elif computed_y_mean <= mean_pose[1] and computed_y_target <= target["y"]:
-                # print("above line")
-                is_within_range = True
-
-            dist_a2t = np.linalg.norm(np.array([target["x"], target["y"]]) - np.array([anchor["x"], anchor["y"]]))
-
-            if is_within_range and dist_a2t <= MAX_RANGE:
-                print(f"    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates[0]}")
-                is_pred_true = True
-                break
 
         if is_pred_true:
             if plot:
@@ -566,55 +523,55 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
                 plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
 
                 plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
-                plt.scatter(x=[anchor["x"]], y=[anchor["y"]], marker="o", color="orange", label="anchor")
-                plt.scatter(x=[target["x"]], y=[target["y"]], marker="o", color="green", label="target")
+                plt.scatter(x=[anchor[0]], y=[anchor[1]], marker="o", color="orange", label="anchor")
+                plt.scatter(x=[target[0]], y=[target[1]], marker="o", color="green", label="target")
 
-                plt.plot([robot["x"], anchor["x"]], [robot["y"], anchor["y"]], linestyle="dotted", c="k", label="normal")
+                plt.plot([robot["x"], anchor[0]], [robot["y"], anchor[1]], linestyle="dotted", c="k", label="normal")
 
-                plt.text(anchor["x"], anchor["y"], s=anchor_candidates[0])
-                plt.text(target["x"], target["y"], s=target_candidate)
+                plt.text(anchor[0], anchor[1], s=anchor_candidates[0])
+                plt.text(target[0], target[1], s=target_candidate)
 
                 for vec_idx, range_vec in enumerate(range_vecs):
-                    mean_pose = np.array([(range_vec["mean"][0] * MAX_RANGE) + anchor["x"],
-                                          (range_vec["mean"][1] * MAX_RANGE) + anchor["y"]])
+                    mean_pose = np.array([(range_vec["mean"][0] * MAX_RANGE) + anchor[0],
+                                          (range_vec["mean"][1] * MAX_RANGE) + anchor[1]])
                     plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c="grey", marker="x", label="mean")
 
-                    min_pose = np.array([(range_vec["min"][0] * MAX_RANGE) + anchor["x"],
-                                         (range_vec["min"][1] * MAX_RANGE) + anchor["y"]])
+                    min_pose = np.array([(range_vec["min"][0] * MAX_RANGE) + anchor[0],
+                                         (range_vec["min"][1] * MAX_RANGE) + anchor[1]])
                     plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c="r", marker="x", label="min")
 
-                    max_pose = np.array([(range_vec["max"][0] * MAX_RANGE) + anchor["x"],
-                                         (range_vec["max"][1] * MAX_RANGE) + anchor["y"]])
+                    max_pose = np.array([(range_vec["max"][0] * MAX_RANGE) + anchor[0],
+                                         (range_vec["max"][1] * MAX_RANGE) + anchor[1]])
                     plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c="b", marker="x", label="max")
 
                     if vec_idx == (len(range_vecs) - 1):
-                        plt.plot([anchor["x"], mean_pose[0]], [anchor["y"], mean_pose[1]], linestyle="dotted", c="grey", label="mean_range" )
-                        plt.plot([anchor["x"], min_pose[0]], [anchor["y"], min_pose[1]], linestyle="dotted", c="r", label="min_range")
-                        plt.plot([anchor["x"], max_pose[0]], [anchor["y"], max_pose[1]], linestyle="dotted", c="b", label="max_range")
+                        plt.plot([anchor[0], mean_pose[0]], [anchor[1], mean_pose[1]], linestyle="dotted", c="grey", label="mean_range" )
+                        plt.plot([anchor[0], min_pose[0]], [anchor[1], min_pose[1]], linestyle="dotted", c="r", label="min_range")
+                        plt.plot([anchor[0], max_pose[0]], [anchor[1], max_pose[1]], linestyle="dotted", c="b", label="max_range")
                     else:
-                        plt.plot([anchor["x"], mean_pose[0]], [anchor["y"], mean_pose[1]], linestyle="dotted", c="grey")
-                        plt.plot([anchor["x"], min_pose[0]], [anchor["y"], min_pose[1]], linestyle="dotted", c="r")
-                        plt.plot([anchor["x"], max_pose[0]], [anchor["y"], max_pose[1]], linestyle="dotted", c="b")
+                        plt.plot([anchor[0], mean_pose[0]], [anchor[1], mean_pose[1]], linestyle="dotted", c="grey")
+                        plt.plot([anchor[0], min_pose[0]], [anchor[1], min_pose[1]], linestyle="dotted", c="r")
+                        plt.plot([anchor[0], max_pose[0]], [anchor[1], max_pose[1]], linestyle="dotted", c="b")
 
                 plt.legend()
                 plt.axis("square")
                 plt.show(block=False)
-            return True
-    return False
+                plt.savefig(f"eval-spatial-pred-{spatial_rel}-{target_candidate}-{'-'.join(anchor_candidates)}.png")
+        return is_pred_true
 
 
 def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
-    print(f"***** SPG Command: {reg_out['utt']}")
+    # print(f"***** SPG Command: {reg_out['utt']}")
 
     if max_range:
         global MAX_RANGE
         MAX_RANGE = max_range
-    print(f" -> MAX_RANGE = {MAX_RANGE}\n")
+    # print(f" -> MAX_RANGE = {MAX_RANGE}\n")
 
     spg_out = {}
 
     for sre, grounded_spatial_preds in reg_out["grounded_sre_to_preds"].items():
-        print(f"Grounding SRE: {sre}")
+        # print(f"Grounding SRE: {sre}")
 
         rel_query, lmk_grounds = list(grounded_spatial_preds.items())[0]
 
@@ -631,7 +588,7 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
             if rel_query not in KNOWN_RELATIONS:
                 # Find best match for unseen spatial relation in set of known spatial relations
                 rel_match = find_match_rel(rel_query, rel_embeds_fpath)
-                print(f"UNSEEN SPATIAL RELATION:\t'{rel_query}' matched to '{rel_match}'")
+                # print(f"UNSEEN SPATIAL RELATION:\t'{rel_query}' matched to '{rel_match}'")
 
             if len(lmk_grounds) == 1:
                 # Spatial referring expression contains only a anchor landmark
@@ -653,7 +610,7 @@ def spg(landmarks, reg_out, topk, rel_embeds_fpath, max_range=None):
         spg_out[sre] = groundings
 
         plt.close("all")
-        print("\n")
+        # print("\n")
     return spg_out
 
 
