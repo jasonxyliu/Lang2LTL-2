@@ -508,8 +508,8 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
             vec_min = np.array([range_vec["min"][0], range_vec["min"][1]])
             vec_max = np.array([range_vec["max"][0], range_vec["max"][1]])
 
-            is_same_dir_mean = np.dot(vec_anc2tar, vec_mean) >= 0  # angle between anchor and mean vectors [-90, 90]
-            is_between_min_max = np.cross(vec_min, vec_anc2tar) >= 0 and np.cross(vec_max, vec_anc2tar) <= 0  # angle between anchor and min vectors [0, 180], between anchor and max vectors [-180, 0)
+            is_same_dir_mean = np.dot(vec_anc2tar, vec_mean) >= 0  # angle between target and mean vectors [-90, 90]
+            is_between_min_max = np.cross(vec_min, vec_anc2tar) >= 0 and np.cross(vec_max, vec_anc2tar) <= 0  # angle between target and min vectors [0, 180], between target and max vectors [-180, 0)
             is_within_dist = np.linalg.norm(vec_anc2tar) <= MAX_RANGE
 
             if is_same_dir_mean and is_between_min_max and is_within_dist:
