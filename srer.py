@@ -12,12 +12,15 @@ PROPS = ['a', 'b', 'c', 'd', 'h', 'j', 'k']
 def parse_llm_output(utt, raw_out):
     parsed_out = {}
     for line in raw_out.split('\n'):
-        if line.startswith("Referring Expressions:"):
-            parsed_out["sres"] = eval(line.split("Referring Expressions: ")[1])
-        if line.startswith("Spatial Predicates: "):
-            parsed_out["spatial_preds"] = eval(line.split("Spatial Predicates: ")[1])
-        if line.startswith("Lifted Command:"):
-            parsed_out["lifted_utt"] = eval(line.split("Lifted Command: ")[1])
+        try:
+            if line.startswith("Referring Expressions:"):
+                parsed_out["sres"] = eval(line.split("Referring Expressions: ")[1])
+            if line.startswith("Spatial Predicates: "):
+                parsed_out["spatial_preds"] = eval(line.split("Spatial Predicates: ")[1])
+            if line.startswith("Lifted Command:"):
+                parsed_out["lifted_utt"] = eval(line.split("Lifted Command: ")[1])
+        except Exception as e:
+            logging.info(f"ERROR in LLM out: {line}\n{e}")
 
     # Map each spatial referring expression (SRE) to its corresponding spatial predicate
     parsed_out["sre_to_preds"] = {}
