@@ -91,7 +91,7 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate, in_cache_fpath):
         os.makedirs(img_embed_dpath, exist_ok=True)
 
         img_dpath = os.path.join(graph_dpath, "images")  # SLAM
-        img_fpaths = sorted([os.path.join(img_dpath, fname) for fname in os.listdir(img_dpath) if ".png" in fname])
+        img_fpaths = sorted([os.path.join(img_dpath, fname) for fname in os.listdir(img_dpath) if ".jpg" in fname or ".png" in fname])
         img_embeds = embed_images(img_fpaths, img_cap_dpath, img_embed_dpath)
 
     if not ablate or ablate == "image":
