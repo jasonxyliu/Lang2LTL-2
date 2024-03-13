@@ -32,7 +32,7 @@ def split_true_lmk_grounds(lmks_fpath, loc, sp_fpath, res_fpath):
     save_to_file(res, res_fpath)
 
 
-def generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsamples, seed):
+def construct_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsamples, seed):
     """
     Generate input utterances and ground truth results for each grounding module.
     """
@@ -171,4 +171,4 @@ if __name__ == "__main__":
         split_true_lmk_grounds(lmks_fpath, args.loc, sp_fpath, res_fpath)
 
     if not os.path.isfile(utts_fpath) or not os.path.isfile(outs_fpath):
-        generate_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, args.nsamples, args.seed)
+        construct_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, args.nsamples, args.seed)
