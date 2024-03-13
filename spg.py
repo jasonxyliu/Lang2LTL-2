@@ -461,34 +461,34 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
 
         is_pred_true = is_tar_between and dist_anchor1_to_tar <= MAX_RANGE and dist_anchor2_to_tar <= MAX_RANGE
 
-        if is_pred_true:
+        # if is_pred_true:
             # print(f'    - VALID LANDMARKS:\ttarget:{target_candidate}\tanchor:{anchor_candidates}')
 
-            if plot:
-                vec_a1_to_a2 = anchor_2 - anchor_1; vec_a1_to_a2 /= np.linalg.norm(vec_a1_to_a2)
-                A, B = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_1, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_1
-                C, D = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_2, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_2
+        if plot:
+            vec_a1_to_a2 = anchor_2 - anchor_1; vec_a1_to_a2 /= np.linalg.norm(vec_a1_to_a2)
+            A, B = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_1, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_1
+            C, D = rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(-90)) + anchor_2, rotate(vec_a1_to_a2 * MAX_RANGE, np.deg2rad(90)) + anchor_2
 
-                plt.figure(figsize=(10,6))
-                plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchors:{anchor_candidates})")
+            plt.figure(figsize=(10,6))
+            plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchors:{anchor_candidates})")
 
-                plt.scatter(x=[target[0]], y=[target[1]], marker='o', color='green', label='target')
-                plt.scatter(x=[anchor_1[0]], y=[anchor_1[1]], marker='o', color='orange', label='anchor_1')
-                plt.scatter(x=[anchor_2[0]], y=[anchor_2[1]], marker='o', color='orange', label='anchor_2')
+            plt.scatter(x=[target[0]], y=[target[1]], marker='o', color='green', label='target')
+            plt.scatter(x=[anchor_1[0]], y=[anchor_1[1]], marker='o', color='orange', label='anchor_1')
+            plt.scatter(x=[anchor_2[0]], y=[anchor_2[1]], marker='o', color='orange', label='anchor_2')
 
-                plt.plot([A[0], anchor_1[0]], [A[1], anchor_1[1]], linestyle='dotted', c='r')
-                plt.plot([C[0], anchor_2[0]], [C[1], anchor_2[1]], linestyle='dotted', c='b')
-                plt.plot([B[0], anchor_1[0]], [B[1], anchor_1[1]], linestyle='dotted', c='r')
-                plt.plot([D[0], anchor_2[0]], [D[1], anchor_2[1]], linestyle='dotted', c='b')
-                plt.plot([anchor_1[0], anchor_2[0]], [anchor_1[1], anchor_2[1]], linestyle='dotted', c='black')
+            plt.plot([A[0], anchor_1[0]], [A[1], anchor_1[1]], linestyle='dotted', c='r')
+            plt.plot([C[0], anchor_2[0]], [C[1], anchor_2[1]], linestyle='dotted', c='b')
+            plt.plot([B[0], anchor_1[0]], [B[1], anchor_1[1]], linestyle='dotted', c='r')
+            plt.plot([D[0], anchor_2[0]], [D[1], anchor_2[1]], linestyle='dotted', c='b')
+            plt.plot([anchor_1[0], anchor_2[0]], [anchor_1[1], anchor_2[1]], linestyle='dotted', c='black')
 
-                plt.text(x=target[0], y=target[1], s=target_candidate)
-                plt.text(x=anchor_1[0], y=anchor_1[1], s=anchor_candidates[0])
-                plt.text(x=anchor_2[0], y=anchor_2[1], s=anchor_candidates[1])
+            plt.text(x=target[0], y=target[1], s=target_candidate)
+            plt.text(x=anchor_1[0], y=anchor_1[1], s=anchor_candidates[0])
+            plt.text(x=anchor_2[0], y=anchor_2[1], s=anchor_candidates[1])
 
-                plt.axis('square')
-                plt.show(block=False)
-                plt.savefig(f"eval-spatial-pred-{spatial_rel}-{target_candidate}-{'-'.join(anchor_candidates)}.png")
+            plt.axis('square')
+            plt.show(block=False)
+            plt.savefig(f"eval-spatial-pred-{spatial_rel}-{target_candidate}-{'-'.join(anchor_candidates)}.png")
         return is_pred_true
     else:
         try:
@@ -515,47 +515,46 @@ def eval_spatial_pred(landmarks, spatial_rel, target_candidate, anchor_candidate
                 is_pred_true = True
                 break
 
-        if is_pred_true:
-            if plot:
-                # Plot the computed vector range
-                plt.figure(figsize=(10,6))
-                plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
+        if plot:
+            # Plot the computed vector range
+            plt.figure(figsize=(10,6))
+            plt.title(f"Grounding SRE: {sre}\n(Target:{target_candidate}, Anchor:{anchor_candidates})")
 
-                plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
-                plt.scatter(x=[anchor[0]], y=[anchor[1]], marker="o", color="orange", label="anchor")
-                plt.scatter(x=[target[0]], y=[target[1]], marker="o", color="green", label="target")
+            plt.scatter(x=[robot["x"]], y=[robot["y"]], marker="o", color="yellow", label="robot")
+            plt.scatter(x=[anchor[0]], y=[anchor[1]], marker="o", color="orange", label="anchor")
+            plt.scatter(x=[target[0]], y=[target[1]], marker="o", color="green", label="target")
 
-                plt.plot([robot["x"], anchor[0]], [robot["y"], anchor[1]], linestyle="dotted", c="k", label="normal")
+            plt.plot([robot["x"], anchor[0]], [robot["y"], anchor[1]], linestyle="dotted", c="k", label="normal")
 
-                plt.text(anchor[0], anchor[1], s=anchor_candidates[0])
-                plt.text(target[0], target[1], s=target_candidate)
+            plt.text(anchor[0], anchor[1], s=anchor_candidates[0])
+            plt.text(target[0], target[1], s=target_candidate)
 
-                for vec_idx, range_vec in enumerate(range_vecs):
-                    mean_pose = np.array([(range_vec["mean"][0] * MAX_RANGE) + anchor[0],
-                                          (range_vec["mean"][1] * MAX_RANGE) + anchor[1]])
-                    plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c="grey", marker="x", label="mean")
+            for vec_idx, range_vec in enumerate(range_vecs):
+                mean_pose = np.array([(range_vec["mean"][0] * MAX_RANGE) + anchor[0],
+                                        (range_vec["mean"][1] * MAX_RANGE) + anchor[1]])
+                plt.scatter(x=[mean_pose[0]], y=[mean_pose[1]], c="grey", marker="x", label="mean")
 
-                    min_pose = np.array([(range_vec["min"][0] * MAX_RANGE) + anchor[0],
-                                         (range_vec["min"][1] * MAX_RANGE) + anchor[1]])
-                    plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c="r", marker="x", label="min")
+                min_pose = np.array([(range_vec["min"][0] * MAX_RANGE) + anchor[0],
+                                        (range_vec["min"][1] * MAX_RANGE) + anchor[1]])
+                plt.scatter(x=[min_pose[0]], y=[min_pose[1]], c="r", marker="x", label="min")
 
-                    max_pose = np.array([(range_vec["max"][0] * MAX_RANGE) + anchor[0],
-                                         (range_vec["max"][1] * MAX_RANGE) + anchor[1]])
-                    plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c="b", marker="x", label="max")
+                max_pose = np.array([(range_vec["max"][0] * MAX_RANGE) + anchor[0],
+                                        (range_vec["max"][1] * MAX_RANGE) + anchor[1]])
+                plt.scatter(x=[max_pose[0]], y=[max_pose[1]], c="b", marker="x", label="max")
 
-                    if vec_idx == (len(range_vecs) - 1):
-                        plt.plot([anchor[0], mean_pose[0]], [anchor[1], mean_pose[1]], linestyle="dotted", c="grey", label="mean_range" )
-                        plt.plot([anchor[0], min_pose[0]], [anchor[1], min_pose[1]], linestyle="dotted", c="r", label="min_range")
-                        plt.plot([anchor[0], max_pose[0]], [anchor[1], max_pose[1]], linestyle="dotted", c="b", label="max_range")
-                    else:
-                        plt.plot([anchor[0], mean_pose[0]], [anchor[1], mean_pose[1]], linestyle="dotted", c="grey")
-                        plt.plot([anchor[0], min_pose[0]], [anchor[1], min_pose[1]], linestyle="dotted", c="r")
-                        plt.plot([anchor[0], max_pose[0]], [anchor[1], max_pose[1]], linestyle="dotted", c="b")
+                if vec_idx == (len(range_vecs) - 1):
+                    plt.plot([anchor[0], mean_pose[0]], [anchor[1], mean_pose[1]], linestyle="dotted", c="grey", label="mean_range" )
+                    plt.plot([anchor[0], min_pose[0]], [anchor[1], min_pose[1]], linestyle="dotted", c="r", label="min_range")
+                    plt.plot([anchor[0], max_pose[0]], [anchor[1], max_pose[1]], linestyle="dotted", c="b", label="max_range")
+                else:
+                    plt.plot([anchor[0], mean_pose[0]], [anchor[1], mean_pose[1]], linestyle="dotted", c="grey")
+                    plt.plot([anchor[0], min_pose[0]], [anchor[1], min_pose[1]], linestyle="dotted", c="r")
+                    plt.plot([anchor[0], max_pose[0]], [anchor[1], max_pose[1]], linestyle="dotted", c="b")
 
-                plt.legend()
-                plt.axis("square")
-                plt.show(block=False)
-                plt.savefig(f"eval-spatial-pred-{spatial_rel}-{target_candidate}-{'-'.join(anchor_candidates)}.png")
+            plt.legend()
+            plt.axis("square")
+            plt.show(block=False)
+            plt.savefig(f"eval-spatial-pred-{spatial_rel}-{target_candidate}-{'-'.join(anchor_candidates)}.png")
         return is_pred_true
 
 
