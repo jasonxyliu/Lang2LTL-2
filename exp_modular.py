@@ -19,9 +19,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--module", type=str, default="all", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
     parser.add_argument("--loc", type=str, default="boston", choices=["blackstone", "boston", "auckland", "san_francisco"], help="domain name.")
-    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both")
+    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all.")
-    parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
+    parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
     parser.add_argument("--lt", type=str, default="t5", choices=["t5", "rag"], help="lifted translation model.")
     parser.add_argument("--nexamples", type=int, default=5, help="number of in-context examples if use RAG lifted translation model.")
@@ -53,15 +53,19 @@ if __name__ == "__main__":
                             logging.StreamHandler()
                         ]
     )
-    logging.info(f"***** Modular-wise Evaluation Ablate {args.ablate}: {loc_id}" if args.ablate else f"***** Modular-wise Evaluation: {loc_id}")
+    logging.info(f"***** Modular-wise Evaluation Ablate {args.ablate}: {loc_id}" if args.ablate else f"***** Modular-wise Evaluation: {loc_id}\n")
+    logging.info(f"{graph_dpath}\n{osm_fpath}\n{utts_fpath}\n{true_results_fpath}\n{results_dpath}")
 
     if args.module == "srer" or args.module == "all":
         srer_out_fpath_full = os.path.join(os.path.expanduser("~"), "ground", f"results_full_ablate_{args.ablate}" if args.ablate else "results_full", loc_id, srer_out_fname)
-        srer_out_fpath_ablate = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image" if args.ablate == "text" else "results_full_ablate_text", loc_id, srer_out_fname)
-        if os.path.isfile(srer_out_fpath_full):  # same SRER output for exp_full and exp_modular
+        srer_out_fpath_ablate_txt = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_text", loc_id, srer_out_fname)
+        srer_out_fpath_ablate_img = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image", loc_id, srer_out_fname)
+        if not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_full):  # same SRER output for exp_full, exp_modular and ablate text
             copy2(srer_out_fpath_full, srer_out_fpath)
-        elif os.path.isfile(srer_out_fpath_ablate):  # same SRER output for ablate text and ablate image
-            copy2(srer_out_fpath_ablate, srer_out_fpath)
+        elif not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
+            copy2(srer_out_fpath_ablate_txt, srer_out_fpath)
+        elif not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_ablate_img):
+            copy2(srer_out_fpath_ablate_img, srer_out_fpath)
         else:
             run_exp_srer(utts_fpath, srer_out_fpath)
         eval_srer(true_results_fpath, srer_out_fpath)
