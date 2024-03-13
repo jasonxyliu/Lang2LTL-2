@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
     graph_dpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate" if args.ablte else LOC2GID[args.loc])
-    osm_fpath = os.path.join(data_dpath, "osm_ablate" if args.ablate == "image" else "osm", f"{args.loc}.json")
+    osm_fpath = os.path.join(data_dpath, "osm_ablate" if args.ablate else "osm", f"{args.loc}.json")
     utts_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablte else f"{args.loc}", f"{loc_id}_utts.txt")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     rel_embeds_fpath = os.path.join(data_dpath, f"known_rel_embeds.json")
