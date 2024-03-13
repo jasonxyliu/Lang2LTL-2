@@ -72,7 +72,7 @@ def split_true_lmk_grounds(loc, lmks_fpath, obj_fpath, sp_fpath, res_fpath):
     save_to_file(res, res_fpath)
 
 
-def construct_dataset(ltl_fpath, obj_fpath, osm_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsamples, seed):
+def construct_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, nsamples, seed):
     """
     Generate input utterances and ground truth results for each grounding module.
     """
@@ -199,7 +199,7 @@ def construct_utt(modality, data, sp_grounds_all, res_all, utts, true_outs, ltl_
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--loc", type=str, default="providence", choices=["providence", "boston", "auckland", "san_francisco"], help="domain name.")
-    parser.add_argument("--nsamples", type=int, default=3, help="number of sample utts per LTL formula or None for all.")
+    parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all.")
     parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 111 (resreved for ablate)
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
@@ -225,11 +225,9 @@ if __name__ == "__main__":
     )
     logging.info(f"Generating dataset location: {args.loc}\n***** Dataset Statisitcs\n")
 
-    # obj_ids = sorted([Path(fname).stem for fname in os.listdir(img_dpath) if ".png" in fname or ".jpg" in fname])
+    if not os.path.isfile(sp_fpath) or not os.path.isfile(res_fpath):
+        lmks_fpath = os.path.join(dataset_dpath, f"true_lmk_grounds_ablate.json")
+        split_true_lmk_grounds(args.loc, lmks_fpath, obj_fpath, sp_fpath, res_fpath)
 
-    # if not os.path.isfile(sp_fpath) or not os.path.isfile(res_fpath):
-    lmks_fpath = os.path.join(dataset_dpath, f"true_lmk_grounds_ablate.json")
-    split_true_lmk_grounds(args.loc, lmks_fpath, obj_fpath, sp_fpath, res_fpath)
-
-    # if not os.path.isfile(utts_fpath) or not os.path.isfile(outs_fpath):
-    construct_dataset(ltl_fpath, obj_fpath, osm_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, args.nsamples, args.seed)
+    if not os.path.isfile(utts_fpath) or not os.path.isfile(outs_fpath):
+        construct_dataset(ltl_fpath, sp_fpath, res_fpath, utts_fpath, outs_fpath, args.nsamples, args.seed)
