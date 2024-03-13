@@ -151,8 +151,7 @@ def create_waypoints(obj_fpath, crs):
     if "waypoint_0" in objects:
         robot = objects["waypoint_0"]
     else:
-        print(" >> ERROR: missing robot coordinates. Check obj_fpath file")
-        exit()
+        raise KeyError(" >> ERROR: missing robot coordinates. Check obj_fpath file")
 
     if "lat" in list(objects.values())[0]:
         # Convert locations of objects from geographic to Cartesian coordinates if not provided as Cartesian
