@@ -172,6 +172,7 @@ def eval_spg(true_results_fpath, topk, spg_out_fpath):
 
                         if is_correct:
                             topk2acc[end_idx] += 1
+                            break
         logging.info("\n")
 
     for idx in range(1, topk+1):
