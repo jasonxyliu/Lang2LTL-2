@@ -39,7 +39,6 @@ if __name__ == "__main__":
     results_dpath = os.path.join(os.path.expanduser("~"), "ground", f"results_modular_ablate_{args.ablate}" if args.ablate else "results_modular", loc_id)
     os.makedirs(results_dpath, exist_ok=True)
     srer_out_fname = "srer_outs.json"
-    srer_out_fpath_full = os.path.join(os.path.expanduser("~"), "ground", f"results_full_ablate_{args.ablate}" if args.ablate else "results_full", loc_id, srer_out_fname)
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
@@ -57,8 +56,12 @@ if __name__ == "__main__":
     logging.info(f"***** Modular-wise Evaluation Ablate {args.ablate}: {loc_id}" if args.ablate else f"***** Modular-wise Evaluation: {loc_id}")
 
     if args.module == "srer" or args.module == "all":
+        srer_out_fpath_full = os.path.join(os.path.expanduser("~"), "ground", f"results_full_ablate_{args.ablate}" if args.ablate else "results_full", loc_id, srer_out_fname)
+        srer_out_fpath_ablate = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image" if args.ablate == "text" else "results_full_ablate_text", loc_id, srer_out_fname)
         if os.path.isfile(srer_out_fpath_full):  # same SRER output for exp_full and exp_modular
             copy2(srer_out_fpath_full, srer_out_fpath)
+        elif os.path.isfile(srer_out_fpath_ablate):  # same SRER output for ablate text and ablate image
+            copy2(srer_out_fpath_ablate, srer_out_fpath)
         else:
             run_exp_srer(utts_fpath, srer_out_fpath)
         eval_srer(true_results_fpath, srer_out_fpath)
