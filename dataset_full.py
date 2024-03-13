@@ -25,7 +25,7 @@ def split_true_lmk_grounds(lmks_fpath, loc, sp_fpath, res_fpath):
                     sp_grounds["None"].append(lmk)
             elif "@" in ground:  # ambiguous referring expression if used without anchor
                 res[lmk]["generic_names"].append(ground["@"])
-            else:  # spatial predicate grounding
+            else:  # referring expression grounding
                 rel = list(ground.keys())[0]
                 sp_grounds[rel].append(ground[rel])
     save_to_file(sp_grounds, sp_fpath)
