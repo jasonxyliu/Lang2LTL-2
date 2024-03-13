@@ -30,31 +30,31 @@ if __name__ == "__main__":
     lt_id = f"lt-{args.lt}{args.nexamples}" if args.lt == "rag" else f"{args.lt}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.loc])
-    osm_fpath = os.path.join(data_dpath, "osm", f"{args.loc}.json")
-    utts_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_utts.txt")
+    graph_dpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate" if args.ablte == "text" else LOC2GID[args.loc])
+    osm_fpath = os.path.join(data_dpath, "osm_ablate" if args.ablate == "image" else "osm", f"{args.loc}.json")
+    utts_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablte else f"{args.loc}", f"{loc_id}_utts.txt")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     rel_embeds_fpath = os.path.join(data_dpath, f"known_rel_embeds.json")
     reg_in_cache_fpath = os.path.join(data_dpath, f"reg_in_cache_{args.loc}.pkl")
-    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_modular", loc_id)
+    results_dpath = os.path.join(os.path.expanduser("~"), "ground", f"results_modular_ablate_{args.ablate}" if args.ablate else "results_modular", loc_id)
     os.makedirs(results_dpath, exist_ok=True)
-    srer_out_fname = f"srer_outs_ablate_{args.ablate}.json" if args.ablate else f"srer_outs.json"
-    srer_out_fpath_full = os.path.join(os.path.expanduser("~"), "ground", "results_full", loc_id, srer_out_fname)
+    srer_out_fname = "srer_outs.json"
+    srer_out_fpath_full = os.path.join(os.path.expanduser("~"), "ground", f"results_full_ablate_{args.ablate}" if args.ablate else "results_full", loc_id, srer_out_fname)
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", f"lt-{lt_id}"))
-    true_results_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_true_results.json")
+    true_results_fpath = os.path.join(data_dpath, "dataset",f"{args.loc}_ablate" if args.ablate else f"{args.loc}", f"{loc_id}_true_results.json")
     ltl_fpath = os.path.join(data_dpath, "dataset", "ltl_samples_sorted.csv")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(results_dpath, f"eval_results_{args.module}.log"), mode='w'),
+                            logging.FileHandler(os.path.join(results_dpath, f"eval_results_modular_{args.module}.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
-    logging.info(f"***** Modular-wise Evaluation on Dataset: {loc_id}")
+    logging.info(f"***** Modular-wise Evaluation Ablate {args.ablate}: {loc_id}" if args.ablate else f"***** Modular-wise Evaluation: {loc_id}")
 
     if args.module == "srer" or args.module == "all":
         if os.path.isfile(srer_out_fpath_full):  # same SRER output for exp_full and exp_modular

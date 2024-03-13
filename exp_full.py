@@ -105,39 +105,39 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--loc", type=str, default="boston", choices=["blackstone", "boston", "auckland", "san_francisco"], help="env name.")
-    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
-    parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all")
-    parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
+    parser.add_argument("--loc", type=str, default="blackstone", choices=["blackstone", "boston", "auckland", "san_francisco"], help="env name.")
+    parser.add_argument("--ablate", type=str, default="text", choices=["text", "image", None], help="ablate out a modality or None to use both.")
+    parser.add_argument("--nsamples", type=int, default=3, help="number of sample utts per LTL formula or None for all")
+    parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate") if args.ablte else os.path.join(data_dpath, "maps", LOC2GID[args.loc])
-    osm_fpath = os.path.join(data_dpath, "osm", f"{args.loc}_ablate.json") if args.ablate else os.path.join(data_dpath, "osm", f"{args.loc}.json")
-    utts_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_utts.txt")
+    graph_dpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate" if args.ablate == "text" else LOC2GID[args.loc])
+    osm_fpath = os.path.join(data_dpath, "osm_ablate" if args.ablate == "image" else "osm", f"{args.loc}.json")
+    utts_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablate else f"{args.loc}", f"{loc_id}_utts.txt")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     rel_embeds_fpath = os.path.join(data_dpath, f"known_rel_embeds.json")
     reg_in_cache_fpath = os.path.join(data_dpath, f"reg_in_cache_{args.loc}.pkl")
-    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_full", loc_id)
+    results_dpath = os.path.join(os.path.expanduser("~"), "ground", f"results_full_ablate_{args.ablate}" if args.ablate else "results_full", loc_id)
     os.makedirs(results_dpath, exist_ok=True)
-    srer_out_fname = f"srer_outs_ablate_{args.ablate}.json" if args.ablate else f"srer_outs.json"
-    srer_out_fpath_modular = os.path.join(os.path.expanduser("~"), "ground", "results_modular", loc_id, srer_out_fname)
+    srer_out_fname = "srer_outs.json"
+    srer_out_fpath_modular = os.path.join(os.path.expanduser("~"), "ground", f"results_modular_ablate_{args.ablate}" if args.ablate else "results_modular", loc_id, srer_out_fname)
     srer_out_fpath = os.path.join(results_dpath, srer_out_fname)
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "lt"))
-    true_results_fpath = os.path.join(data_dpath, "dataset", args.loc, f"{loc_id}_true_results.json")
+    true_results_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablate else f"{args.loc}", f"{loc_id}_true_results.json")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(results_dpath, f"eval_results_full.log"), mode='w'),
+                            logging.FileHandler(os.path.join(results_dpath, "eval_results_full.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
-    logging.info(f"***** Full System Evaluation Dataset: {loc_id}")
+    logging.info(f"***** Full System Evaluation Ablate {args.ablate}: {loc_id}" if args.ablate else f"***** Full System Evaluation: {loc_id}")
 
     # Spatial Referring Expression Recognition (SRER)
     if os.path.isfile(srer_out_fpath_modular):  # same SRER output for exp_full and exp_modular
