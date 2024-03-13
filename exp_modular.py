@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--module", type=str, default="all", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
     parser.add_argument("--loc", type=str, default="boston", choices=["blackstone", "boston", "auckland", "san_francisco"], help="domain name.")
-    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", None], help="ablate out a modality or None to use both.")
+    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", "both", None], help="ablate out a modality.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all.")
     parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
@@ -62,9 +62,9 @@ if __name__ == "__main__":
         srer_out_fpath_ablate_img = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image", loc_id, srer_out_fname)
         if not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_full):  # same SRER output for exp_full, exp_modular and ablate text
             copy2(srer_out_fpath_full, srer_out_fpath)
-        elif not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
+        elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
             copy2(srer_out_fpath_ablate_txt, srer_out_fpath)
-        elif not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_ablate_img):
+        elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_img):
             copy2(srer_out_fpath_ablate_img, srer_out_fpath)
         else:
             run_exp_srer(utts_fpath, srer_out_fpath)

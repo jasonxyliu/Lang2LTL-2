@@ -84,7 +84,7 @@ class REG():
 def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate, in_cache_fpath):
     img_embeds, txt_embeds = None, None
 
-    if not ablate or ablate == "text":
+    if not ablate or ablate == "both" or ablate == "text":
         img_cap_dpath = os.path.join(graph_dpath, "image_captions")
         os.makedirs(img_cap_dpath, exist_ok=True)
         img_embed_dpath = os.path.join(graph_dpath, "image_embeds")
@@ -94,7 +94,7 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate, in_cache_fpath):
         img_fpaths = sorted([os.path.join(img_dpath, fname) for fname in os.listdir(img_dpath) if ".jpg" in fname or ".png" in fname])
         img_embeds = embed_images(img_fpaths, img_cap_dpath, img_embed_dpath)
 
-    if not ablate or ablate == "image":
+    if not ablate or  ablate == "both" or ablate == "image":
         txt_embed_dpath = os.path.join(graph_dpath, "text_embeds")
         os.makedirs(txt_embed_dpath, exist_ok=True)
 

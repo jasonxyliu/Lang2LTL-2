@@ -106,7 +106,7 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--loc", type=str, default="providence", choices=["providence", "boston", "auckland", "san_francisco"], help="env name.")
-    parser.add_argument("--ablate", type=str, default="text", choices=["text", "image", None], help="ablate out a modality or None to use both.")
+    parser.add_argument("--ablate", type=str, default="both", choices=["text", "image", "both", None], help="ablate out a modality.")
     parser.add_argument("--nsamples", type=int, default=3, help="number of sample utts per LTL formula or None for all")
     parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
@@ -145,9 +145,9 @@ if __name__ == "__main__":
     srer_out_fpath_ablate_img = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image", loc_id, srer_out_fname)
     if not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_modular):  # same SRER output for exp_full and  exp_modular
         copy2(srer_out_fpath_modular, srer_out_fpath)
-    elif not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
+    elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
         copy2(srer_out_fpath_ablate_txt, srer_out_fpath)
-    elif not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_ablate_img):
+    elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_img):
         copy2(srer_out_fpath_ablate_img, srer_out_fpath)
     else:
         run_exp_srer(utts_fpath, srer_out_fpath)
