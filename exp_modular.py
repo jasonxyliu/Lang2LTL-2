@@ -53,8 +53,8 @@ if __name__ == "__main__":
                             logging.StreamHandler()
                         ]
     )
-    logging.info(f"***** Modular-wise Evaluation Ablate {args.ablate}: {loc_id}" if args.ablate else f"***** Modular-wise Evaluation: {loc_id}\n")
-    logging.info(f"{graph_dpath}\n{osm_fpath}\n{utts_fpath}\n{true_results_fpath}\n{results_dpath}")
+    logging.info(f"***** Modular-wise Evaluation Ablate {args.ablate}: {loc_id}\n" if args.ablate else f"***** Modular-wise Evaluation: {loc_id}\n")
+    logging.info(f"{graph_dpath}\n{osm_fpath}\n{utts_fpath}\n{true_results_fpath}\n{results_dpath}\n")
 
     if args.module == "srer" or args.module == "all":
         srer_out_fpath_full = os.path.join(os.path.expanduser("~"), "ground", f"results_full_ablate_{args.ablate}" if args.ablate else "results_full", loc_id, srer_out_fname)

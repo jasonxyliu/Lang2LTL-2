@@ -136,8 +136,8 @@ if __name__ == "__main__":
                             logging.StreamHandler()
                         ]
     )
-    logging.info(f"***** Full System Evaluation Ablate {args.ablate}: {loc_id}" if args.ablate else f"***** Full System Evaluation: {loc_id}")
-    logging.info(f"{graph_dpath}\n{osm_fpath}\n{utts_fpath}\n{true_results_fpath}\n{results_dpath}")
+    logging.info(f"***** Full System Evaluation Ablate {args.ablate}: {loc_id}\n" if args.ablate else f"***** Full System Evaluation: {loc_id}\n")
+    logging.info(f"{graph_dpath}\n{osm_fpath}\n{utts_fpath}\n{true_results_fpath}\n{results_dpath}\n")
 
     # Spatial Referring Expression Recognition (SRER)
     srer_out_fpath_modular = os.path.join(os.path.expanduser("~"), "ground", f"results_modular_ablate_{args.ablate}" if args.ablate else "results_modular", loc_id, srer_out_fname)
