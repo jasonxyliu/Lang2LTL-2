@@ -200,7 +200,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--loc", type=str, default="providence", choices=["providence", "boston", "auckland", "san_francisco"], help="domain name.")
     parser.add_argument("--nsamples", type=int, default=3, help="number of sample utts per LTL formula or None for all.")
-    parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")
+    parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 111 (resreved for ablate)
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
 
