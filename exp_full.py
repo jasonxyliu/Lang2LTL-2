@@ -114,7 +114,7 @@ if __name__ == "__main__":
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate" if args.ablate == "text" else LOC2GID[args.loc])
+    graph_dpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate" if args.ablate else LOC2GID[args.loc])
     osm_fpath = os.path.join(data_dpath, "osm_ablate" if args.ablate == "image" else "osm", f"{args.loc}.json")
     utts_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablate else f"{args.loc}", f"{loc_id}_utts.txt")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
