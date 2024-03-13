@@ -198,7 +198,7 @@ def construct_utt(modality, data, sp_grounds_all, res_all, utts, true_outs, ltl_
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--loc", type=str, default="providence", choices=["providence", "boston", "auckland", "san_francisco"], help="domain name.")
+    parser.add_argument("--loc", type=str, default="providence", choices=["providence", "auckland", "boston", "san_francisco"], help="domain name.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all.")
     parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 111 (resreved for ablate)
     args = parser.parse_args()
