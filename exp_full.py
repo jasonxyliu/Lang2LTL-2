@@ -128,7 +128,7 @@ if __name__ == "__main__":
     reg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "reg"))
     spg_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "spg"))
     lt_out_fpath = os.path.join(results_dpath, srer_out_fname.replace("srer", "lt"))
-    true_results_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablate else f"{args.loc}", f"{loc_id}_true_results.json")
+    true_results_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablate else "args.loc", f"{loc_id}_true_results.json")
 
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
