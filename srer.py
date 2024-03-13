@@ -28,21 +28,24 @@ def parse_llm_output(utt, raw_out):
     for sre in parsed_out["sres"]:
         found_re = False  # there may be RE without spatial relation
 
-        for pred in parsed_out["spatial_preds"]:
-            relation, lmks = list(pred.items())[0]
-
-            if relation in sre:
-                num_matches = 0
-                for lmk in lmks:
-                    if lmk in sre:
-                        num_matches += 1
-
-                if len(lmks) == num_matches:
-                    parsed_out["sre_to_preds"][sre] = pred
-                    found_re = True
-
-        if not found_re:  # find RE without spatial relation
+        if "spatial_preds" not in parsed_out:
             parsed_out["sre_to_preds"][sre] = {}
+        else:
+            for pred in parsed_out["spatial_preds"]:
+                relation, lmks = list(pred.items())[0]
+
+                if relation in sre:
+                    num_matches = 0
+                    for lmk in lmks:
+                        if lmk in sre:
+                            num_matches += 1
+
+                    if len(lmks) == num_matches:
+                        parsed_out["sre_to_preds"][sre] = pred
+                        found_re = True
+
+            if not found_re:  # find RE without spatial relation
+                parsed_out["sre_to_preds"][sre] = {}
 
     # Replace spatial referring expressions by symbols
     lifted_utt = utt.lower()
@@ -84,9 +87,10 @@ def run_exp_srer(utts_fpath, srer_out_fpath):
 
 if __name__ == "__main__":
     utts = [
+        "the vegetarian restaurant on the left side of the restaurant called Moon Star, the restaurant called Garden Grille southwest of the bakery called Wildflour, the bakery called Wildflour to the right of the restaurant called Moon Star, the vegetarian restaurant on the right of the pizza restaurant, and Garden Grille Cafe adjacent to the Wildflour cafe cannot be visited at any time",
         # "head to the clothing store called Lucy's League and then to A&F south of Historic Faneuil Hall after the clothing store called Lucy's League is visited and then to the cafe southeast of the restaurant called Salty Dog Seafood Grille & Bar after A&F south of Historic Faneuil Hall is visited and then to the clothing store called Lucy's League left of Newbury Comics after the cafe southeast of the restaurant called Salty Dog Seafood Grille & Bar is visited and then to the vendor cart behind the clocktower after the clothing store called Lucy's League left of Newbury Comics is visited",
         # "first go to the restaurant called Wagamama then go to the bar by the bicycle rack only after the restaurant called Wagamama finally go to the Santander ATM to the right of TD Bank only after the bar by the bicycle rack",
-        "go to the coffee shop called Cafe Pulse exactly once while avoiding the park bench northeast of the restaurant called Dick's Last Resort and the Asian restaurant left of the restaurant called Ned Devines then go to the park bench northeast of the restaurant called Dick's Last Resort exactly once while avoiding the Asian restaurant left of the restaurant called Ned Devines finally go to the Asian restaurant left of the restaurant called Ned Devines",
+        # "go to the coffee shop called Cafe Pulse exactly once while avoiding the park bench northeast of the restaurant called Dick's Last Resort and the Asian restaurant left of the restaurant called Ned Devines then go to the park bench northeast of the restaurant called Dick's Last Resort exactly once while avoiding the Asian restaurant left of the restaurant called Ned Devines finally go to the Asian restaurant left of the restaurant called Ned Devines",
         # "you cannot go to other place from the park bench by the comics store unless you see the vendor cart between the Best of Boston clothing store and Boston Pewter Company",
         # "move the ATM to the right of TD Bank then find Starbucks behind the restaurant called Ned Devines",
         # "visit the street vendor cart in front of the coffee shop called Cafe Pulse exactly once avoid the car at the shop called Boston Pewter Company or the bicycle rack before the street vendor cart in front of the coffee shop called Cafe Pulse then reach the car at the shop called Boston Pewter Company exactly once avoid the bicycle rack before the car at the shop called Boston Pewter Company finally move to the bicycle rack",
@@ -95,5 +99,6 @@ if __name__ == "__main__":
     for utt in utts:
         raw_out, parsed_out = srer(utt)
 
-        print(f"{parsed_out['lifted_utt']}\n\n{parsed_out['lifted_symbol_map']}\n\n{parsed_out['sre_to_preds']}\n\n\n")
+        spatial_preds = parsed_out["spatial_preds"] if "spatial_preds" in parsed_out else {}
+        print(f"{parsed_out['lifted_utt']}\n\n{parsed_out['lifted_symbol_map']}\n\n{parsed_out['sres']}\n\n{spatial_preds}\n\n{parsed_out['sre_to_preds']}\n\n\n")
         breakpoint()
