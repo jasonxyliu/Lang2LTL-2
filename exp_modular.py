@@ -49,7 +49,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(results_dpath, "eval_results_modular.log"), mode='w'),
+                            logging.FileHandler(os.path.join(results_dpath, f"eval_results_modular_{args.module}.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
