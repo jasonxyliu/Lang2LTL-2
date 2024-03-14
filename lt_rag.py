@@ -8,32 +8,6 @@ from openai_models import get_embed, translate
 from utils import deserialize_props_str, load_from_file, save_to_file
 
 
-def lt(data_dpath, srer_out_fname, raw_data, topk):
-    lt_outs = []
-    srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
-
-    for srer_out in srer_outs:
-        query = [srer_out['lifted_utt'], json.dumps(list(srer_out["lifted_symbol_map"].keys()))]
-        lifted_ltl = lifted_translate(query, raw_data, topk)
-
-        print(f"query: {query}\n{lifted_ltl}\n")
-
-        breakpoint()
-
-    save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
-
-    return lifted_ltl
-
-
-def lifted_translate(query, embeds_fpath, raw_data, topk):
-    prompt_examples = retriever(query, embeds_fpath, raw_data, topk)
-
-    breakpoint()
-
-    lifted_ltl = translate(query[0], prompt_examples)
-    return lifted_ltl
-
-
 def retriever(query, embeds_fpath, raw_data, topk):
     nprops_query = len(deserialize_props_str(query[1]))
     query = query[:1]
@@ -82,16 +56,40 @@ def retriever(query, embeds_fpath, raw_data, topk):
     return prompt_examples
 
 
+def lifted_translate(query, embeds_fpath, raw_data, topk):
+    prompt_examples = retriever(query, embeds_fpath, raw_data, topk)
+
+    breakpoint()
+
+    lifted_ltl = translate(query[0], prompt_examples)
+    return lifted_ltl
+
+
+def lt(data_dpath, srer_out_fname, raw_data, topk):
+    lt_outs = []
+    srer_outs = load_from_file(os.path.join(data_dpath, srer_out_fname))
+
+    for srer_out in srer_outs:
+        query = [srer_out['lifted_utt'], json.dumps(list(srer_out["lifted_symbol_map"].keys()))]
+        lifted_ltl = lifted_translate(query, raw_data, topk)
+
+        print(f"query: {query}\n{lifted_ltl}\n")
+
+        breakpoint()
+
+    save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
+
+    return lifted_ltl
+
+
 def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, data_dpath, ltl_fpath, topk):
     if not os.path.isfile(lt_out_fpath):
         raw_data = load_from_file(ltl_fpath)
         spg_outs = load_from_file(spg_out_fpath)
-
         embeds_fpath = os.path.join(data_dpath, f"data_embeds.pkl")
 
         for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module (method='rag')"):
             query = [spg_out['lifted_utt'], json.dumps(list(spg_out["props"]))]
-
             lifted_ltl = lifted_translate(query, embeds_fpath, raw_data, topk)
             print(f"query: {query}\n{lifted_ltl}\n")
             spg_out["lifted_ltl"] = lifted_ltl
