@@ -20,7 +20,7 @@ KNOWN_RELATIONS = [
     "between",
     "north of", "south of", "east of", "west of", "northeast of", "northwest of", "southeast of", "southwest of"
 ]
-MAX_RANGE = 60.0  # assume target within this radius of the anchor
+MAX_RANGE = 80.0  # assume target within this radius of the anchor. providence: 60; auckland: 40; boston: 60; san_francisco: 80
 DIST_TO_ANCHOR = 2.0  # distance to robot when compute a target location for SRE with only an anchor
 
 
