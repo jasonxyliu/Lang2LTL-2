@@ -105,7 +105,7 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--loc", type=str, default="providence", choices=["providence", "auckland", "boston", "san_francisco"], help="env name.")
+    parser.add_argument("--loc", type=str, default="boston", choices=["providence", "auckland", "boston", "san_francisco"], help="env name.")
     parser.add_argument("--ablate", type=str, default="both", choices=["text", "image", "both", None], help="ablate out a modality.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all")
     parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
@@ -143,12 +143,15 @@ if __name__ == "__main__":
     srer_out_fpath_modular = os.path.join(os.path.expanduser("~"), "ground", f"results_modular_ablate_{args.ablate}" if args.ablate else "results_modular", loc_id, srer_out_fname)
     srer_out_fpath_ablate_txt = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_text", loc_id, srer_out_fname)
     srer_out_fpath_ablate_img = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image", loc_id, srer_out_fname)
+    srer_out_fpath_ablate_both = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_both", loc_id, srer_out_fname)
     if not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_modular):  # same SRER output for exp_full and  exp_modular
         copy2(srer_out_fpath_modular, srer_out_fpath)
     elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
         copy2(srer_out_fpath_ablate_txt, srer_out_fpath)
     elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_img):
         copy2(srer_out_fpath_ablate_img, srer_out_fpath)
+    elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_both):
+        copy2(srer_out_fpath_ablate_both, srer_out_fpath)
     else:
         run_exp_srer(utts_fpath, srer_out_fpath)
     eval_srer(true_results_fpath, srer_out_fpath)

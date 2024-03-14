@@ -60,12 +60,15 @@ if __name__ == "__main__":
         srer_out_fpath_full = os.path.join(os.path.expanduser("~"), "ground", f"results_full_ablate_{args.ablate}" if args.ablate else "results_full", loc_id, srer_out_fname)
         srer_out_fpath_ablate_txt = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_text", loc_id, srer_out_fname)
         srer_out_fpath_ablate_img = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image", loc_id, srer_out_fname)
+        srer_out_fpath_ablate_both = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_both", loc_id, srer_out_fname)
         if not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_full):  # same SRER output for exp_full, exp_modular and ablate text
             copy2(srer_out_fpath_full, srer_out_fpath)
         elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
             copy2(srer_out_fpath_ablate_txt, srer_out_fpath)
         elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_img):
             copy2(srer_out_fpath_ablate_img, srer_out_fpath)
+        elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_both):
+            copy2(srer_out_fpath_ablate_both, srer_out_fpath)
         else:
             run_exp_srer(utts_fpath, srer_out_fpath)
         eval_srer(true_results_fpath, srer_out_fpath)
@@ -83,5 +86,4 @@ if __name__ == "__main__":
             run_exp_lt(true_results_fpath, model_fpath, lt_out_fpath)
         elif args.lt == "rag":
             run_exp_lt_rag(true_results_fpath, lt_out_fpath, data_dpath, ltl_fpath, args.nexamples)
-
         eval_lt(true_results_fpath, lt_out_fpath)
