@@ -18,7 +18,7 @@ from evaluate import eval_srer, eval_reg, eval_spg, eval_lt
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--module", type=str, default="all", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
-    parser.add_argument("--loc", type=str, default="auckland", choices=["providence", "auckland", "boston", "san_francisco"], help="domain name.")
+    parser.add_argument("--loc", type=str, default="providence", choices=["providence", "auckland", "boston", "san_francisco"], help="domain name.")
     parser.add_argument("--ablate", type=str, default="both", choices=["both", "image", "text", None], help="ablate out a modality.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all.")
     parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("--lt", type=str, default="t5", choices=["t5", "rag"], help="lifted translation model.")
     parser.add_argument("--nexamples", type=int, default=2, help="number of in-context examples if use RAG lifted translation model.")
     args = parser.parse_args()
-   loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
+    loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
     lt_id = f"lt-{args.lt}{args.nexamples}" if args.lt == "rag" else f"{args.lt}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
