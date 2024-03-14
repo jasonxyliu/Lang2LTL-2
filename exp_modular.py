@@ -18,21 +18,21 @@ from evaluate import eval_srer, eval_reg, eval_spg, eval_lt
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--module", type=str, default="all", choices=["srer", "reg", "spg", "lt", "all"], help="domain name.")
-    parser.add_argument("--loc", type=str, default="boston", choices=["blackstone", "auckland", "boston", "san_francisco"], help="domain name.")
-    parser.add_argument("--ablate", type=str, default=None, choices=["text", "image", "both", None], help="ablate out a modality.")
+    parser.add_argument("--loc", type=str, default="auckland", choices=["providence", "auckland", "boston", "san_francisco"], help="domain name.")
+    parser.add_argument("--ablate", type=str, default="both", choices=["both", "image", "text", None], help="ablate out a modality.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all.")
-    parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
+    parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
     parser.add_argument("--lt", type=str, default="t5", choices=["t5", "rag"], help="lifted translation model.")
-    parser.add_argument("--nexamples", type=int, default=5, help="number of in-context examples if use RAG lifted translation model.")
+    parser.add_argument("--nexamples", type=int, default=2, help="number of in-context examples if use RAG lifted translation model.")
     args = parser.parse_args()
-    loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
+   loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
     lt_id = f"lt-{args.lt}{args.nexamples}" if args.lt == "rag" else f"{args.lt}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate" if args.ablte else LOC2GID[args.loc])
+    graph_dpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate" if args.ablate else LOC2GID[args.loc])
     osm_fpath = os.path.join(data_dpath, "osm_ablate" if args.ablate else "osm", f"{args.loc}.json")
-    utts_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablte else f"{args.loc}", f"{loc_id}_utts.txt")
+    utts_fpath = os.path.join(data_dpath, "dataset", f"{args.loc}_ablate" if args.ablate else f"{args.loc}", f"{loc_id}_utts.txt")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     rel_embeds_fpath = os.path.join(data_dpath, f"known_rel_embeds.json")
     reg_in_cache_fpath = os.path.join(data_dpath, f"reg_in_cache_{args.loc}.pkl")
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format='%(message)s',
                         handlers=[
-                            logging.FileHandler(os.path.join(results_dpath, f"eval_results_modular_{args.module}.log"), mode='w'),
+                            logging.FileHandler(os.path.join(results_dpath, "eval_results_modular.log"), mode='w'),
                             logging.StreamHandler()
                         ]
     )
