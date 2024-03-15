@@ -10,7 +10,7 @@ from utils import deserialize_props_str, load_from_file, save_to_file
 
 def retriever(query, embeds_fpath, raw_data, topk):
     nprops_query = len(deserialize_props_str(query[1]))
-    query = query[:1]
+    query = query[1]
 
     # Select lifted commands and formulas with same nprops as query command
     # not work with SRER output for "go to a at most five times"
@@ -36,22 +36,32 @@ def retriever(query, embeds_fpath, raw_data, topk):
             embed = get_embed(utt)  # embedding
             utt2embed[utt] = embed
             embeds_updated = True
-            print(f"added new embedding\n{utt}")
+            print(f"added new prompt embedding:\n{utt}")
         embeds.append(embed)
     if embeds_updated:
         save_to_file(utt2embed, embeds_fpath)
     embeds = np.array(embeds)
 
     # Retrieve prompt in-context examples
-    query_embed = get_embed(query)
-    query_scores = cosine_similarity(np.array(query_embed).reshape(1, -1), embeds)[0]
+    embeds_updated = False
+    if query in utt2embed:
+        embed_query = utt2embed[query]
+    else:
+        embed_query = get_embed(query)
+        utt2embed[query] = embed_query
+        embeds_updated = True
+        print(f"added new query embedding:\n{utt}")
+    if embeds_updated:
+        save_to_file(utt2embed, embeds_fpath)
+
+    query_scores = cosine_similarity(np.array(embed_query).reshape(1, -1), embeds)[0]
     data_sorted = sorted(zip(query_scores, data), reverse=True)
 
     prompt_examples = []
     for score, (ltl_type, props, utt, ltl) in data_sorted[:topk]:
         # print(score)
         prompt_examples.append(f"Command: \"{utt}\"\nLTL formula: \"{ltl}\"")
-        print(f"Command: \"{utt}\"\nLTL formula: \"{ltl}\"\n")
+        # print(f"Command: \"{utt}\"\nLTL formula: \"{ltl}\"\n")
 
     return prompt_examples
 
@@ -59,7 +69,7 @@ def retriever(query, embeds_fpath, raw_data, topk):
 def lifted_translate(query, embeds_fpath, raw_data, topk):
     prompt_examples = retriever(query, embeds_fpath, raw_data, topk)
 
-    breakpoint()
+    # breakpoint()
 
     lifted_ltl = translate(query[0], prompt_examples)
     return lifted_ltl
@@ -73,9 +83,9 @@ def lt(data_dpath, srer_out_fname, raw_data, topk):
         query = [srer_out['lifted_utt'], json.dumps(list(srer_out["lifted_symbol_map"].keys()))]
         lifted_ltl = lifted_translate(query, raw_data, topk)
 
-        print(f"query: {query}\n{lifted_ltl}\n")
+        # print(f"query: {query}\n{lifted_ltl}\n")
 
-        breakpoint()
+        # breakpoint()
 
     save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
 
@@ -91,7 +101,7 @@ def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, data_dpath, ltl_fpath, topk):
         for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module (method='rag')"):
             query = [spg_out['lifted_utt'], json.dumps(list(spg_out["props"]))]
             lifted_ltl = lifted_translate(query, embeds_fpath, raw_data, topk)
-            print(f"query: {query}\n{lifted_ltl}\n")
+            # print(f"query: {query}\n{lifted_ltl}\n")
             spg_out["lifted_ltl"] = lifted_ltl
 
         save_to_file(spg_outs, lt_out_fpath)
