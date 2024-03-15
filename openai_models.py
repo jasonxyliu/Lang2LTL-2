@@ -154,4 +154,4 @@ def translate(query, examples):
     # print(raw_response.usage)
 
     # breakpoint()
-    return response
+    return response, raw_response.usage.total_tokens

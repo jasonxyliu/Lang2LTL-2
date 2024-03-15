@@ -71,8 +71,8 @@ def lifted_translate(query, embeds_fpath, raw_data, topk):
 
     # breakpoint()
 
-    lifted_ltl = translate(query[0], prompt_examples)
-    return lifted_ltl
+    lifted_ltl, num_tokens = translate(query[0], prompt_examples)
+    return lifted_ltl, num_tokens
 
 
 def lt(data_dpath, srer_out_fname, raw_data, topk):
@@ -81,7 +81,7 @@ def lt(data_dpath, srer_out_fname, raw_data, topk):
 
     for srer_out in srer_outs:
         query = [srer_out['lifted_utt'], json.dumps(list(srer_out["lifted_symbol_map"].keys()))]
-        lifted_ltl = lifted_translate(query, raw_data, topk)
+        lifted_ltl, num_tokens = lifted_translate(query, raw_data, topk)
 
         # print(f"query: {query}\n{lifted_ltl}\n")
 
@@ -89,7 +89,7 @@ def lt(data_dpath, srer_out_fname, raw_data, topk):
 
     save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
 
-    return lifted_ltl
+    return lifted_ltl, num_tokens
 
 
 def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, data_dpath, ltl_fpath, topk):
@@ -98,11 +98,16 @@ def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, data_dpath, ltl_fpath, topk):
         spg_outs = load_from_file(spg_out_fpath)
         embeds_fpath = os.path.join(data_dpath, f"data_embeds.pkl")
 
+        tot_tokens = 0
+
         for spg_out in tqdm(spg_outs, desc="Running lifted translation (LT) module (method='rag')"):
             query = [spg_out['lifted_utt'], json.dumps(list(spg_out["props"]))]
-            lifted_ltl = lifted_translate(query, embeds_fpath, raw_data, topk)
+            lifted_ltl, num_tokens = lifted_translate(query, embeds_fpath, raw_data, topk)
+            tot_tokens += num_tokens
             # print(f"query: {query}\n{lifted_ltl}\n")
             spg_out["lifted_ltl"] = lifted_ltl
+
+        print(f'\nAVG. TOKEN SIZE:\t{tot_tokens / len(spg_outs)}')
 
         save_to_file(spg_outs, lt_out_fpath)
 
