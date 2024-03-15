@@ -105,8 +105,8 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--loc", type=str, default="boston", choices=["providence", "auckland", "boston", "san_francisco"], help="env name.")
-    parser.add_argument("--ablate", type=str, default="both", choices=["text", "image", "both", None], help="ablate out a modality.")
+    parser.add_argument("--loc", type=str, default="providence", choices=["providence", "auckland", "boston", "san_francisco"], help="env name.")
+    parser.add_argument("--ablate", type=str, default="both", choices=["both", "image", "text", None], help="ablate out a modality.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all")
     parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
