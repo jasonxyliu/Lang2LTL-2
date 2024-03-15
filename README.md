@@ -8,6 +8,7 @@ conda activate ground
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia  # GPU
 conda install pytorch torchdata -c pytorch  # CPU
 conda install -c conda-forge pyproj
+conda install -c conda-forge spot
 ```
 
 
