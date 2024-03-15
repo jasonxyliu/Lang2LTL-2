@@ -10,7 +10,7 @@ from utils import deserialize_props_str, load_from_file, save_to_file
 
 def retriever(query, embeds_fpath, raw_data, topk):
     nprops_query = len(deserialize_props_str(query[1]))
-    query = query[1]
+    query = query[:1]
 
     # Select lifted commands and formulas with same nprops as query command
     # not work with SRER output for "go to a at most five times"
@@ -44,11 +44,12 @@ def retriever(query, embeds_fpath, raw_data, topk):
 
     # Retrieve prompt in-context examples
     embeds_updated = False
-    if query in utt2embed:
-        embed_query = utt2embed[query]
+    query_str = json.dumps(query)
+    if query_str in utt2embed:
+        embed_query = utt2embed[query_str]
     else:
         embed_query = get_embed(query)
-        utt2embed[query] = embed_query
+        utt2embed[query_str] = embed_query
         embeds_updated = True
         print(f"added new query embedding:\n{utt}")
     if embeds_updated:
