@@ -149,6 +149,7 @@ def construct_utt(modality, data, sp_grounds_all, res_all, utts, true_outs, ltl_
         else:  # for sre with target and one or two anchors, both proper and generic names are valid
             while "proper_names" not in res_all[sp_grounds_sampled[1][0]] \
                 or (len(sp_grounds_sampled) == 3 and "proper_names" not in res_all[sp_grounds_sampled[2][0]]):
+                print(f"RESAMPLE: {sp_grounds_sampled}")
                 sp_grounds_sampled = random.sample(sp_grounds_all[rel], 1)[0]
             res_tar = list(itertools.chain.from_iterable(res_all[sp_grounds_sampled[0][0]].values()))
             re_tar = random.sample(res_tar, 1)[0]  # target referring expression
