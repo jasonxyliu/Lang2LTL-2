@@ -134,7 +134,7 @@ def translate(query, examples):
                     }
                 ],
                 temperature=0.1,
-                max_tokens=1000,
+                max_tokens=100,
                 top_p=1,
                 frequency_penalty=0,
                 presence_penalty=0
