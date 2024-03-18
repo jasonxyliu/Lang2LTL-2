@@ -13,6 +13,7 @@ def eval_srer(true_results_fpath, srer_out_fpath):
     true_outs = load_from_file(true_results_fpath)
     srer_outs = load_from_file(srer_out_fpath)
     ncorrects = 0
+    nprops2ncorrects, nprops2total = defaultdict(int), defaultdict(int)
 
     assert len(srer_outs) == len(true_outs), f"ERROR different numbers of samples:\ntrue: {len(true_outs)}\npred: {len(srer_outs)}"
 
@@ -20,6 +21,7 @@ def eval_srer(true_results_fpath, srer_out_fpath):
         assert srer_out["utt"].strip() == true_out["utt"].strip(), f"ERROR different utterances:\ntrue: {true_out['utt']}\npred: {srer_out['utt']}"
         logging.info(f"* Command: {srer_out['utt']}")
         is_correct = True
+        nprops = len(true_out["props"])
 
         if len(srer_out["sre_to_preds"]) != len(true_out["sre_to_preds"]):
             is_correct = False
@@ -63,11 +65,17 @@ def eval_srer(true_results_fpath, srer_out_fpath):
 
         if is_correct:
             ncorrects += 1
+            nprops2ncorrects[nprops] += 1
         else:
             logging.info("Incorrect SRER output")
+        nprops2total[nprops] += 1
 
         logging.info("\n")
     logging.info(f"SRER Accuracy: {ncorrects} / {len(true_outs)} = {ncorrects / len(true_outs)}\n\n")
+    nprops2acc = {nprops: ncorrects / nprops2total[nprops] for nprops, ncorrects in nprops2ncorrects.items()}
+    logging.info(f"SRER nprops vs. acc: {nprops2acc}")
+    nprops2acc = {nprops: (ncorrects, nprops2total[nprops]) for nprops, ncorrects in nprops2ncorrects.items()}
+    return nprops2acc
 
 
 def eval_reg(true_results_fpath, topk, reg_out_fpath):
@@ -79,6 +87,7 @@ def eval_reg(true_results_fpath, topk, reg_out_fpath):
     reg_outs = load_from_file(reg_out_fpath)
     topk2acc = defaultdict(int)
     total_res = 0
+    len2ncorrects, len2total = defaultdict(int), defaultdict(int)
 
     assert len(reg_outs) == len(true_outs), f"ERROR different numbers of samples\ntrue: {len(true_outs)}\npred: {len(reg_outs)}"
 
@@ -111,14 +120,23 @@ def eval_reg(true_results_fpath, topk, reg_out_fpath):
                     for end_idx in range(1, topk+1):
                         if re_true in res_topk[:end_idx]:
                             topk2acc[end_idx] += 1
+                            if end_idx == topk:
+                                len2ncorrects[len(re_true)] += 1
+                                len2total[len(re_true)] += 1
                         else:
                             if end_idx == topk:
                                 logging.info(f"Incorrect Top-{topk} REG: \n{sre_out}\ntrue: {re_true}\npred: {res_topk}")
+                                len2total[len(re_true)] += 1
         logging.info("\n")
 
     for idx in range(1, topk+1):
         logging.info(f"REG Top-{idx} Accuracy: {topk2acc[idx]} / {total_res} = {topk2acc[idx] / total_res}")
     logging.info("\n\n")
+
+    len2acc = {nprops: ncorrects / len2total[nprops] for nprops, ncorrects in len2ncorrects.items()}
+    logging.info(f"REG length vs. acc: {len2acc}")
+    len2acc = {nprops: (ncorrects, len2total[nprops]) for nprops, ncorrects in len2ncorrects.items()}
+    return len2acc
 
 
 def eval_spg(true_results_fpath, topk, spg_out_fpath):
