@@ -24,11 +24,10 @@ for x in bins_reg:
 			count += 1
 	acc_reg.append(total/count)
 
-plt.figure()
-
 plot_type = ['full_sys', 'reg_acc', 'spg_acc']
 
 for P in plot_type:
+	plt.figure()
 	if P == 'full_sys':
 		plt.bar(x=methods, height=accuracy, color=sns.color_palette('colorblind'))
 		plt.errorbar(methods, accuracy, yerr=std, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
