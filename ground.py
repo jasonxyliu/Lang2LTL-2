@@ -8,16 +8,6 @@ from lt import Seq2Seq, lt
 from utils import load_from_file, save_to_file
 
 
-LOC2GID = {
-    "indoor": "downloaded_graph_2024-02-02_10-55-35",
-    "outdoor": "outdoor",
-    "providence": "providence",  # "downloaded_graph_2024-01-27_07-48-53"
-    "boston": "boston",
-    "auckland": "auckland",
-    "san_francisco": "san_francisco",
-}  # location to Spot graph ID
-
-
 def ground(graph_dpath, lmk2sym, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath, reg_in_cache_fpath):
     """
     Grounding API function
@@ -63,7 +53,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.loc])
+    graph_dpath = os.path.join(data_dpath, "maps", args.loc)
     lmk2sym_fpath = os.path.join(graph_dpath, "lmk2sym.json")
     lmk2sym = load_from_file(lmk2sym_fpath) if os.path.isfile(lmk2sym_fpath) else {}  # landmark ID to planner symbol used for robot demo
     osm_fpath = os.path.join(data_dpath, "osm", f"{args.loc}.json")

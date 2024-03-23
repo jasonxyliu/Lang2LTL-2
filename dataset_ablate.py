@@ -6,7 +6,6 @@ import itertools
 import random
 import re
 
-from ground import LOC2GID
 from utils import load_from_file, save_to_file
 
 
@@ -206,7 +205,7 @@ if __name__ == "__main__":
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    obj_fpath = os.path.join(data_dpath, "maps", f"{LOC2GID[args.loc]}_ablate", "obj_locs.json")
+    obj_fpath = os.path.join(data_dpath, "maps", f"{args.loc}_ablate", "obj_locs.json")
     osm_fpath = os.path.join(data_dpath, "osm_ablate", f"{args.loc}.json")
     dataset_dpath = os.path.join(os.path.expanduser("~"), "ground", "data", "dataset")
     loc_dpath = os.path.join(dataset_dpath, f"{args.loc}_ablate")

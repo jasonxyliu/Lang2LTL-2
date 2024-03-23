@@ -1,7 +1,6 @@
 """
 Analyze the evaluation dataset.
 """
-from ground import LOC2GID
 from utils import load_from_file
 
 
@@ -39,7 +38,7 @@ if __name__ == "__main__":
 
     for loc in locs:
         res_fpath = f"data/dataset/{loc}/{loc}_res.json"
-        obj_fpath = f"data/maps/{LOC2GID[loc]}/obj_locs.json"
+        obj_fpath = f"data/maps/{loc}/obj_locs.json"
         osm_fpath = f"data/osm/{loc}.json"
         count_lmks(loc, res_fpath, obj_fpath, osm_fpath)
 
