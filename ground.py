@@ -1,4 +1,5 @@
 import os
+import argparse
 
 from srer import srer
 from reg import reg
@@ -36,23 +37,18 @@ def ground(graph_dpath, lmk2sym, osm_fpath, model_fpath, utt, ablate, topk, rel_
     lt(srer_out, lt_module)
 
     # Substitute symbols by groundings of spatial referring expressions
-    sym2ground = {}
-    if lmk2sym:
-        sym2sym = {}
+    sym2ground = {}  # only language grounding: language grounding symbol to lmk ID. robot demo: language grounding symbol to planner symbol
     for symbol, sre in srer_out["lifted_symbol_map"].items():
         ground = srer_out["grounded_sps"][sre][0]["target"]
-        sym2ground[symbol] = ground
-        if lmk2sym:
-            sym2sym[symbol] = lmk2sym[ground]  # language grounding symbol to planner symbol
+        sym2ground[symbol] = lmk2sym[ground] if lmk2sym else ground
     srer_out["sym2ground"] = sym2ground
-    if lmk2sym:
-        srer_out["sym2sym"] = sym2sym
 
+    #  Robot demo only; replace language grounding symbol by planner symbol
     if lmk2sym:
         grounded_ltl = srer_out["lifted_ltl"]
-        for ground_sym in sym2sym.keys():
+        for ground_sym in sym2ground.keys():
             grounded_ltl = grounded_ltl.replace(ground_sym, f"<{ground_sym}>")
-        for ground_sym, plan_sym in sym2sym.items():
+        for ground_sym, plan_sym in sym2ground.items():
             grounded_ltl = grounded_ltl.replace(f"<{ground_sym}>", plan_sym)
         srer_out["grounded_ltl"] = grounded_ltl
 
@@ -60,22 +56,22 @@ def ground(graph_dpath, lmk2sym, osm_fpath, model_fpath, utt, ablate, topk, rel_
 
 
 if __name__ == "__main__":
-    loc = "outdoor"
-    ablate = None  # "text", "image", None
-    # loc = "indoor"
-    # ablate = "text"  # "text", "image", None
-    topk = 10  # top k most likely landmarks grounded by REG
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--loc", type=str, default="outdoor", choices=["indoor", "outdoor"], help="env name.")
+    parser.add_argument("--ablate", type=str, default=None, choices=["both", "image", "text", None], help="ablate out a modality (indoor: text. outdoor: None).")
+    parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
+    args = parser.parse_args()
 
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[loc])
+    graph_dpath = os.path.join(data_dpath, "maps", LOC2GID[args.loc])
     lmk2sym_fpath = os.path.join(graph_dpath, "lmk2sym.json")
     lmk2sym = load_from_file(lmk2sym_fpath) if os.path.isfile(lmk2sym_fpath) else {}  # landmark ID to planner symbol used for robot demo
-    osm_fpath = os.path.join(data_dpath, "osm", f"{loc}.json")
+    osm_fpath = os.path.join(data_dpath, "osm", f"{args.loc}.json")
     model_fpath = os.path.join(os.path.expanduser("~"), "ground", "models", "checkpoint-best")
     rel_embeds_fpath = os.path.join(data_dpath, f"known_rel_embeds.json")
-    reg_in_cache_fpath = os.path.join(data_dpath, f"reg_in_cache_{loc}.pkl")
-    utt_fpath = os.path.join(data_dpath, f"utts_{loc}.txt")
-    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_spot", loc)
+    reg_in_cache_fpath = os.path.join(data_dpath, f"reg_in_cache_{args.loc}.pkl")
+    utt_fpath = os.path.join(data_dpath, f"utts_{args.loc}.txt")
+    results_dpath = os.path.join(os.path.expanduser("~"), "ground", "results_spot", args.loc)
     os.makedirs(results_dpath, exist_ok=True)
     out_fpath = os.path.join(results_dpath, "srer_outs.json")
 
@@ -84,12 +80,12 @@ if __name__ == "__main__":
 
         "Visit the white car, then go to the red brick wall and then go to the silver car near the apartment, in addition you can never go to the apartment once you've seen the white car"
     ]
+
     ground_outs = []
     for idx, utt in enumerate(utts):
-        ground_out = ground(graph_dpath, lmk2sym, osm_fpath, model_fpath, utt, ablate, topk, rel_embeds_fpath, reg_in_cache_fpath)
+        ground_out = ground(graph_dpath, lmk2sym, osm_fpath, model_fpath, utt, args.ablate, args.topk, rel_embeds_fpath, reg_in_cache_fpath)
+        print(f"***** {idx}/{len(utts)}\nInput utt: {utt}\nLifted LTL: {ground_out['lifted_ltl']}\nSymbol to Grounding: {ground_out['sym2ground']}")
         if lmk2sym:
-            print(f"***** {idx}/{len(utts)}\nInput utt: {utt}\nLifted LTL: {ground_out['lifted_ltl']}\n{ground_out['sym2sym']}\n{ground_out['grounded_ltl']}")
-        else:
-            print(f"***** {idx}/{len(utts)}\nInput utt: {utt}\nLifted LTL: {ground_out['lifted_ltl']}\n{ground_out['sym2ground']}")
+            print(f"Grounded LTL: {ground_out['grounded_ltl']}")
         ground_outs.append(ground_out)
     save_to_file(ground_outs, out_fpath)
