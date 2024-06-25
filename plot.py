@@ -35,10 +35,10 @@ for P in plot_type:
 		plt.title("Full System Accuracy", fontsize=16)
 	elif P == 'reg_acc':
 		plt.bar(x=bins_reg, height=acc_reg, color=sns.color_palette('colorblind')[0])
-		plt.xlabel("Length of Regular Expressions (REs)", fontsize=14)
+		plt.xlabel("Length of Referring Expressions (REs)", fontsize=14)
 	else:
 		plt.bar(x=bins_props, height=acc_props, color=sns.color_palette('colorblind')[0])
-		plt.xlabel("Length of Spatial Regular Expressions (SREs)", fontsize=14)
+		plt.xlabel("Length of Spatial Referring Expressions (SREs)", fontsize=14)
 
 	plt.ylabel("Accuracy (%)", fontsize=14)
 	plt.show()
