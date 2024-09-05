@@ -20,7 +20,11 @@ python synthetic_dataset.py --location <LOCATION>
 
 
 # Lifted Command Translation Module
-Download finetuned T5-base model weights at [drive](https://drive.google.com/drive/folders/1rZl8tblyVj-pZZW4OgbO1NJwMIT2fwx9?usp=sharing)
+Please download finetuned T5-base model weights at [drive](https://drive.google.com/drive/folders/1rZl8tblyVj-pZZW4OgbO1NJwMIT2fwx9?usp=sharing).
+
+
+# Data
+Please download data from [drive](https://drive.google.com/drive/folders/1gWomkuVqxLU01ftzF34bEacJBeUwBMOf?usp=sharing).
 
 
 # Citation
