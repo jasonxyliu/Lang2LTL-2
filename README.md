@@ -11,6 +11,9 @@ conda install -c conda-forge pyproj
 pip install openai utm
 ```
 
+# Data
+Please download data from [drive](https://drive.google.com/drive/folders/1gWomkuVqxLU01ftzF34bEacJBeUwBMOf?usp=sharing).
+
 
 # Generate Synthetic Dataset for Evaluation
 ```
