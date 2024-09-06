@@ -3,11 +3,12 @@ Codebase for the paper Grounding Spatio-temporal Language Commands.
 
 # Installation
 ```
-conda create -n ground python=3.9 dill matplotlib plotly scipy scikit-learn utm
+conda create -n ground python=3.9 dill matplotlib plotly scipy scikit-learn tqdm openai pandas
 conda activate ground
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia  # GPU
 conda install pytorch torchdata -c pytorch  # CPU
 conda install -c conda-forge pyproj
+pip install openai utm
 ```
 
 
