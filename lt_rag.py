@@ -17,7 +17,6 @@ def lt(data_dpath, srer_out_fname, raw_data, topk):
         lifted_ltl = lifted_translate(query, raw_data, topk)
 
         print(f"query: {query}\n{lifted_ltl}\n")
-
         breakpoint()
 
     save_to_file(lt_outs, os.path.join(data_dpath, srer_out_fname.replace("srer", "lt")))
@@ -101,11 +100,12 @@ def run_exp_lt_rag(spg_out_fpath, lt_out_fpath, data_dpath, ltl_fpath, topk):
 
 if __name__ == "__main__":
     data_dpath = os.path.join(os.path.expanduser("~"), "ground", "data")
-    data_fpath = os.path.join(data_dpath, "symbolic_batch12_noperm.csv")
+    data_fpath = os.path.join(data_dpath, "dataset", "symbolic_batch12_noperm.csv")
     raw_data = load_from_file(data_fpath)
 
-    srer_out_fname = "srer_outs_blackstone.json"
-    lt(data_dpath, srer_out_fname, raw_data, topk=50)
+    # srer_out_fname = "srer_outs_blackstone.json"
+    # lt(data_dpath, srer_out_fname, raw_data, topk=50)
 
-    # query = ["go to a at most five times", "['a', 'a', 'a', 'a', 'a']"]
-    # lifted_translate(query, raw_data, topk=50)
+    query = ["navigate to a at most twice", "['a', 'a']"]
+    embeds_fpath = os.path.join(data_dpath, f"data_embeds.pkl")
+    lifted_translate(query, embeds_fpath, raw_data, topk=10)
