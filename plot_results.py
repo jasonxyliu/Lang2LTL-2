@@ -23,7 +23,7 @@ def plot_srer_acc():
 
 	plt.figure()
 	plt.bar(x=bins_props, height=acc_props, color=sns.color_palette('colorblind')[0])
-	plt.xlabel("Length of Spatial Regular Expressions (SREs)", fontsize=14)
+	plt.xlabel("Length of Spatial Referring Expressions (SREs)", fontsize=14)
 	plt.ylabel("Accuracy (%)", fontsize=14)
 	plt.show()
 
