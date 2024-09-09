@@ -15,9 +15,9 @@ pip install openai utm
 Please download data from [drive](https://drive.google.com/drive/folders/1gWomkuVqxLU01ftzF34bEacJBeUwBMOf?usp=sharing).
 
 
-# Generate Synthetic Dataset for Evaluation
+# Generate Language Grounding Dataset for Evaluation
 ```
-python synthetic_dataset.py --location <LOCATION>
+python dataset_full.py --location <LOCATION> --nsamples <N_PER_TEMPORAL_PATTERN> --seed <SEED>
 ```
 
 
