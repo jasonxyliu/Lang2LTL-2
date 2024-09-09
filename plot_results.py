@@ -7,8 +7,8 @@ plt.rcParams['ps.fonttype'] = 42
 
 # -- values for full system accuracy plot:
 methods = ['Text+Image (Ours)', 'Text Only (Lang2LTL)', 'Image Only']
-accuracy = [93.52, 82.81, 41.69]
-std = [4.35, 9.54, 14.65]
+accuracy = [93.53, 82.81, 41.69]
+std = [4.33, 9.54, 14.65]
 
 # -- values for SRER/acc plot:
 bins_props = ['1', '2', '3', '4', '5']
