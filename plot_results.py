@@ -30,18 +30,18 @@ for x in bins_reg:
 plot_type = ['full_sys', 'reg_acc', 'spg_acc']
 
 for P in plot_type:
-	plt.figure(figsize=(6,3))
+	fig = plt.figure(figsize=(6,4))
 	if P == 'full_sys':
 		plt.bar(x=methods, height=accuracy, color=sns.color_palette('colorblind'))
 		plt.errorbar(methods, accuracy, yerr=std, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
 		plt.title("Full System Accuracy", fontsize=18)
+		plt.xlabel("Modality", fontsize=16)
 	elif P == 'reg_acc':
 		plt.bar(x=bins_reg, height=acc_reg, color=sns.color_palette('colorblind')[0])
 		plt.xlabel("Length of Referring Expressions (REs)", fontsize=16)
 	else:
 		plt.bar(x=bins_props, height=acc_props, color=sns.color_palette('colorblind')[0])
 		plt.xlabel("Number of Spatial Referring Expressions (SREs)", fontsize=16)
-
 	plt.ylabel("Accuracy (%)", fontsize=14)
-	plt.show()
-#endfor
+	fig.tight_layout()
+	fig.savefig(f"{P}.pdf")
