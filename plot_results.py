@@ -5,15 +5,16 @@ import seaborn as sns
 def plot_full_sys_acc():
 	# Full system accuracy plot
 	methods = ['Text+Image (Ours)', 'Text Only (Lang2LTL)', 'Image Only']
-	accuracy = [93.52, 82.81, 41.69]
-	std = [4.35, 9.54, 14.65]
+	accuracy = [93.53, 82.81, 41.69]
+	std = [4.33, 9.54, 14.65]
 
 	plt.figure()
 	plt.bar(x=methods, height=accuracy, color=sns.color_palette('colorblind'))
 	plt.errorbar(methods, accuracy, yerr=std, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
 	plt.title("Full System Accuracy", fontsize=16)
 	plt.ylabel("Accuracy (%)", fontsize=14)
-	plt.show()
+	# plt.show()
+	plt.savefig("full_sys_acc.png")
 
 
 def plot_srer_acc():
@@ -25,7 +26,8 @@ def plot_srer_acc():
 	plt.bar(x=bins_props, height=acc_props, color=sns.color_palette('colorblind')[0])
 	plt.xlabel("Length of Spatial Referring Expressions (SREs)", fontsize=14)
 	plt.ylabel("Accuracy (%)", fontsize=14)
-	plt.show()
+	# plt.show()
+	plt.savefig("srer_acc.png")
 
 
 def plot_reg_acc():
@@ -46,7 +48,8 @@ def plot_reg_acc():
 	plt.bar(x=bins_reg, height=acc_reg, color=sns.color_palette('colorblind')[0])
 	plt.xlabel("Length of Regular Expressions (REs)", fontsize=14)
 	plt.ylabel("Accuracy (%)", fontsize=14)
-	plt.show()
+	# plt.show()
+	plt.savefig("reg_acc.png")
 
 
 if __name__ == "__main__":
