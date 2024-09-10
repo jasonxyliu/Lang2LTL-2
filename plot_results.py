@@ -11,7 +11,7 @@ def plot_full_sys_acc():
 	accuracy = [93.53, 82.81, 41.69]
 	std = [4.33, 9.54, 14.65]
 
-	fig = plt.figure(figsize=(6,4))
+	fig = plt.figure(figsize=(6,5))
 	plt.bar(x=methods, height=accuracy, color=sns.color_palette('colorblind'))
 	plt.errorbar(methods, accuracy, yerr=std, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
 	plt.title("Full System Accuracy", fontsize=18)
