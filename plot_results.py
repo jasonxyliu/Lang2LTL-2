@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# -- remove type 3 fonts:
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
 
 def plot_full_sys_acc():
 	# Full system accuracy plot
@@ -8,13 +11,15 @@ def plot_full_sys_acc():
 	accuracy = [93.53, 82.81, 41.69]
 	std = [4.33, 9.54, 14.65]
 
-	plt.figure()
+	fig = plt.figure(figsize=(6,4))
 	plt.bar(x=methods, height=accuracy, color=sns.color_palette('colorblind'))
 	plt.errorbar(methods, accuracy, yerr=std, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
-	plt.title("Full System Accuracy", fontsize=16)
-	plt.ylabel("Accuracy (%)", fontsize=14)
-	# plt.show()
-	plt.savefig("full_sys_acc.png")
+	plt.title("Full System Accuracy", fontsize=18)
+	plt.xlabel("Modality", fontsize=16)
+	plt.ylabel("Accuracy (%)", fontsize=16)
+	plt.xticks(fontsize=11)
+	fig.tight_layout()
+	fig.savefig("full_sys_acc.pdf")
 
 
 def plot_srer_acc():
@@ -22,12 +27,13 @@ def plot_srer_acc():
 	bins_props = ['1', '2', '3', '4', '5']
 	acc_props = [0.9969465648854962, 0.9947887323943662, 0.9967980295566502, 0.99321608040201, 0.9920398009950249]
 
-	plt.figure()
+	fig = plt.figure(figsize=(6,3))
 	plt.bar(x=bins_props, height=acc_props, color=sns.color_palette('colorblind')[0])
-	plt.xlabel("Length of Spatial Referring Expressions (SREs)", fontsize=14)
-	plt.ylabel("Accuracy (%)", fontsize=14)
-	# plt.show()
-	plt.savefig("srer_acc.png")
+	plt.xlabel("Number of Spatial Referring Expressions (SREs)", fontsize=16)
+	plt.ylabel("Accuracy (%)", fontsize=16)
+	plt.xticks(fontsize=11)
+	fig.tight_layout()
+	fig.savefig("srer_acc.pdf")
 
 
 def plot_reg_acc():
@@ -44,12 +50,13 @@ def plot_reg_acc():
 				count += 1
 		acc_reg.append(total/count)
 
-	plt.figure()
+	fig = plt.figure(figsize=(6,3))
 	plt.bar(x=bins_reg, height=acc_reg, color=sns.color_palette('colorblind')[0])
-	plt.xlabel("Length of Regular Expressions (REs)", fontsize=14)
-	plt.ylabel("Accuracy (%)", fontsize=14)
-	# plt.show()
-	plt.savefig("reg_acc.png")
+	plt.xlabel("Length of Regular Expressions (REs)", fontsize=16)
+	plt.ylabel("Accuracy (%)", fontsize=16)
+	plt.xticks(fontsize=11)
+	fig.tight_layout()
+	fig.savefig("reg_acc.pdf")
 
 
 if __name__ == "__main__":
