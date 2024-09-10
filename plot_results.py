@@ -1,3 +1,5 @@
+import numpy as np
+import scipy.stats as stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -6,15 +8,58 @@ plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
 
 
+def compute_ci_interval(data, confience=0.95):
+	# Sample data
+	data = np.array(data)
+
+	# Sample mean and standard error
+	mean = np.mean(data)
+	std_error = stats.sem(data)  # standard error of the mean
+
+	# Compute the 95% confidence interval; use t-distribution since sample size < 30
+	confidence = confience
+	n = len(data)
+	t_critical = stats.t.ppf((1 + confidence) / 2, df=n-1)  # t-critical value for 95% CI
+
+	margin_of_error = t_critical * std_error
+	# confidence_interval = (mean - margin_of_error, mean + margin_of_error)
+	return mean, margin_of_error
+
+
 def plot_full_sys_acc():
 	# Full system accuracy plot
 	methods = ['Text+Image (Ours)', 'Text Only (Lang2LTL)', 'Image Only']
-	accuracy = [93.53, 82.81, 41.69]
-	std = [4.33, 9.54, 14.65]
+
+	accuracies_per_sys = [
+		[
+			0.9917355372, 0.9908172635, 0.9898989899, 0.9917355372, 0.940312213,
+			0.9632690542, 0.9678604224, 0.9595959596, 0.9834710744, 0.9550045914,
+			0.9008264463, 0.8870523416, 0.8870523416, 0.8925619835, 0.870523416,
+			0.9072543618, 0.9182736455, 0.9127640037, 0.927456382, 0.867768595
+		],
+		[
+			0.8916437098,
+			0.8668503214,
+			0.6859504132,
+			0.867768595
+		],
+		[
+			0.4719926538,
+			0.4380165289,
+			0.2084481175,
+			0.54912764
+		]
+	]
+
+	means, margins = [], []
+	for accuracies in accuracies_per_sys:
+		mean, margin = compute_ci_interval(accuracies)
+		means.append(mean)
+		margins.append(margin)
 
 	fig = plt.figure(figsize=(6,5))
-	plt.bar(x=methods, height=accuracy, color=sns.color_palette('colorblind'))
-	plt.errorbar(methods, accuracy, yerr=std, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
+	plt.bar(x=methods, height=means, color=sns.color_palette('colorblind'))
+	plt.errorbar(methods, means, yerr=margins, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
 	plt.title("Full System Accuracy", fontsize=18)
 	plt.xlabel("Modality", fontsize=16)
 	plt.ylabel("Accuracy (%)", fontsize=16)
