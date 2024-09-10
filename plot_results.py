@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# -- remove type 3 fonts:
+# Avoid Type 3 fonts
 plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
+
 
 def plot_full_sys_acc():
 	# Full system accuracy plot
