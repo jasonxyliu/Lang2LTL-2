@@ -63,6 +63,8 @@ def eval_full_system(true_results_fpath, lt_out_fpath):
 
         # Spatial referring expression grounding
         true_ground_sps = true_out["grounded_sps"]
+        # true_ground_sps = {srer.lower(): sps for srer, sps in true_ground_sps.items()}
+
         spg_ground_sps = sys_out["grounded_sps"]
         if len(spg_ground_sps) != len(true_ground_sps):
             logging.info(f"Incorrect number of spatial referring expression:\ntrue: {true_ground_sps}\npred: {spg_ground_sps}")
@@ -107,7 +109,7 @@ if __name__ == "__main__":
     parser.add_argument("--loc", type=str, default="providence", choices=["providence", "auckland", "boston", "san_francisco"], help="env name.")
     parser.add_argument("--ablate", type=str, default="both", choices=["both", "image", "text", None], help="ablate out a modality.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all")
-    parser.add_argument("--seed", type=int, default=111, help="seed to random sampler.")  # 0, 1, 2, 42, 111 (resreved for ablate)
+    parser.add_argument("--seed", type=int, default=1, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
