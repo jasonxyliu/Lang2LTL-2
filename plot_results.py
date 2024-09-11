@@ -98,7 +98,7 @@ def plot_reg_acc():
 
 	fig = plt.figure(figsize=(6,3))
 	plt.bar(x=bins_reg, height=acc_reg, color=sns.color_palette('colorblind')[0])
-	plt.xlabel("Length of Regular Expressions (REs)", fontsize=16)
+	plt.xlabel("Length of Referring Expressions (REs)", fontsize=16)
 	plt.ylabel("Accuracy (%)", fontsize=16)
 	plt.xticks(fontsize=11)
 	fig.tight_layout()
