@@ -41,11 +41,11 @@ def parse_llm_output(utt, raw_out):
                             num_matches += 1
 
                     if len(lmks) == num_matches:
-                        parsed_out["sre_to_preds"][sre.lower()] = pred
+                        parsed_out["sre_to_preds"][sre] = pred
                         found_re = True
 
             if not found_re:  # find RE without spatial relation
-                parsed_out["sre_to_preds"][sre.lower()] = {}
+                parsed_out["sre_to_preds"][sre] = {}
 
     # Replace spatial referring expressions by symbols
     lifted_utt = utt.lower()
