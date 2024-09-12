@@ -240,17 +240,27 @@ def sort_combs(lmk_grounds):
     return combs_sorted
 
 
-def find_match_rel(rel_unseen, rel_embeds_fpath):
+def find_match_rel(rel_unseen, known_rel_embeds_fpath):
     """
     Use cosine similatiry between text embeddings to find best matching known spatial relation to unseen input.
     """
-    if os.path.isfile(rel_embeds_fpath):
-        known_rel_embeds = load_from_file(rel_embeds_fpath)
+    if os.path.isfile(known_rel_embeds_fpath):
+        known_rel_embeds = load_from_file(known_rel_embeds_fpath)
     else:
         known_rel_embeds = {known_rel: get_embed(known_rel) for known_rel in KNOWN_RELATIONS}
-        save_to_file(known_rel_embeds, rel_embeds_fpath)
+        save_to_file(known_rel_embeds, known_rel_embeds_fpath)
 
-    unseen_rel_embed = get_embed(rel_unseen)
+    # unseen_rel_embed = get_embed(rel_unseen)
+    unknown_rel_embeds_fpath = known_rel_embeds_fpath.replace("known", "unknown")
+    unknown_rel_embeds = load_from_file(unknown_rel_embeds_fpath) if os.path.isfile(unknown_rel_embeds_fpath) else {}
+    if rel_unseen in unknown_rel_embeds:
+        unseen_rel_embed = unknown_rel_embeds[rel_unseen]
+    else:
+        unseen_rel_embed = get_embed(rel_unseen)
+        unknown_rel_embeds[rel_unseen] = unseen_rel_embed
+        save_to_file(unknown_rel_embeds, unknown_rel_embeds_fpath)
+        print(f"SAVED UNSEEN SPATIAL RELATION: {rel_unseen}'")
+
     scores = cosine_similarity(np.array(unseen_rel_embed).reshape(1, -1), np.array(list(known_rel_embeds.values())))[0]
     rel_match = sorted(zip(scores, KNOWN_RELATIONS), reverse=True)[0][1]
     return rel_match
