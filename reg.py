@@ -28,20 +28,22 @@ def embed_images(img_fpaths, cap_dpath, embed_dpath):
     return img_embeds
 
 
-def embed_texts(txts, embed_dpath):
+def embed_texts(txts, obj_locs, embed_dpath):
     txt_embeds = {}
     for lmk_name, txt in txts.items():
-        txt_id = lmk_name.lower().replace(" ", "_")
-        embed_fpath = os.path.join(embed_dpath, f"{txt_id}.pkl")
+        if lmk_name not in obj_locs:
+            txt_id = lmk_name.lower().replace(" ", "_")
+            embed_fpath = os.path.join(embed_dpath, f"{txt_id}.pkl")
 
-        if os.path.isfile(embed_fpath):
-            txt_emebed = load_from_file(embed_fpath)
-        else:
-            txt["name"] = lmk_name  # add landmark name into its textual description
-            txt_emebed = get_embed(txt)
-            save_to_file(txt_emebed, embed_fpath)
+            if os.path.isfile(embed_fpath):
+                txt_emebed = load_from_file(embed_fpath)
+            else:
+                txt["name"] = lmk_name  # add landmark name into its textual description
+                txt_emebed = get_embed(txt)
+                save_to_file(txt_emebed, embed_fpath)
 
-        txt_embeds[lmk_name] = txt_emebed
+            txt_embeds[lmk_name] = txt_emebed
+
     return txt_embeds
 
 
@@ -98,8 +100,11 @@ def reg(graph_dpath, osm_fpath, srer_outs, topk, ablate, in_cache_fpath):
         txt_embed_dpath = os.path.join(graph_dpath, "text_embeds")
         os.makedirs(txt_embed_dpath, exist_ok=True)
 
+        obj_locs_fpath = os.path.join(graph_dpath, "obj_locs.json")  # avoid lmks with visual description
+        obj_locs = load_from_file(obj_locs_fpath)
+
         txts = load_from_file(osm_fpath)  # OSM
-        txt_embeds = embed_texts(txts, txt_embed_dpath)
+        txt_embeds = embed_texts(txts, obj_locs, txt_embed_dpath)
 
     reg = REG(img_embeds, txt_embeds, in_cache_fpath)
 
