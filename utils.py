@@ -61,3 +61,21 @@ def save_to_file(data, fpth, mode=None):
             writer.writerows(data)
     else:
         raise ValueError(f"ERROR: file type {ftype} not recognized")
+
+
+def copy_lt_outs(lt_out_fpath_from, lt_out_fpath_to, spg_out_fpath):
+    """
+    Optimization.
+    When input utterance are the same, SRER and LT outputs are the same.
+    """
+    lt_outs = load_from_file(lt_out_fpath_from)
+    spg_outs = load_from_file(spg_out_fpath)
+    lt_outs_new = []
+
+    for lt_out, spg_out in zip(lt_outs, spg_outs):
+        assert lt_out["utt"].strip() == spg_out["utt"].strip(), f"ERROR different utterances:\ntrue: {lt_out['utt']}\npred: {spg_out['utt']}"
+
+        spg_out["lifted_ltl"] = lt_out["lifted_ltl"]
+        lt_outs_new.append(spg_out)
+
+    save_to_file(lt_outs_new, lt_out_fpath_to)

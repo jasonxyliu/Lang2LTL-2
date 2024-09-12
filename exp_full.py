@@ -12,7 +12,7 @@ from reg import run_exp_reg
 from spg import run_exp_spg
 from lt import run_exp_lt
 from evaluate import eval_srer, eval_reg, eval_spg, eval_lt
-from utils import load_from_file
+from utils import load_from_file, copy_lt_outs
 
 
 def eval_full_system(true_results_fpath, lt_out_fpath):
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     parser.add_argument("--loc", type=str, default="providence", choices=["providence", "auckland", "boston", "san_francisco"], help="env name.")
     parser.add_argument("--ablate", type=str, default="both", choices=["both", "image", "text", None], help="ablate out a modality.")
     parser.add_argument("--nsamples", type=int, default=None, help="number of sample utts per LTL formula or None for all")
-    parser.add_argument("--seed", type=int, default=1, help="seed to random sampler.")  # 0, 1, 2, 42, 111
+    parser.add_argument("--seed", type=int, default=0, help="seed to random sampler.")  # 0, 1, 2, 42, 111
     parser.add_argument("--topk", type=int, default=10, help="top k most likely landmarks grounded by REG.")
     args = parser.parse_args()
     loc_id = f"{args.loc}_n{args.nsamples}_seed{args.seed}" if args.nsamples else f"{args.loc}_all_seed{args.seed}"
@@ -141,13 +141,14 @@ if __name__ == "__main__":
     logging.info(f"{graph_dpath}\n{osm_fpath}\n{utts_fpath}\n{true_results_fpath}\n{results_dpath}\n")
 
     # Spatial Referring Expression Recognition (SRER)
-    srer_out_fpath_modular = os.path.join(os.path.expanduser("~"), "ground", f"results_modular_ablate_{args.ablate}" if args.ablate else "results_modular", loc_id, srer_out_fname)
+    # srer_out_fpath_modular = os.path.join(os.path.expanduser("~"), "ground", f"results_modular_ablate_{args.ablate}", loc_id, srer_out_fname)
     srer_out_fpath_ablate_txt = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_text", loc_id, srer_out_fname)
     srer_out_fpath_ablate_img = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image", loc_id, srer_out_fname)
     srer_out_fpath_ablate_both = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_both", loc_id, srer_out_fname)
-    if not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_modular):  # same SRER output for exp_full and  exp_modular
-        copy2(srer_out_fpath_modular, srer_out_fpath)
-    elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
+    # if not os.path.isfile(srer_out_fpath) and os.path.isfile(srer_out_fpath_modular):  # same SRER output for exp_full and  exp_modular
+    #     copy2(srer_out_fpath_modular, srer_out_fpath)
+    # elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
+    if not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_txt):  # same SRER output for ablate text and ablate image
         copy2(srer_out_fpath_ablate_txt, srer_out_fpath)
     elif not os.path.isfile(srer_out_fpath) and args.ablate and os.path.isfile(srer_out_fpath_ablate_img):
         copy2(srer_out_fpath_ablate_img, srer_out_fpath)
@@ -166,7 +167,19 @@ if __name__ == "__main__":
     eval_spg(true_results_fpath, args.topk, spg_out_fpath)
 
     # Lifted Translation (LT)
-    run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath)
+    lt_out_fname = os.path.basename(lt_out_fpath)  # lt_outs.json
+    lt_out_fpath_ablate_txt = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_text", loc_id, lt_out_fname)
+    lt_out_fpath_ablate_img = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_image", loc_id, lt_out_fname)
+    lt_out_fpath_ablate_both = os.path.join(os.path.expanduser("~"), "ground", "results_full_ablate_both", loc_id, lt_out_fname)
+    if not os.path.isfile(lt_out_fpath) and args.ablate and os.path.isfile(lt_out_fpath_ablate_txt):  # same LT output for ablate text and ablate image
+        copy_lt_outs(lt_out_fpath_ablate_txt, lt_out_fpath, spg_out_fpath)
+    elif not os.path.isfile(lt_out_fpath) and args.ablate and os.path.isfile(lt_out_fpath_ablate_img):
+        copy_lt_outs(lt_out_fpath_ablate_img, lt_out_fpath, spg_out_fpath)
+    elif not os.path.isfile(lt_out_fpath) and args.ablate and os.path.isfile(lt_out_fpath_ablate_both):
+        copy_lt_outs(lt_out_fpath_ablate_both, lt_out_fpath, spg_out_fpath)
+    else:
+        run_exp_lt(spg_out_fpath, model_fpath, lt_out_fpath)
+
     eval_lt(true_results_fpath, lt_out_fpath)
 
     # Full system evaluation
