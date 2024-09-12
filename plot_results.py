@@ -8,7 +8,7 @@ plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
 
 
-def compute_ci_interval(data, confience=0.95):
+def compute_mean_err_bar(data, confidence=None):
 	# Sample data
 	data = np.array(data)
 
@@ -16,56 +16,60 @@ def compute_ci_interval(data, confience=0.95):
 	mean = np.mean(data)
 	std_error = stats.sem(data)  # standard error of the mean
 
-	# Compute the 95% confidence interval; use t-distribution since sample size < 30
-	confidence = confience
-	n = len(data)
-	t_critical = stats.t.ppf((1 + confidence) / 2, df=n-1)  # t-critical value for 95% CI
+	if confidence:  # 95% confidence interval
+		# Compute the 95% confidence interval; use t-distribution since sample size < 30
+		n = len(data)
+		t_critical = stats.t.ppf((1 + confidence) / 2, df=n-1)  # t-critical value for 95% CI
 
-	margin_of_error = t_critical * std_error
-	# confidence_interval = (mean - margin_of_error, mean + margin_of_error)
-	return mean, margin_of_error
+		margin_of_error = t_critical * std_error
+		# confidence_interval = (mean - margin_of_error, mean + margin_of_error)
+		err_bar = margin_of_error
+	else:
+		err_bar = std_error
+	return mean, err_bar
 
 
 def plot_full_sys_acc():
 	# Full system accuracy plot
-	methods = ['Text+Image (Ours)', 'Text Only (Lang2LTL)', 'Image Only']
+	methods = ['Text+Image (Ours)', 'Text Only (Lang2LTL-Spatial)', 'Image Only']
 
 	accuracies_per_sys = [
 		[
-			0.9917355372, 0.9908172635, 0.9898989899, 0.9917355372, 0.940312213,
-			0.9632690542, 0.9678604224, 0.9595959596, 0.9834710744, 0.9550045914,
-			0.9008264463, 0.8870523416, 0.8870523416, 0.8925619835, 0.870523416,
-			0.9072543618, 0.9182736455, 0.9127640037, 0.927456382, 0.867768595
+			0.9531680441, 0.9348025712, 0.9467401286, 0.943067034, 0.9880624426,
+			0.8576675849, 0.8503213958, 0.8383838384, 0.8714416896, 0.8622589532,
+			0.8842975207, 0.8778696051, 0.8907254362, 0.8760330579, 0.8466483012,
+			0.7520661157, 0.7594123049, 0.7731864096, 0.8797061524, 0.867768595
 		],
 		[
-			0.8916437098,
-			0.8668503214,
-			0.6859504132,
-			0.867768595
+			0.3140495868, 0.3158861341, 0.3149678604, 0.3149678604, 0.3140495868,
+			0.2736455464, 0.2837465565, 0.2837465565, 0.2883379247, 0.2883379247,
+			0.2837465565, 0.277318641, 0.277318641, 0.2819100092, 0.2883379247,
+			0.2736455464, 0.2883379247, 0.2883379247, 0.2764003673, 0.2653810836
 		],
 		[
-			0.4719926538,
-			0.4380165289,
-			0.2084481175,
-			0.54912764
+			0.4756657484, 0.4710743802, 0.4775022957, 0.4729109275, 0.4710743802,
+			0.3232323232, 0.3112947658, 0.290174472, 0.3269054178, 0.3269054178,
+			0.6703397612, 0.7033976125, 0.6914600551, 0.665748393, 0.6831955923,
+			0.5610651974, 0.5665748393, 0.5573921028, 0.5564738292, 0.5656565657
 		]
 	]
 
-	means, margins = [], []
+	means, err_bars = [], []
 	for accuracies in accuracies_per_sys:
-		mean, margin = compute_ci_interval(accuracies)
+		# mean, err_bar = compute_mean_err_bar(accuracies)
+		mean, err_bar = compute_mean_err_bar(accuracies, 0.95)
 		means.append(mean)
-		margins.append(margin)
+		err_bars.append(err_bar)
 
 	fig = plt.figure(figsize=(6,5))
 	plt.bar(x=methods, height=means, color=sns.color_palette('colorblind'))
-	plt.errorbar(methods, means, yerr=margins, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
+	plt.errorbar(methods, means, yerr=err_bars, color="k", fmt='.', elinewidth=2,capthick=2, ms=10, capsize=4)
 	plt.title("Full System Accuracy", fontsize=18)
 	plt.xlabel("Modality", fontsize=16)
 	plt.ylabel("Accuracy (%)", fontsize=16)
-	plt.xticks(fontsize=11)
+	plt.xticks(fontsize=9)
 	fig.tight_layout()
-	fig.savefig("full_sys_acc.pdf")
+	fig.savefig("full_acc.pdf")
 
 
 def plot_srer_acc():
